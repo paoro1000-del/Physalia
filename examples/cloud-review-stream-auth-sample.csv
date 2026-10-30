@@ -1,0 +1,2 @@
+event,timestamp,run_id,scope,method,failures_total
+stream_auth_failure_summary,2026-10-21T10:26:00Z,a1b2c3d4e5f60718,stream,GET,4

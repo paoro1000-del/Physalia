@@ -1,0 +1,65 @@
+name: Static quality checks
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 8 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: static-quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-quality:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Verify pinned dependencies
+        run: python3 scripts/check_dependency_pins.py
+
+      - name: Check pinned PyPI releases for active advisories
+        run: python3 scripts/check_dependency_advisories.py
+
+      - name: Check settings privacy rules
+        run: python3 scripts/check_settings_privacy.py
+
+      - name: Check audit KQL coverage
+        run: python3 scripts/check_audit_kql_parity.py
+
+      - name: Check integration bundle allowlist
+        run: python3 scripts/check_integration_bundle.py
+
+      - name: Check browser DOM sinks
+        run: python3 scripts/check_browser_dom_sinks.py
+
+      - name: Check generation setting parity
+        run: python3 scripts/check_setting_api_parity.py
+
+      - name: Check study metadata schema
+        run: python3 scripts/check_study_metadata_schema.py
+
+      - name: Check local documentation links
+        run: python3 scripts/check_local_document_links.py
+
+      - name: Check Japanese and English UI consistency
+        run: python3 scripts/check_ui_translations.py
+
+      - name: Check connection-limit status propagation
+        run: python3 scripts/check_connection_limit_status_parity.py
+
+      - name: Compile Python sources
+        run: python3 -m compileall -q app.py decrypt.py aideceptionguard examples scripts tests
+
+      - name: Check JavaScript syntax
+        run: |
+          node --check web/app.js
+          node --check web/cloud_review.js
+          node --check web/json_utils.js

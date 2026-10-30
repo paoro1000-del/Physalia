@@ -1,0 +1,23 @@
+// Starting point for tenant-wide password-spray review across rotating IPs.
+// If one table is unavailable in your workspace, remove that union branch.
+// Tune and correlate with expected VPN, identity-provider and service activity.
+// The union covers interactive and non-interactive user sign-ins; fixed bins can miss boundary-spanning events.
+union kind=outer
+  (SigninLogs
+   | where TimeGenerated >= ago(30m)
+   | project Tenant=tostring(AADTenantId), IPAddress, UserId, UserPrincipalName,
+             EventTime=coalesce(todatetime(CreatedDateTime), TimeGenerated), ResultType),
+  (AADNonInteractiveUserSignInLogs
+   | where TimeGenerated >= ago(30m)
+   | project Tenant=tostring(AADTenantId), IPAddress, UserId, UserPrincipalName,
+             EventTime=coalesce(todatetime(CreatedDateTime), TimeGenerated), ResultType)
+| extend Account=case(isnotempty(tostring(UserId)), strcat("id:", tolower(tostring(UserId))),
+                      isnotempty(tostring(UserPrincipalName)), strcat("upn:", tolower(tostring(UserPrincipalName))), ""),
+         ErrorCode=toint(ResultType)
+| where isnotempty(Tenant) and isnotempty(IPAddress) and isnotempty(Account)
+  and isnotnull(EventTime) and isnotnull(ErrorCode) and ErrorCode != 0
+| summarize Failures=count(), Users=dcount(Account),
+            SourceIPs=dcount(IPAddress), SourceIPExamples=make_set(IPAddress, 20),
+            FirstFailure=min(EventTime), LastFailure=max(EventTime)
+  by Tenant, WindowStart=bin(EventTime, 15m)
+| where Failures >= 10 and Users >= 5 and SourceIPs >= 2

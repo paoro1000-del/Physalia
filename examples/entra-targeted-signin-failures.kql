@@ -1,0 +1,23 @@
+// Starting point for repeated failures against a single identity.
+// If one table is unavailable in your workspace, remove that union branch.
+// The output includes user identities and source IPs; restrict its access.
+// The union covers interactive and non-interactive user sign-ins; fixed bins can miss boundary-spanning events.
+union kind=outer
+  (SigninLogs
+   | where TimeGenerated >= ago(30m)
+   | project Tenant=tostring(AADTenantId), IPAddress, UserId, UserPrincipalName,
+             EventTime=coalesce(todatetime(CreatedDateTime), TimeGenerated), ResultType),
+  (AADNonInteractiveUserSignInLogs
+   | where TimeGenerated >= ago(30m)
+   | project Tenant=tostring(AADTenantId), IPAddress, UserId, UserPrincipalName,
+             EventTime=coalesce(todatetime(CreatedDateTime), TimeGenerated), ResultType)
+| extend Account=case(isnotempty(tostring(UserId)), strcat("id:", tolower(tostring(UserId))),
+                      isnotempty(tostring(UserPrincipalName)), strcat("upn:", tolower(tostring(UserPrincipalName))), ""),
+         ErrorCode=toint(ResultType)
+| where isnotempty(Tenant) and isnotempty(Account) and isnotnull(EventTime)
+  and isnotnull(ErrorCode) and ErrorCode != 0
+| summarize Failures=count(), SourceIPs=dcountif(IPAddress, isnotempty(IPAddress)),
+            SourceIPExamples=make_set_if(IPAddress, isnotempty(IPAddress), 20),
+            FirstFailure=min(EventTime), LastFailure=max(EventTime)
+  by Tenant, Account, WindowStart=bin(EventTime, 15m)
+| where Failures >= 20

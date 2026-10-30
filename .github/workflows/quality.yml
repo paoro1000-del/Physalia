@@ -1,0 +1,97 @@
+name: Quality checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22.23.4"
+
+      - name: Enforce exact dependency pins
+        run: python scripts/check_dependency_pins.py
+
+      - name: Check English UI translation coverage
+        run: python scripts/check_ui_translations.py
+
+      - name: Check canary URL settings privacy
+        run: python scripts/check_settings_privacy.py
+
+      - name: Check audit KQL coverage
+        run: python scripts/check_audit_kql_parity.py
+
+      - name: Check integration bundle allowlist
+        run: python scripts/check_integration_bundle.py
+
+      - name: Check browser DOM sinks
+        run: python scripts/check_browser_dom_sinks.py
+
+      - name: Check generation setting parity
+        run: python scripts/check_setting_api_parity.py
+
+      - name: Check local documentation links
+        run: python scripts/check_local_document_links.py
+
+      - name: Check study metadata schema and template
+        run: python scripts/check_study_metadata_schema.py
+
+      - name: Check connection-limit status propagation
+        run: python scripts/check_connection_limit_status_parity.py
+
+      - name: Compile all Python sources
+        run: python -m compileall -q app.py decrypt.py aideceptionguard examples scripts tests
+
+      - name: Check pinned releases for known PyPI advisories
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.14'
+        run: python scripts/check_dependency_advisories.py
+
+      - name: Install reviewed dependencies
+        run: "python -m pip install --require-hashes --no-deps --only-binary=:all: -r requirements-dev.txt"
+
+      - name: Check installed dependency consistency
+        run: python -m pip check
+
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Check browser JavaScript syntax
+        run: node --check web/app.js
+
+      - name: Check cloud review JavaScript syntax
+        run: node --check web/cloud_review.js
+
+      - name: Check shared JSON utility syntax
+        run: node --check web/json_utils.js
+
+      - name: Run browser integration checks
+        if: matrix.os == 'windows-latest'
+        run: python tests/browser_smoke.py

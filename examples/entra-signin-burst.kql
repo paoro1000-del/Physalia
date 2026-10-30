@@ -1,0 +1,20 @@
+// Starting threshold, not an ARTEX fingerprint. Tune for your organization.
+// If one table is unavailable in your workspace, remove that union branch.
+// The union covers interactive and non-interactive user sign-ins.
+// Fixed UTC bins can miss boundary-spanning events or distributed IPs.
+union kind=outer
+  (SigninLogs
+   | where TimeGenerated >= ago(20m)
+   | project Tenant=tostring(AADTenantId), IPAddress, UserId, UserPrincipalName,
+             EventTime=coalesce(todatetime(CreatedDateTime), TimeGenerated), ResultType),
+  (AADNonInteractiveUserSignInLogs
+   | where TimeGenerated >= ago(20m)
+   | project Tenant=tostring(AADTenantId), IPAddress, UserId, UserPrincipalName,
+             EventTime=coalesce(todatetime(CreatedDateTime), TimeGenerated), ResultType)
+| extend Account=case(isnotempty(tostring(UserId)), strcat("id:", tolower(tostring(UserId))),
+                      isnotempty(tostring(UserPrincipalName)), strcat("upn:", tolower(tostring(UserPrincipalName))), ""),
+         ErrorCode=toint(ResultType)
+| where isnotempty(Tenant) and isnotempty(IPAddress) and isnotempty(Account)
+  and isnotnull(EventTime) and isnotnull(ErrorCode) and ErrorCode != 0
+| summarize Failures=count(), Users=dcount(Account) by Tenant, IPAddress, bin(EventTime, 15m)
+| where Failures >= 10 and Users >= 5

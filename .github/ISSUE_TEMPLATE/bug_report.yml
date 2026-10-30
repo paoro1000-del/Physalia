@@ -1,0 +1,75 @@
+name: Bug report
+description: Report a reproducible problem without sharing secrets or production data.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Do not report security vulnerabilities here. Read SECURITY.md and use GitHub's
+        private vulnerability reporting. Never attach real canary URLs, credentials,
+        operator or inventory JSON, production logs, or personal data.
+
+        脆弱性の詳細はここに投稿せず、SECURITY.mdに記載の非公開報告を利用してください。
+        実際のカナリアURL、認証情報、operator/inventory JSON、本番ログ、個人情報は添付しないでください。
+
+  - type: input
+    id: version
+    attributes:
+      label: Commit or release / コミットまたはリリース
+      description: Provide the commit hash or release tag, if known. / 分かる場合はコミットハッシュまたはリリースタグを記載してください。
+      placeholder: e.g. commit hash or v0.x.y
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment / 実行環境
+      description: Operating system, Python version, and browser if relevant. / OS、Pythonのバージョン、必要に応じてブラウザーを記載してください。
+      placeholder: e.g. Windows 11, Python 3.12, Edge
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component / 対象機能
+      options:
+        - Local GUI
+        - Canary file generator
+        - Encrypted Deep Nest generator
+        - Decoy database generator
+        - Maze or stream sample
+        - Cloud log review
+        - Documentation or integration example
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps / 再現手順
+      description: Use synthetic values and a local or otherwise authorized environment. / 架空の値を使い、ローカルまたは許可を得た環境で再現してください。
+      placeholder: |
+        1. Select ...
+        2. Set synthetic values ...
+        3. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and observed behavior / 期待した動作と実際の動作
+      description: Redact tokens, URLs, identifiers, and personal information from any output. / 出力に含まれるトークン、URL、識別子、個人情報は伏せてください。
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: safe_to_publish
+    attributes:
+      label: Safe-to-publish check / 公開前の確認
+      options:
+        - label: I removed real secrets, canary URLs, operator files, production logs, and personal data from this report and its attachments. / 実際の秘密情報・カナリアURL・operatorファイル・本番ログ・個人情報を本文と添付から削除しました。
+          required: true

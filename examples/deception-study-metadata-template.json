@@ -1,0 +1,34 @@
+{
+  "schema": "adg-deception-study-metadata-v1",
+  "study_id": "",
+  "scenario_name": "",
+  "authorization_scope": "",
+  "mock_target_definition": "",
+  "control_condition": "",
+  "decoy_condition": "",
+  "equivalent_starting_information": "",
+  "assignment_method": "",
+  "randomization_method": "",
+  "run_order_policy": "",
+  "attacker_conditions": {
+    "actor_type": "",
+    "model_provider": "",
+    "model_name_version": "",
+    "agent_framework_version": "",
+    "tools_and_scripts": [],
+    "parallelism": null,
+    "offline_analysis": null
+  },
+  "network_and_host_conditions": "",
+  "planned_time_budget_seconds": null,
+  "stopping_rule": "",
+  "telemetry_sources": [],
+  "alert_and_response_procedure": "",
+  "privacy_review": {
+    "classification": "not-reviewed",
+    "synthetic_data_only": "not-reviewed",
+    "personal_data": "not-reviewed",
+    "credentials_and_canary_urls": "not-reviewed",
+    "retention_and_access_controls": ""
+  }
+}

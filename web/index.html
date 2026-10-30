@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="adg-token" content="__SESSION_TOKEN__">
+  <meta name="adg-generation-request-limit" content="__MAX_GENERATION_REQUEST_BYTES__">
+  <title>AiDeceptionGuard</title>
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="/json_utils.js"></script>
+  <script defer src="/app.js"></script>
+  <script defer src="/cloud_review.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#main-content" data-i18n="skip_to_content">メインコンテンツへ移動</a>
+<div class="layout">
+  <aside>
+    <div class="brand"><span class="mark">◈</span><span>AiDeceptionGuard<small>LOCAL WORKSPACE</small></span></div>
+    <p class="aside-label" data-i18n="workspace">ワークスペース</p>
+    <div class="side-active">◫ <span data-i18n="create">デコイを作成</span></div>
+    <div class="aside-bottom"><span class="dot"></span> <span data-i18n="running">ローカルで動作中</span><br><small data-i18n="browser_save">生成物はブラウザーから保存します</small></div>
+  </aside>
+  <main id="main-content" tabindex="-1">
+    <header class="top"><span data-i18n="workspace_create">作業スペース / 作成</span><div class="top-controls"><span class="local" data-i18n="local_mode">● ローカルモード</span><label for="language" class="language-label" data-i18n="language">言語</label><select id="language" aria-label="言語 / Language"><option value="ja">日本語</option><option value="en">English</option></select></div></header>
+    <div class="content">
+      <div class="intro"><div><div class="eyebrow" data-i18n="assets_eyebrow">デコイ生成</div><h1 data-i18n="create">デコイを作成</h1><p data-i18n="intro">手法を選び、仕組みや対象となる攻撃を確認してから生成します。</p></div><span class="version" data-i18n="workspace_badge">ローカル作業環境</span></div>
+      <div class="notice"><strong data-i18n="getting_started">はじめに</strong><span data-i18n="notice">このツールはファイルを生成します。設置・通知基盤の準備はご自身で行ってください。</span></div>
+      <p class="cloud-jump"><a href="#cloud-review" data-cloud-i18n="jump">認証・クラウド操作ログを分析する ↓</a></p>
+      <div class="section-head"><div><span class="step">01</span><h2 data-i18n="select_method">手法を選択</h2></div><span data-i18n="file_type">狙う役割から選択</span></div>
+      <p class="category-intro" data-i18n="category_intro">タグは各手法が狙う役割です。複数の役割を持つ手法もあります。効果は配置や攻撃者の行動により変わります。</p>
+      <details class="category-guide"><summary data-i18n="category_guide">タグの意味を見る</summary><p data-i18n="category_description">検知：デコイ接触や使用の把握。遅延：攻撃者の作業を増やす。デコイ誘導：偽の資産や画面へ誘う。流出後の攪乱：持ち出された候補の判断や利用を難しくする。AI攻撃を想定：AIエージェントなどを使った攻撃も評価対象で、人間やスクリプトによる攻撃にも作用し得ます。検知・通知は別途設定が必要な場合があり、どの効果も保証されません。</p></details>
+      <div class="cards" role="radiogroup" aria-label="作成する手法" data-i18n-aria="select_method">
+        <label class="card"><input type="radio" name="kind" value="env" checked><span class="icon teal">⌁</span><strong data-i18n="canary_file">カナリアファイル</strong><small data-i18n="canary_card">監視URLの利用を手掛かりに不審な接触を検知</small><span class="method-tags"><span class="method-tag detect" data-i18n="tag_detect">検知</span></span><span class="card-foot">PDF / OFFICE / DB <b>↗</b></span></label>
+        <label class="card"><input type="radio" name="kind" value="nest"><span class="icon violet">◇</span><strong data-i18n="nest_title">エンクリプテッド・ディープ・ネスト</strong><small data-i18n="nest_card">暗号化された偽候補を重ねて探索を遅らせる</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span><span class="method-tag leak" data-i18n="tag_leak">流出後の攪乱</span><span class="method-tag ai" data-i18n="tag_ai">AI攻撃を想定</span></span><span class="card-foot">AES ZIP <b>↗</b></span></label>
+        <label class="card"><input type="radio" name="kind" value="database"><span class="icon blue">▤</span><strong data-i18n="database_title">デコイ・データベース</strong><small data-i18n="database_card">架空のデータベースで真偽の判断を迷わせる</small><span class="method-tags"><span class="method-tag lure" data-i18n="tag_lure">デコイ誘導</span><span class="method-tag leak" data-i18n="tag_leak">流出後の攪乱</span><span class="method-tag delay" data-i18n="tag_delay">遅延</span></span><span class="card-foot">SQLITE <b>↗</b></span></label>
+        <label class="card"><input type="radio" name="kind" value="web"><span class="icon amber">▦</span><strong data-i18n="web_title">スタティック・デコイ・ポータル</strong><small data-i18n="web_card">偽のポータル画面で探索を誘い込む</small><span class="method-tags"><span class="method-tag lure" data-i18n="tag_lure">デコイ誘導</span><span class="method-tag detect" data-i18n="tag_detect">検知</span></span><span class="card-foot">HTML <b>↗</b></span></label>
+        <label class="card"><input type="radio" name="kind" value="fake_trap"><span class="icon amber">⚑</span><strong data-i18n="fake_title">フェイクトラップ</strong><small data-i18n="fake_card">警告や待機表示で再確認を促す</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span><span class="method-tag ai" data-i18n="tag_ai">AI攻撃を想定</span></span><span class="card-foot">HTML <b>↗</b></span></label>
+        <label class="card"><input type="radio" name="kind" value="data_dilution"><span class="icon blue">≋</span><strong data-i18n="dilution_title">データ・ディルーション</strong><small data-i18n="dilution_card">本物に偽レコードを混ぜて選別を困難に</small><span class="method-tags"><span class="method-tag leak" data-i18n="tag_leak">流出後の攪乱</span></span><span class="card-foot">INFO <b>↗</b></span></label>
+        <label class="card"><input type="radio" name="kind" value="honeyword"><span class="icon violet">◇</span><strong data-i18n="honeyword_title">プリビレッジ・ハニーワード・セッション</strong><small data-i18n="honeyword_card">偽パスワードで隔離デコイへ誘導</small><span class="method-tags"><span class="method-tag detect" data-i18n="tag_detect">検知</span><span class="method-tag lure" data-i18n="tag_lure">デコイ誘導</span><span class="method-tag delay" data-i18n="tag_delay">遅延</span></span><span class="card-foot">INFO <b>↗</b></span></label>
+        <label class="card"><input type="radio" name="kind" value="stream"><span class="icon violet">∞</span><strong data-i18n="stream_title">インフィニット・ストリーム</strong><small data-i18n="stream_card">終わりのない配信でダウンロードを引き延ばす</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span><span class="method-tag lure" data-i18n="tag_lure">デコイ誘導</span></span><span class="card-foot">PYTHON SERVER <b>↗</b></span></label>
+        <label class="card"><input type="radio" name="kind" value="directory_maze"><span class="icon teal">⌘</span><strong data-i18n="directory_title">ディレクトリ・メイズ</strong><small data-i18n="directory_card">偽ファイルを階層に配置して探索を増やす</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span><span class="method-tag lure" data-i18n="tag_lure">デコイ誘導</span><span class="method-tag ai" data-i18n="tag_ai">AI攻撃を想定</span></span><span class="card-foot">STATIC ZIP <b>↗</b></span></label>
+        <label class="card"><input type="radio" name="kind" value="encoding_maze"><span class="icon blue">≋</span><strong data-i18n="encoding_title">エンコーディング・メイズ</strong><small data-i18n="encoding_card">多段変換した偽候補で内容の確認を増やす</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span><span class="method-tag leak" data-i18n="tag_leak">流出後の攪乱</span><span class="method-tag ai" data-i18n="tag_ai">AI攻撃を想定</span></span><span class="card-foot">ENCODED ZIP <b>↗</b></span></label>
+      </div>
+      <div class="section-head second"><div><span class="step">02</span><h2 data-i18n="settings">設定</h2></div><span data-i18n="method_settings">選択した手法の設定</span></div>
+        <p id="csv-safety-note" class="explanation-note" role="status" aria-live="polite" data-i18n="csv_safety_note" hidden>CSVにはセル型の情報がありません。数式として解釈され得るテキストには先頭にアポストロフィを付けてリスクを下げますが、CSV上にもアポストロフィが残り、表計算ソフトの取込動作は異なります。配置前に利用するソフトで確認してください。</p>
+      <form id="generator" class="panel" novalidate>
+        <section class="method-explanation" aria-live="polite" aria-labelledby="method-explanation-title">
+          <div class="explanation-heading"><span data-i18n="method_explainer">この手法の説明</span><h3 id="method-explanation-title"></h3></div>
+          <figure class="method-flow" aria-labelledby="flow-title">
+            <figcaption id="flow-title" data-i18n="flow_title">仕組みの流れ</figcaption>
+            <p id="method-flow-scenario" class="flow-scenario"></p>
+            <p id="method-flow-context" class="flow-context"></p>
+            <ol id="method-flow-steps" class="method-flow-steps"></ol>
+            <div class="flow-branches"><div><strong data-i18n="flow_if">効果が期待できる場合</strong><p id="method-flow-if"></p></div><div><strong data-i18n="flow_else">効果が弱まる条件</strong><p id="method-flow-else"></p></div></div>
+            <div class="flow-response"><strong data-i18n="flow_response">検知・対応の準備</strong><p id="method-flow-response"></p></div>
+            <p id="method-flow-note" class="method-flow-note"></p>
+          </figure>
+          <details class="method-details">
+          <summary data-i18n="flow_details">仕組み・対象・限界を詳しく見る</summary>
+          <div class="explanation-grid">
+            <div><strong data-i18n="explain_how">どういう対策か</strong><p id="explain-how"></p></div>
+            <div><strong data-i18n="explain_target">どの攻撃を想定するか</strong><p id="explain-target"></p></div>
+            <div><strong data-i18n='explain_deception'>What makes it look genuine</strong><p id='explain-deception'></p></div>
+            <div><strong data-i18n='explain_delay'>How it can delay an attacker</strong><p id='explain-delay'></p></div>
+            <div><strong data-i18n="explain_limit">できないこと・限界</strong><p id="explain-limit"></p></div>
+          </div>
+          <p class="explanation-note" data-i18n="explain_measurement">本物らしさ・遅滞は配置環境と攻撃者の自動化度で変わります。ここに示すのは期待条件であり、実測結果や保証ではありません。</p>
+          </details>
+          <p class="legal-opinion-note" data-i18n="legal_disclaimer">以下は日本法・米国法に関する一般的な一見解です。個別の適法性を保証するものではありません。実際の導入前に、適用地域に詳しい法律の専門家へ確認してください。</p>
+          <details class="legal-explanation">
+            <summary data-i18n="legal_title">日本法上の見解（不正アクセス禁止法）</summary>
+            <p><strong data-i18n="legal_normal">通常の利用</strong> <span id="legal-normal"></span></p>
+            <p><strong data-i18n="legal_risk">抵触し得る行為</strong> <span id="legal-risk"></span></p>
+            <p id="legal-other"></p>
+            <p class="legal-sources"><span data-i18n="legal_scope">自組織または設置権限のある環境での一般的な評価です。具体的な権限・操作によって結論は変わり、他の法律も関係します。</span> <a id="legal-guide-link" href="/legal/ja" target="_blank" rel="noopener" data-i18n="legal_more">根拠と各手法の詳細</a> · <a href="https://laws.e-gov.go.jp/law/411AC0000000128" target="_blank" rel="noopener">e-Gov</a> · <a href="https://www.npa.go.jp/bureau/cyber/pdf/1_kaisetsu.pdf" target="_blank" rel="noopener" data-i18n="legal_police">警察庁の解説</a></p>
+          </details>
+          <details class="legal-explanation">
+            <summary data-i18n="legal_us_title">米国法上の見解（連邦法・州法）</summary>
+            <p><strong data-i18n="legal_normal">通常の利用</strong> <span id="legal-us-normal"></span></p>
+            <p><strong data-i18n="legal_us_risk">具体的な注意点</strong> <span id="legal-us-risk"></span></p>
+            <p data-i18n="legal_us_scope">連邦法のほか州法・契約等が関係し、通信の内容や保存方法、関係者の所在地で評価が変わります。自己管理の設備であっても通信内容の監視が常に認められるわけではありません。</p>
+            <p class="legal-sources"><a href="https://uscode.house.gov/view.xhtml?req=(title:18%20section:1030%20edition:prelim)" target="_blank" rel="noopener">18 U.S.C. § 1030 (CFAA)</a> · <a href="https://uscode.house.gov/view.xhtml?req=(title:18%20section:2511%20edition:prelim)" target="_blank" rel="noopener">18 U.S.C. § 2511</a> · <a id="legal-us-guide-link" href="/legal/ja" target="_blank" rel="noopener" data-i18n="legal_us_more">米国法の根拠と補足</a></p>
+          </details>
+        </section>
+        <div class="settings-actions"><button type="button" class="secondary" id="save-settings" data-i18n="save_settings">設定を保存（URL・ドメイン所有確認は除外）</button><button type="button" class="secondary" id="load-settings" data-i18n="load_settings">設定を読み込む</button><input type="file" id="settings-file" accept="application/json,.json" hidden><a id="guide-link" href="/guide/ja" target="_blank" rel="noopener" data-i18n="guide_link">導入・監視ガイド</a><a href="/integration-kit.zip" download="adg-integration-examples.zip" data-i18n="samples_link">連携サンプルZIP</a></div>
+        <p class="help" data-i18n="settings_privacy_help">URL形式の入力欄だけを除外します。コメントや候補値などの自由入力欄に貼り付けたURL・秘密情報は検出・除外されません。設定JSONにはほかの入力値やDB候補値が含まれるため、実データや秘密情報を入力せず安全に保管してください。</p>
+        <div id="env-fields" class="fields">
+          <div class="panel-title"><h3 data-i18n="canary_file">カナリアファイル</h3><p data-i18n="canary_desc">形式・ファイル名・タイトルを変えて、監視URLを含む文書を生成します。</p></div>
+          <div class="form-grid"><div><label for="canary-format" data-i18n="format">ファイル形式</label><select id="canary-format"><option value="env">.env</option><option value="txt">Text (.txt)</option><option value="json">JSON</option><option value="csv">CSV</option><option value="html">HTML</option><option value="pdf">PDF</option><option value="xlsx">Excel (.xlsx)</option><option value="pptx">PowerPoint (.pptx)</option><option value="sqlite">SQLite (.db)</option></select></div>
+          <div><label for="canary-name" data-i18n="filename">ファイル名（拡張子なし・空欄で自動・英数字で始め、英数字・_・-のみ、64文字まで・OS予約名不可）</label><input id="canary-name" type="text" maxlength="64" placeholder="accounts_2026"></div>
+          <div><label for="canary-title" data-i18n="document_title">文書タイトル</label><input id="canary-title" data-i18n-placeholder="context_title_auto" maxlength="80"></div>
+          <div><label for="canary-rows" data-i18n="document_rows">文書内のレコード件数</label><input id="canary-rows" type="number" min="1" max="500" value="25" required></div></div>
+          <label for="env-url"><span data-i18n="canary_url">カナリアURL</span> <span class="optional" data-i18n="optional">任意</span></label><textarea id="env-url" rows="1" inputmode="url" spellcheck="false" autocapitalize="none" placeholder="https://..." maxlength="2048" autocomplete="off"></textarea>
+          <p class="help" data-i18n="canary_help">利用中のカナリアサービスで発行したHTTPS URLを入力してください。空欄の場合は通知されないプレースホルダーを出力します。公開到達可能な監視先を指定してください。非公開IPやlocalhost等の内部用ホスト名は拒否しますが、DNS解決先は確認しません。PowerPointは指定件数をすべて収録し、1枚あたり最大10件のスライドに分けます。通常の.env形式ではURLを一重引用符で囲みます。一重引用符を含むURLは開発・本番切替メモ形式か別形式を選んでください。切替メモ形式では別の入力制限があります。URLに$が含まれる場合は.env形式を使わず、別形式を選んでください。</p>
+          <fieldset id="env-template-options"><legend data-i18n="env_layout_title">.envの構成</legend>
+            <label for="env-layout" data-i18n="env_layout_label">設定パターン</label><select id="env-layout"><option value="commented_production" data-i18n="env_layout_switch">開発・本番切替メモ（本番URLはコメント）</option><option value="standard" data-i18n="env_layout_standard">通常のURL設定</option></select>
+            <div id="env-switch-options"><div class="form-grid">
+              <div><label for="env-suffix" data-i18n="env_suffix">ファイルの環境名</label><input id="env-suffix" value="development" maxlength="32"></div>
+              <div><label for="env-variable" data-i18n="env_variable">設定キー</label><input id="env-variable" value="URL" maxlength="48"></div>
+              <div><label for="env-dev-url" data-i18n="env_dev_url">この環境で使う有効なURL（任意）</label><input id="env-dev-url" type="url" maxlength="2048" placeholder="http://dev.example.invalid:8080" autocomplete="off"></div>
+              <div class="full-width"><label class="check-label"><input id="env-dev-url-authorized" type="checkbox" data-operator-attestation><span data-i18n="env_dev_url_authorized">このホストを管理し、本番認証のない隔離検証先だけに向けています。URLをたどる利用者からリクエストを受ける可能性があります。</span></label></div>
+              <div><label for="env-dev-comment" data-i18n="env_dev_comment_label">開発側の説明（任意）</label><input id="env-dev-comment" maxlength="160"></div>
+              <div><label for="env-prod-comment" data-i18n="env_prod_comment_label">本番側の切替メモ（任意）</label><input id="env-prod-comment" maxlength="160"></div>
+            </div><p class="help" data-i18n="env_switch_help">ファイル名を空欄にすると .env.development の形式になります。開発用URLは有効行、カナリアURLは本番用のコメント行です。既定のexample.invalidを使うか、任意のホストは管理者が所有し、本番認証のない隔離検証先だけに向けてください。URLをたどる利用者からリクエストを受ける可能性があります。生成器は名前解決・接続を行いません。内部・本番の接続先は入力しないでください。ファイルは本番アプリに読み込ませないでください。</p></div>
+          </fieldset>
+          <fieldset id="canary-context-options"><legend data-i18n="canary_context">URLを記載する文脈</legend><div class="form-grid">
+            <div><label for="canary-context" data-i18n="context_profile">用途</label><select id="canary-context"><option value="service" data-i18n="context_service">サービス管理</option><option value="billing" data-i18n="context_billing">請求</option><option value="support" data-i18n="context_support">サポート</option><option value="reports" data-i18n="context_reports">レポート</option><option value="auto" data-i18n="context_auto">自動選択</option></select></div>
+            <div><label for="canary-field" data-i18n="context_field">URLの項目名（任意・英数字と_）</label><input id="canary-field" maxlength="48" placeholder="billing_portal_url"></div>
+            <div><label for="canary-label" data-i18n="context_label">リンクの表示文言（任意）</label><input id="canary-label" maxlength="80" placeholder="Billing portal"></div>
+          </div><p class="help" data-i18n="context_help">用途に合わせて項目名と表示文言を調整できます。文書形式では、ファイル名とタイトルも空欄なら選んだ用途に合わせます。通常の.envではタイトルとURL項目名に反映し、開発・本番切替メモ形式では環境設定を優先します。CSVは先頭レコードにURLを置き、Excelはデータシートにリンクを配置します。URLは変更せず、自動通信もしません。URLのドメインやリンク先の情報は解析可能です。</p></fieldset>
+          <div class="inline-note" data-i18n="canary_note">監視サービスが自分のアカウント向けに発行したHTTPSカナリアURLだけを使ってください。ファイルの読み取りだけでは通知されず、URLにアクセスされたときに連携先から通知される場合があります。メール・文書スキャナーやリンクプレビューが自動アクセスする場合もあります。通知はURLへの要求を示すだけで、攻撃者やファイル閲覧者の特定にはなりません。既知のスキャンと照合してください。生成器はURLに接続しません。空白と # 以降のフラグメントは指定できません。フラグメントはHTTPリクエストで送信されないためです。</div>
+        </div>
+        <div id="nest-fields" class="fields" hidden>
+          <div class="panel-title"><h3 data-i18n="nest_title">エンクリプテッド・ディープ・ネスト</h3><p data-i18n="nest_desc">ZIPごとに方針に沿ったパスワードを生成し、分岐構造と選択形式を中心にしたダミーファイルを作ります。重複を検出し、必要に応じてランダム方式で置き換えて一意にします。</p></div>
+          <label for="nest-scenario" data-i18n="scenario_label">デコイの用途</label><select id="nest-scenario"><option value="crm" data-i18n="scenario_crm">顧客管理の登録簿</option><option value="migration" data-i18n="scenario_migration">顧客データ移行</option><option value="archive" data-i18n="scenario_archive">顧客データ保管</option><option value="cards" data-i18n="scenario_cards">支払カード台帳</option><option value="companies" data-i18n="scenario_companies">取引先企業一覧</option><option value="passwords" data-i18n="scenario_passwords">認証情報保管庫</option><option value="invoices" data-i18n="scenario_invoices">請求書・入金一覧</option><option value="employees" data-i18n="scenario_employees">従業員・部署一覧</option><option value="vendors" data-i18n="scenario_vendors">仕入先・委託先台帳</option><option value="orders" data-i18n="scenario_orders">受注・販売台帳</option><option value="tickets" data-i18n="scenario_tickets">サポートチケット一覧</option><option value="assets" data-i18n="scenario_assets">IT資産台帳</option><option value="cloud" data-i18n="scenario_cloud">クラウド資産一覧</option></select>
+          <p class="help" data-i18n="scenario_help">用途に合う合成データのスキーマ・ファイル名・タイトル・URL文脈をそろえます。実在する個人情報は使いません。</p>
+          <div class="form-grid">
+            <div><label for="nest-name" data-i18n="filename">ファイル名（拡張子なし・空欄で自動・英数字で始め、英数字・_・-のみ、64文字まで・OS予約名不可）</label><input id="nest-name" maxlength="64" placeholder="backup_2026"></div>
+            <div><label for="layers" data-i18n="layers">暗号化の階層数</label><input id="layers" type="number" value="3" min="1" max="8" required></div>
+            <div><label for="branches" data-i18n="branches">次階層への分岐数</label><input id="branches" type="number" value="2" min="1" max="3" required></div>
+            <div><label for="decoys" data-i18n="decoys">各ZIP内のダミーファイル数</label><input id="decoys" type="number" value="4" min="0" max="10" required></div>
+            <div><label for="directory-depth" data-i18n="directory_depth">各ZIP内のフォルダー深度（最大）</label><input id="directory-depth" type="number" value="2" min="1" max="5" required></div>
+            <div><label for="nest-rows" data-i18n="nest_rows">ダミー文書・DBのレコード件数</label><input id="nest-rows" type="number" value="20" min="1" max="100" required></div>
+          </div>
+          <label for="directories" data-i18n="directories">フォルダー名候補（用途別の初期値・編集可、英数字・カンマ区切り）</label><input id="directories" value="finance,operations,exports,backups,archive,config,reports" maxlength="1300">
+          <div><label for="nest-format" data-i18n="nest_format">主なダミーファイル形式</label><select id="nest-format"><option value="env">.env</option><option value="txt" selected>Text</option><option value="json">JSON</option><option value="csv">CSV</option><option value="html">HTML</option><option value="pdf">PDF</option><option value="xlsx">Excel</option><option value="pptx">PowerPoint</option><option value="sqlite">SQLite</option></select></div>
+          <label class="check-label"><input id="nest-varied-formats" type="checkbox" checked><span data-i18n="nest_varied_formats">選択形式を中心に、他形式も時々混ぜる</span></label>
+          <p class="help" data-i18n="nest_varied_formats_help">選択した形式を約75%に保ち、残りにExcel・SQLite・.envなどを重み付きで混ぜます。これは暗号化ネスト内のダミー文書に適用されます。</p>
+          <fieldset aria-describedby="password-help"><legend data-i18n="password_policy">自動生成するパスワードの方針</legend>
+            <div class="form-grid"><div><label for="password-mode" data-i18n="password_mode">生成方式</label><select id="password-mode"><option value="memorable" data-i18n="memorable">単語＋数字・記号</option><option value="random" data-i18n="random">完全ランダム</option></select></div>
+            <div><label for="hints" data-i18n="hints">保守メモに手掛かりを配置</label><select id="hints"><option value="early" data-i18n="hints_early">序盤の2階層</option><option value="all" data-i18n="hints_all">全階層</option><option value="none" data-i18n="hints_none">配置しない</option></select></div>
+            <div><label for="min-length" data-i18n="min_length">最小文字数</label><input id="min-length" type="number" value="9" min="4" max="64" required></div>
+            <div><label for="max-length" data-i18n="max_length">最大文字数</label><input id="max-length" type="number" value="13" min="4" max="64" required></div>
+            <div><label for="hint-characters" data-i18n="hint_characters">復元メモが「別管理」と装う末尾文字数</label><input id="hint-characters" type="number" value="2" min="2" max="6" required></div>
+            <div><label for="password-words" data-i18n="password_words">単語候補（英字・カンマ区切り・空欄で既定）</label><input id="password-words" maxlength="1050" placeholder="Atlas,Cedar,Delta"></div></div>
+            <div class="checks"><label><input id="lowercase" type="checkbox" checked><span data-i18n="lowercase">英小文字</span></label><label><input id="uppercase" type="checkbox" checked><span data-i18n="uppercase">英大文字</span></label><label><input id="digits" type="checkbox" checked><span data-i18n="digits">数字</span></label><label><input id="symbols" type="checkbox" checked><span data-i18n="symbols">記号</span></label></div>
+            <label class="check-label"><input id="progressive" type="checkbox" checked><span data-i18n="progressive">序盤は短く、深い階層ほど長くする</span></label>
+            <p id="password-help" class="help" data-i18n="password_help">保守メモは、別の鍵台帳を探させるためのデコイです。実際のパスワード文字は含まず、伏せ字の文字数も利用可能な手掛かりではありません。パスワード本体は管理者専用ファイルにのみ保存されます。既定の9〜13文字では、段階設定により序盤を短くし、深い階層ほど長くします。ZIP取得後はオフラインで並列試行できるため、解読成功や遅延は保証されません。単語形式の候補が重複した場合はランダム値に切り替わります。9〜13文字でも解読困難な場合があり、所要時間はZIP形式や攻撃設備に左右されます。</p>
+          </fieldset>
+          <div class="form-grid"><div><label for="nest-url" data-i18n="canary_urls">カナリアURL（1行に1つ）</label><textarea id="nest-url" data-secret-url rows="3" maxlength="820000" placeholder="https://...&#10;https://..."></textarea></div>
+          <div><label for="canary-percent" data-i18n="canary_percent">ダミーへのカナリア配置率（%）</label><input id="canary-percent" type="number" min="0" max="100" value="25" required></div></div>
+          <p class="help" data-i18n="canary_probability">各ファイルで個別に抽選します。0%なら配置せず、100%なら全ダミーに配置します。複数URLは再利用前に別々のファイルに配置し、最大400URLまで指定できます。抽選で選ばれたファイル数よりURLが多い場合、余りは未使用です。同じURLを再利用した場合、通知からファイルを特定できません。URLが空欄なら通知用URLは入りません。</p>
+          <div id="nest-estimate" class="inline-note" aria-live="polite"></div>
+          <div class="inline-note" data-i18n="nest_note">AES対応のZIPツールで開けます。生成本文は32MiB、暗号化ZIPの累積サイズは64MiBまでです。配置用ZIPと、パスワード・構成を含むJSON、運用台帳JSONを別々に保存してください。管理者専用JSONは配置・公開しないでください。</div>
+        </div>
+        <div id="database-fields" class="fields" hidden>
+          <div class="panel-title"><h3 data-i18n="database_title">デコイ・データベース</h3><p data-i18n="database_desc">項目の構成とデータ種類を指定してSQLiteを生成します。</p></div>
+          <div class="template-picker"><label for="database-template" data-i18n="database_template">用途別テンプレート</label><select id="database-template"><option value="" data-i18n="template_loading">読込中…</option></select><p id="template-description" class="help" data-i18n="template_help">テンプレートを選ぶと、項目を置き換えます。選択後に自由に編集できます。</p></div>
+          <div class="form-grid"><div><label for="db-name" data-i18n="filename">ファイル名（拡張子なし・空欄で自動・英数字で始め、英数字・_・-のみ、64文字まで・OS予約名不可）</label><input id="db-name" value="customer_archive" maxlength="64"></div>
+          <div><label for="table-name" data-i18n="table_name">テーブル名</label><input id="table-name" value="customers" maxlength="48"></div>
+          <div><label for="rows" data-i18n="rows">レコード件数</label><input id="rows" type="number" value="100" min="1" max="10000" required></div>
+          <div><label for="db-url" data-i18n="canary_url">カナリアURL</label><textarea id="db-url" rows="1" inputmode="url" spellcheck="false" autocapitalize="none" maxlength="2048" placeholder="https://..." autocomplete="off"></textarea></div></div>
+          <div class="form-grid"><div><label for="db-email-domain" data-i18n="email_domain">Dedicated decoy email domain (optional)</label><input id="db-email-domain" type="text" maxlength="204" placeholder="decoy.example-corp.jp" autocomplete="off"></div></div>
+          <p class="help" data-i18n="email_domain_help">Use only a domain you own and dedicate to an isolated decoy with no real mailboxes. Leave blank for example.invalid. The app does not resolve or contact it.</p>
+          <label class="check-label"><input id="db-email-domain-authorized" type="checkbox" data-operator-attestation><span data-i18n="email_domain_authorized">I own this domain and reserve it for isolated decoys with no production mailboxes</span></label>
+          <div class="schema-heading"><h4 data-i18n="schema">項目の定義</h4><button type="button" id="add-column" class="secondary" data-i18n="add_column">＋ 項目を追加</button></div>
+          <div id="columns"></div>
+          <p class="help" data-i18n="candidate_values_safety">候補値には実在ドメイン・IPアドレス・URL・メールを指定できません。example.invalidなどの予約済み例示値を使い、監視URLや所有ドメインは専用欄から指定してください。一般的な認証情報・秘密鍵・JWT・カード番号形式も拒否しますが、秘密情報を網羅的に検出するものではありません。実データや秘密は入力しないでください。設定JSONには項目名と候補値が保存されるため、管理者専用として保管してください。</p>
+          <p class="help" data-i18n="database_help">顧客・カード台帳・企業・パスワード管理・注文・請求・従業員・取引先・サポート・資産・クラウドのテンプレートがあります。最大30項目を編集できます。候補値を業務に合う架空の値へ置き換えると自然さを高められます。メール・ドメイン型はexample.invalidを使います。実在の個人情報や実接続先は使わないでください。</p>
+          <div class="inline-note" data-i18n="database_note">カードは実際の番号・CVVを生成せず、明確に無効な見本参照値のみ。パスワード欄には実在アカウントやサービスに結び付かないランダムな合成文字列を入れ、実認証情報やハッシュは取り込みません。DB読取だけでは通知しません。パスワード管理テンプレートではlogin_url列があればその1件に、なければ接続先テーブルに保存します。その他のDBも接続先テーブルを使います。URLにアクセスされた場合だけ監視サービスから通知されます。</div>
+        </div>
+        <div id="web-fields" class="fields" hidden>
+          <div class="panel-title"><h3 data-i18n="web_title">スタティック・デコイ・ポータル</h3><p data-i18n="web_desc">静的なアーカイブ画面を生成します。</p></div>
+          <label for="web-name" data-i18n="filename">ファイル名（拡張子なし・空欄で自動・英数字で始め、英数字・_・-のみ、64文字まで・OS予約名不可）</label><input id="web-name" maxlength="64" placeholder="archive_index">
+          <label for="title" data-i18n="page_title">画面タイトル</label><input id="title" type="text" value="Operations Portal" maxlength="80">
+          <label for="web-url"><span data-i18n="canary_url">カナリアURL</span> <span class="optional" data-i18n="optional">任意</span></label><textarea id="web-url" rows="1" inputmode="url" spellcheck="false" autocapitalize="none" placeholder="https://..." maxlength="2048" autocomplete="off"></textarea>
+          <p class="help" data-i18n="web_help">URLを指定するとリンクを配置します。ページを開くだけではURLにアクセスしません。</p>
+          <div class="inline-note" data-i18n="web_note">静的HTMLです。ログイン、設定変更、アクセス監視、無限配信には別途サーバーが必要です。</div>
+        </div>
+        <div id="fake_trap-fields" class="fields" hidden>
+          <div class="panel-title"><h3 data-i18n="fake_title">フェイクトラップ</h3><p data-i18n="fake_desc">警告または待機表示の静的HTMLを生成します。</p></div>
+          <label for="fake-variant" data-i18n="fake_variant">表示パターン</label><select id="fake-variant"><option value="warning" data-i18n="fake_warning">異常アクセスの警告</option><option value="reported" data-i18n="fake_reported">通報済みの警告</option><option value="waiting" data-i18n="fake_waiting">認証中のスピナー</option></select>
+          <label for="fake-name" data-i18n="filename">ファイル名</label><input id="fake-name" maxlength="64" placeholder="security_notice">
+          <p class="inline-note" data-i18n="fake_note">表示だけの静的ページです。検知・通報・認証・情報収集は行わず、外部への通信やプログラム送信もありません。監視・通知が必要な場合は配信側で別途設定してください。通報済みの表示は実際の通報を意味しません。正規利用者の誤接触に配慮してください。</p>
+        </div>
+        <div id="data_dilution-fields" class="fields" hidden><p class="inline-note" data-i18n="technology_only">技術紹介のみです。生成や本番環境への変更は行いません。</p></div>
+        <div id="honeyword-fields" class="fields" hidden><p class="inline-note" data-i18n="technology_only">技術紹介のみです。生成や本番環境への変更は行いません。</p></div>
+        <div id="stream-fields" class="fields" hidden>
+          <div class="panel-title"><h3 data-i18n="stream_title">インフィニット・ストリーム</h3><p data-i18n="stream_desc">認証付きの配信サーバーと設定をZIPで生成します。生成しただけでは起動しません。</p></div>
+          <div class="form-grid"><div><label for="stream-name" data-i18n="filename">ファイル名（拡張子なし・空欄で自動・英数字で始め、英数字・_・-のみ、64文字まで・OS予約名不可）</label><input id="stream-name" maxlength="64" placeholder="stream_sample"></div>
+          <div><label for="stream-format" data-i18n="stream_format">配信するテキストの形式</label><select id="stream-format"><option value="sql">SQL</option><option value="csv">CSV</option><option value="txt">Text</option></select></div>
+          <div><label for="stream-path" data-i18n="stream_path">配信パス</label><input id="stream-path" value="/exports/archive.sql" maxlength="160"></div>
+          <div><label for="stream-port" data-i18n="stream_port">ローカル待受ポート</label><input id="stream-port" type="number" value="9080" min="1024" max="65535" required></div>
+          <div><label for="stream-rate" data-i18n="stream_rate">全接続の合計帯域（KiB/秒）</label><input id="stream-rate" type="number" value="8" min="1" max="64" required></div>
+          <div><label for="stream-concurrency" data-i18n="stream_concurrency">同時配信数</label><input id="stream-concurrency" type="number" value="2" min="1" max="8" required></div></div>
+          <p class="help" data-i18n="stream_help">接続が続く限り、総容量・総時間による自動終了はありません。ただし、バックエンドは5秒間無通信が続くと接続を終了し、受信側が読み取らず書き込みが詰まった場合も対象です。クライアント切断、管理用の停止操作、障害等でも終了します。検証時は受信側で短時間のタイムアウトを指定してください。速度設定は累積配信量の上限ではありません。</p>
+          <div class="inline-note" data-i18n="stream_note">Python標準ライブラリのみで起動できます。127.0.0.1待受・Bearer認証付きです。配信用と管理用のトークンは管理者専用JSONに保存し、配置ZIPには含めません。配信開始・終了時に秘密情報とIPを含まないJSONイベントを標準出力へ記録します。payload_bytes_sentは、チャンク全体の書き込みとflushが成功したデータ本体の合計です。失敗したチャンクの部分書き込みやHTTP/TCPの通信制御分は含まず、クライアントの受信確認でもありません。保護されたログ収集と通知は別途設定してください。中継設定は同梱READMEを参照してください。認証済みのHEAD確認は本体を配信せず、stream_probeイベントを記録します。配信枠を消費しません。</div>
+        </div>
+        <div id="directory_maze-fields" class="fields" hidden>
+          <div class="panel-title"><h3 data-i18n="directory_title">ディレクトリ・メイズ</h3><p data-i18n="directory_desc">通常のフォルダーとindex.html、ダミーファイルを生成します。展開して静的配信できます。</p></div>
+          <label for="maze-scenario" data-i18n="scenario_label">デコイの用途</label><select id="maze-scenario"><option value="crm" data-i18n="scenario_crm">顧客管理の登録簿</option><option value="migration" data-i18n="scenario_migration">顧客データ移行</option><option value="archive" data-i18n="scenario_archive">顧客データ保管</option><option value="cards" data-i18n="scenario_cards">支払カード台帳</option><option value="companies" data-i18n="scenario_companies">取引先企業一覧</option><option value="passwords" data-i18n="scenario_passwords">認証情報保管庫</option><option value="invoices" data-i18n="scenario_invoices">請求書・入金一覧</option><option value="employees" data-i18n="scenario_employees">従業員・部署一覧</option><option value="vendors" data-i18n="scenario_vendors">仕入先・委託先台帳</option><option value="orders" data-i18n="scenario_orders">受注・販売台帳</option><option value="tickets" data-i18n="scenario_tickets">サポートチケット一覧</option><option value="assets" data-i18n="scenario_assets">IT資産台帳</option><option value="cloud" data-i18n="scenario_cloud">クラウド資産一覧</option></select>
+          <p class="help" data-i18n="scenario_help">用途に合う合成データのスキーマ・ファイル名・タイトル・URL文脈をそろえます。実在する個人情報は使いません。</p>
+          <div class="form-grid"><div><label for="directory-name" data-i18n="filename">ファイル名（拡張子なし・空欄で自動・英数字で始め、英数字・_・-のみ、64文字まで・OS予約名不可）</label><input id="directory-name" maxlength="64"></div>
+          <div><label for="directory-title" data-i18n="document_title">文書タイトル</label><input id="directory-title" maxlength="80"><p class="help" data-i18n="directory_title_help">空欄にすると、選択したシナリオのタイトルを使います。</p></div>
+          <div><label for="maze-depth" data-i18n="maze_depth">ルートからのディレクトリ階層数</label><input id="maze-depth" type="number" value="3" min="1" max="6" required></div>
+          <div><label for="maze-branches" data-i18n="branches">次階層への分岐数</label><input id="maze-branches" type="number" value="3" min="1" max="5" required></div>
+          <p id="maze-estimate" class="help" data-i18n="maze_estimate" aria-live="polite">ディレクトリ40個・文書40個（上限400ディレクトリ）</p>
+          <div><label for="maze-files" data-i18n="maze_files">各ディレクトリのダミーファイル数</label><input id="maze-files" type="number" value="1" min="1" max="3" required></div>
+          <div><label for="maze-url" data-i18n="canary_urls">カナリアURL（1行に1つ）</label><textarea id="maze-url" data-secret-url rows="3" maxlength="820000" placeholder="https://...&#10;https://..."></textarea></div></div>
+          <label class="check-label"><input id="maze-cross-links" type="checkbox" checked><span data-i18n="maze_cross_links">別枝・親へのリンクを配置して回遊経路を作る</span></label>
+          <label for="maze-format" data-i18n="maze_format">ダミーファイルの形式</label><select id="maze-format"><option value="env">.env</option><option value="txt">Text</option><option value="json" selected>JSON</option><option value="csv">CSV</option><option value="html">HTML</option><option value="pdf">PDF</option><option value="xlsx">Excel</option><option value="pptx">PowerPoint</option><option value="sqlite">SQLite</option></select>
+          <div class="inline-note" data-i18n="directory_note">全ダミーファイルを選択した1形式に統一します。最大400ディレクトリ・生成内容16MiB。循環するのはHTMLリンクで、シンボリックリンクや再帰展開する仕掛けは作りません。URL重複を除外する探索では巡回が止まります。カナリアURLは配置ファイル数まで割り当て、管理者専用JSONにパスとの対応を記録します。配置ファイルよりURLが多い場合、余りは未使用です。再利用URLの通知では接触ファイルを特定できません。</div>
+        </div>
+        <div id="encoding_maze-fields" class="fields" hidden>
+          <div class="panel-title"><h3 data-i18n="encoding_title">エンコーディング・メイズ</h3><p data-i18n="encoding_desc">用途に合った架空データを個別生成し、多段エンコードします。ファイル名・タイトル・スキーマは選択したシナリオに沿います。.env形式では一般的なdotenv名を使い、APP_ENVをファイル名に合わせます。</p></div>
+          <div class="form-grid"><div><label for="encoding-name" data-i18n="filename">ファイル名（拡張子なし・空欄で自動・英数字で始め、英数字・_・-のみ、64文字まで・OS予約名不可）</label><input id="encoding-name" maxlength="64"></div>
+          <div><label for="encoding-format" data-i18n="decoded_format">復元後のファイル形式</label><select id="encoding-format"><option value="json">JSON</option><option value="env">.env</option><option value="txt">Text</option><option value="csv">CSV</option><option value="html">HTML</option><option value="pdf">PDF</option><option value="xlsx">Excel</option><option value="pptx">PowerPoint</option><option value="sqlite">SQLite</option></select></div>
+          <div><label for="encoding-scenario" data-i18n="scenario_label">デコイの用途</label><select id="encoding-scenario"><option value="crm" data-i18n="scenario_crm">顧客管理の登録簿</option><option value="migration" data-i18n="scenario_migration">顧客データ移行</option><option value="archive" data-i18n="scenario_archive">顧客データ保管</option><option value="cards" data-i18n="scenario_cards">支払カード台帳</option><option value="companies" data-i18n="scenario_companies">取引先企業一覧</option><option value="passwords" data-i18n="scenario_passwords">認証情報保管庫</option><option value="invoices" data-i18n="scenario_invoices">請求書・入金一覧</option><option value="employees" data-i18n="scenario_employees">従業員・部署一覧</option><option value="vendors" data-i18n="scenario_vendors">仕入先・委託先台帳</option><option value="orders" data-i18n="scenario_orders">受注・販売台帳</option><option value="tickets" data-i18n="scenario_tickets">サポートチケット一覧</option><option value="assets" data-i18n="scenario_assets">IT資産台帳</option><option value="cloud" data-i18n="scenario_cloud">クラウド資産一覧</option></select></div>
+          <div><label for="encoding-layers" data-i18n="encoding_layers">変換の階層数</label><input id="encoding-layers" type="number" value="4" min="1" max="8" required></div>
+          <div><label for="encoding-candidates" data-i18n="encoding_candidates">候補ファイル数</label><input id="encoding-candidates" type="number" value="5" min="1" max="20" required></div></div>
+          <fieldset><legend data-i18n="encoding_codecs">各階層で使用する変換方式</legend><div class="checks" id="encoding-codecs"><label><input type="checkbox" value="base64" checked>Base64</label><label><input type="checkbox" value="base64url">Base64url</label><label><input type="checkbox" value="hex" checked>Hex</label><label><input type="checkbox" value="percent" checked>Percent encoding</label><label><input type="checkbox" value="gzip_base64" checked>Gzip + Base64</label></div></fieldset>
+          <label for="encoding-url" data-i18n="canary_urls">カナリアURL（1行に1つ）</label><textarea id="encoding-url" data-secret-url rows="3" maxlength="820000" placeholder="https://...&#10;https://..."></textarea>
+          <div class="inline-note" data-i18n="encoding_note">各層はencodingとpayloadを持つJSONです。暗号化ではありません。管理者専用JSONにシナリオ・復元順序・URLと候補の対応・SHA-256を記録します。生成内容16MiBまで。短いスクリプトで一括復元できるため、遅滞効果は探索・検証の運用で評価してください。候補数よりURLが多い場合、余りは未使用です。再利用URLの通知では接触候補を特定できません。</div>
+        </div>
+        <div id="vault-domain-fields" class="fields" hidden>
+          <label for="vault-domain" data-i18n="vault_domain">デコイ用ドメイン（任意）</label>
+          <input id="vault-domain" type="text" maxlength="204" placeholder="decoy.example-corp.jp" autocomplete="off">
+          <p class="help" data-i18n="vault_domain_help">認証情報保管庫シナリオの架空login_urlだけに使います。単独DB、暗号化ネスト、ディレクトリ・メイズ、エンコーディング・メイズの非.env形式に反映されます。.envでは環境変数を使います。入力すると生成物に実際にアクセス可能なHTTPS URLが入ります。攻撃者・クローラー・AIツールがそのURLを開くと、隔離先にHTTPS要求が届く場合があります。ドメインは名前解決・接続しません。所有するドメインを使い、ワイルドカードDNSとTLS証明書を隔離デコイへ向けてください。これは監視トークンではないため、DNS・Webサーバー側のログで接触を監視してください。空欄なら安全なexample.invalidを使います。</p>
+          <label class="check-label"><input id="vault-domain-authorized" type="checkbox" data-operator-attestation><span data-i18n="vault_domain_authorized">このドメインを管理し、本番認証を持たない隔離デコイだけに向けていることを確認しました</span></label>
+        </div>
+        <p id="canary-url-warning" class="inline-note" role="status" aria-live="polite" hidden></p>
+        <div class="panel-bottom"><p id="result" role="status" aria-live="polite"></p><button type="submit" id="submit"><span data-i18n="generate">ファイルを生成</span> <span>↓</span></button></div>
+        <section id="downloads" class="downloads" role="region" aria-label="生成ファイル" hidden></section>
+      </form>
+      <section id="cloud-review" class="cloud-panel" aria-labelledby="cloud-title">
+        <div class="panel-title"><h2 id="cloud-title" data-cloud-i18n="title">認証・クラウド操作ログの分析</h2><p data-cloud-i18n="intro">Microsoft Entra / Graphの監査ログとデコイ接触イベントをローカルで確認します。</p></div>
+        <p class="help" data-cloud-i18n="help">Azure Monitor形式のCSV・JSON配列・JSON Linesを最大4ファイル、合計4MiB・10,000件まで選択します。ログはこのPC内で処理し保存しません。リアルタイム監視・通知・遮断は行いません。</p>
+        <p class="help" data-cloud-i18n="utf8">UTF-8で保存したログを選択してください。不正なUTF-8は文字化けしたまま解析せず、読み込みを拒否します。</p>
+        <p class="help" data-cloud-i18n="agent_help">成功したユーザー・サービスプリンシパル・マネージドIDのサインインにAgent情報があれば、AIエージェント活動候補を表示します。列の内容は送信・表示せず、有無だけを使います。正規利用も含むため要確認です。Agent情報がないことはAIエージェント不使用の証明ではありません。</p>
+        <div class="inline-note"><span data-cloud-i18n="legal">日本の不正アクセス禁止法上、閲覧権限のあるログを分析する通常利用は不正アクセス行為に通常は該当しません。調査を理由に他人の認証情報で保護された環境へ無断ログインすると、同法に抵触し得ます。ログ中の個人情報の取扱いは別途確認してください。</span> <a id="cloud-legal-guide" href="/legal/ja" target="_blank" rel="noopener" data-cloud-i18n="legal_guide">法的ガイド</a></div>
+        <div class="cloud-actions"><label for="cloud-files" data-cloud-i18n="choose">ログファイル</label><input id="cloud-files" type="file" accept=".csv,.json,.jsonl,text/csv,application/json" multiple><button type="button" id="cloud-analyze" data-cloud-i18n="analyze">選択したログを分析</button><button type="button" class="secondary" id="cloud-sample" data-cloud-i18n="sample">架空サンプルを分析</button><button type="button" class="secondary" id="cloud-clear" data-cloud-i18n="clear">ログと結果を消去</button></div>
+        <p id="cloud-status" role="status" aria-live="polite"></p>
+        <div id="cloud-result" role="region" aria-labelledby="cloud-results-title" hidden><h3 id="cloud-results-title" tabindex="-1" data-cloud-i18n="result">分析結果</h3><p id="cloud-coverage"></p><p id="cloud-limitations" data-cloud-i18n="limits">要確認の兆候です。通常操作でも発生します。該当なしは安全の証明ではなく、欠落ログ・対象外の操作は検知できません。</p><ol id="cloud-findings"></ol></div>
+        <p class="help"><a href="/guide/ja" id="cloud-guide" target="_blank" rel="noopener" data-cloud-i18n="guide">必要なログと対応手順</a></p>
+      </section>
+      <footer><span>AiDeceptionGuard</span><span data-i18n="footer">管理権限のある環境で利用してください</span></footer>
+    </div>
+  </main>
+</div>
+<template id="column-template"><div class="column-row">
+  <label><span data-i18n="column_name">項目名</span><input class="column-name" maxlength="48"></label>
+  <label><span data-i18n="data_kind">データ種類</span><select class="column-kind">
+    <option value="id" data-i18n="kind_id">連番（INTEGER）</option><option value="name" data-i18n="kind_name">氏名（TEXT）</option><option value="email" data-i18n="kind_email">メール（TEXT）</option><option value="company" data-i18n="kind_company">会社（TEXT）</option><option value="department" data-i18n="kind_department">部署（TEXT）</option><option value="integer" data-i18n="kind_integer">整数（INTEGER）</option><option value="decimal" data-i18n="kind_decimal">小数（REAL）</option><option value="date" data-i18n="kind_date">日付（TEXT）</option><option value="datetime" data-i18n="kind_datetime">日時（TEXT）</option><option value="status" data-i18n="kind_status">状態（TEXT）</option><option value="uuid">UUID（TEXT）</option><option value="text" data-i18n="kind_text">テキスト（TEXT）</option><option value="phone" data-i18n="kind_phone">架空電話番号</option><option value="domain" data-i18n="kind_domain">example.invalid ドメイン</option><option value="card_reference" data-i18n="kind_card_reference">無効カード参照値</option><option value="card_expiry" data-i18n="kind_card_expiry">カード期限</option><option value="test_postal" data-i18n="kind_test_postal">テスト用郵便番号</option><option value="credential_preview" data-i18n="kind_credential_preview">合成パスワード値（実アカウントとの紐付けなし）</option><option value="currency" data-i18n="kind_currency">通貨</option><option value="documentation_ip" data-i18n="kind_documentation_ip">文書用IPアドレス</option>
+  </select></label>
+  <label><span data-i18n="data_options">候補値 / 数値範囲</span><input class="column-options" maxlength="6100" placeholder="active|pending / 0,10000"></label>
+  <button type="button" class="remove-column secondary" data-i18n="remove_column">削除</button>
+</div></template>
+</body></html>

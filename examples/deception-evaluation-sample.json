@@ -1,0 +1,10 @@
+{
+  "runs": [
+    {"actor": "attacker", "arm": "control", "budget_seconds": 120, "secret_time": 40, "decoy_time": null, "alert_time": null, "response_time": 85},
+    {"actor": "attacker", "arm": "control", "budget_seconds": 120, "secret_time": 55, "decoy_time": null, "alert_time": null, "response_time": null},
+    {"actor": "attacker", "arm": "decoy", "budget_seconds": 120, "secret_time": 95, "decoy_time": 20, "alert_time": 24, "response_time": 70},
+    {"actor": "attacker", "arm": "decoy", "budget_seconds": 120, "secret_time": null, "decoy_time": 30, "alert_time": 34, "response_time": 80},
+    {"actor": "authorized", "arm": "control", "budget_seconds": 120, "secret_time": null, "decoy_time": null, "alert_time": null, "response_time": null},
+    {"actor": "authorized", "arm": "decoy", "budget_seconds": 120, "secret_time": null, "decoy_time": 15, "alert_time": 18, "response_time": 40}
+  ]
+}

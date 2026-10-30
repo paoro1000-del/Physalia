@@ -1,0 +1,35 @@
+// Review successful interactive/non-interactive user, service-principal and managed-identity sign-ins with Agent details.
+// SigninLogs.ResultType uses "0" for success; other tables may use "Success".
+// Exclude empty strings and serialized empty/null values; export only a Boolean presence marker, never raw Agent metadata.
+// If a table is unavailable in your workspace, remove its union branch.
+// This is a review signal, not proof of compromise. Protect results as security logs.
+union kind=outer
+  (SigninLogs
+   | where TimeGenerated >= ago(24h)
+   | where (ResultType == "0" or ResultType =~ "Success")
+   | extend AgentText=trim(@"\s+", tostring(Agent))
+   | where isnotempty(AgentText) and AgentText !in ("{}", "[]", "null", "false", "\"\"")
+   | project Type="SigninLogs", AADTenantId, TimeGenerated, AppId, UserId,
+             UserPrincipalName, ResultType, Agent=true),
+  (AADNonInteractiveUserSignInLogs
+   | where TimeGenerated >= ago(24h)
+   | where (ResultType == "0" or ResultType =~ "Success")
+   | extend AgentText=trim(@"\s+", tostring(Agent))
+   | where isnotempty(AgentText) and AgentText !in ("{}", "[]", "null", "false", "\"\"")
+   | project Type="AADNonInteractiveUserSignInLogs", AADTenantId, TimeGenerated, AppId, UserId,
+             UserPrincipalName, ResultType, Agent=true),
+  (AADServicePrincipalSignInLogs
+   | where TimeGenerated >= ago(24h)
+   | where (ResultType == "0" or ResultType =~ "Success")
+   | extend AgentText=trim(@"\s+", tostring(Agent))
+   | where isnotempty(AgentText) and AgentText !in ("{}", "[]", "null", "false", "\"\"")
+   | project Type="AADServicePrincipalSignInLogs", AADTenantId, TimeGenerated, AppId,
+             ServicePrincipalId, ResultType, Agent=true),
+  (AADManagedIdentitySignInLogs
+   | where TimeGenerated >= ago(24h)
+   | where (ResultType == "0" or ResultType =~ "Success")
+   | extend AgentText=trim(@"\s+", tostring(Agent))
+   | where isnotempty(AgentText) and AgentText !in ("{}", "[]", "null", "false", "\"\"")
+   | project Type="AADManagedIdentitySignInLogs", AADTenantId, TimeGenerated, AppId,
+             ServicePrincipalId, ResultType, Agent=true)
+| order by TimeGenerated desc

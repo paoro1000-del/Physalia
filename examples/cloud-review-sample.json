@@ -1,0 +1,570 @@
+[
+  {
+    "Type": "AuditLogs",
+    "AADTenantId": "example-tenant",
+    "ActivityDateTime": "2026-10-21T10:00:00Z",
+    "ActivityDisplayName": "Add member to role",
+    "Result": "success"
+  },
+  {
+    "Type": "AuditLogs",
+    "AADTenantId": "example-tenant",
+    "ActivityDateTime": "2026-10-21T10:01:00Z",
+    "ActivityDisplayName": "Update application - Certificates and secrets management",
+    "Result": "success"
+  },
+  {
+    "Type": "AuditLogs",
+    "AADTenantId": "example-tenant",
+    "ActivityDateTime": "2026-10-21T10:01:30Z",
+    "ActivityDisplayName": "Remove service principal credentials",
+    "Result": "success"
+  },
+  {
+    "Type": "AADServicePrincipalSignInLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:02:00Z",
+    "Id": "sp-signin-example-01",
+    "AppId": "example-app",
+    "ServicePrincipalId": "example-service-principal",
+    "ResultType": "Success",
+    "UniqueTokenIdentifier": "token-example-01",
+    "Agent": "synthetic agent metadata"
+  },
+  {
+    "Type": "AADManagedIdentitySignInLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:02:30Z",
+    "Id": "mi-signin-example-01",
+    "AppId": "example-managed-app",
+    "ServicePrincipalId": "example-managed-principal",
+    "ResultType": "Success",
+    "UniqueTokenIdentifier": "token-example-02",
+    "Agent": "synthetic managed identity agent metadata"
+  },
+  {
+    "Type": "AADServicePrincipalSignInLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:02:45Z",
+    "Id": "sp-signin-example-02",
+    "AppId": "example-legacy-app",
+    "ServicePrincipalId": "example-legacy-principal",
+    "ResultType": "Success"
+  },
+  {
+    "Type": "AADManagedIdentitySignInLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:02:50Z",
+    "Id": "mi-signin-example-02",
+    "AppId": "example-empty-agent-app",
+    "ServicePrincipalId": "example-empty-agent-principal",
+    "ResultType": "Success",
+    "Agent": ""
+  },
+  {
+    "Type": "AADServicePrincipalSignInLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:02:55Z",
+    "Id": "sp-empty-agent-object-example-01",
+    "AppId": "example-empty-agent-object-app",
+    "ServicePrincipalId": "example-empty-agent-object-principal",
+    "ResultType": "Success",
+    "Agent": "{}"
+  },
+  {
+    "Type": "MicrosoftGraphActivityLogs",
+    "AadTenantId": "example-tenant",
+    "TimeGenerated": "2026-10-21T10:03:00Z",
+    "AppId": "example-app",
+    "ServicePrincipalId": "example-service-principal",
+    "RequestMethod": "GET",
+    "RequestUri": "https://graph.microsoft.com/v1.0/users/example/messages",
+    "ResponseStatusCode": 200,
+    "OperationId": "op-mail-01",
+    "RequestId": "req-mail-01",
+    "SignInActivityId": "token-example-01"
+  },
+  {
+    "Type": "MicrosoftGraphActivityLogs",
+    "AadTenantId": "example-tenant",
+    "TimeGenerated": "2026-10-21T10:03:15Z",
+    "AppId": "example-app",
+    "ServicePrincipalId": "example-service-principal",
+    "RequestMethod": "GET",
+    "RequestUri": "https://graph.microsoft.com/v1.0/servicePrincipals/example-service-principal/appRoleAssignedTo",
+    "ResponseStatusCode": 200,
+    "OperationId": "op-permission-01",
+    "RequestId": "req-permission-01",
+    "SignInActivityId": "token-example-01"
+  },
+  {
+    "Type": "MicrosoftGraphActivityLogs",
+    "AadTenantId": "example-tenant",
+    "TimeGenerated": "2026-10-21T10:03:30Z",
+    "AppId": "example-app",
+    "ServicePrincipalId": "example-service-principal",
+    "RequestMethod": "POST",
+    "RequestUri": "https://graph.microsoft.com/v1.0/$batch",
+    "ResponseStatusCode": 200,
+    "OperationId": "op-batch-01",
+    "RequestId": "req-batch-01",
+    "SignInActivityId": "token-example-01"
+  },
+  {
+    "Type": "MicrosoftGraphActivityLogs",
+    "AadTenantId": "example-tenant",
+    "TimeGenerated": "2026-10-21T10:03:45Z",
+    "AppId": "example-managed-app",
+    "ServicePrincipalId": "example-managed-principal",
+    "RequestMethod": "GET",
+    "RequestUri": "https://graph.microsoft.com/enterprise/agents",
+    "ResponseStatusCode": 200,
+    "OperationId": "op-agent-01",
+    "RequestId": "req-agent-01",
+    "SignInActivityId": "token-example-02"
+  },
+  {
+    "event": "decoy_contact",
+    "request_id": "0123456789abcdef0123456789abcdef",
+    "time": "2026-10-21T10:03:59.000+00:00",
+    "request_completed_at": "2026-10-21T10:04:00Z",
+    "request_seconds": 1.0,
+    "rate_limit_status": "DELAYED",
+    "connection_limit_status": "PASSED",
+    "body_bytes_sent": 4096,
+    "outcome": "response_2xx",
+    "method": "GET",
+    "path": "/exports/customer-archive.csv",
+    "status": 200
+  },
+  {
+    "event": "decoy_contact",
+    "request_id": "1123456789abcdef0123456789abcdef",
+    "time": "2026-10-21T10:04:09.998+00:00",
+    "request_completed_at": "2026-10-21T10:04:10Z",
+    "request_seconds": 0.002,
+    "rate_limit_status": "PASSED",
+    "connection_limit_status": "REJECTED",
+    "body_bytes_sent": 0,
+    "outcome": "response_non_2xx",
+    "method": "GET",
+    "path": "/exports/customer-archive.csv",
+    "status": 429
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:04:30Z",
+    "Id": "user-agent-signin-example-01",
+    "AppId": "example-agent-app",
+    "UserId": "example-user",
+    "UserPrincipalName": "agent.user@example.invalid",
+    "IPAddress": "192.0.2.55",
+    "ResultType": "Success",
+    "Agent": {
+      "agentType": "AgentIdentity"
+    }
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:05:00Z",
+    "IPAddress": "192.0.2.10",
+    "UserPrincipalName": "user1@example.invalid",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:05:01Z",
+    "IPAddress": "192.0.2.10",
+    "UserPrincipalName": "user2@example.invalid",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:05:02Z",
+    "IPAddress": "192.0.2.10",
+    "UserPrincipalName": "user3@example.invalid",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:05:03Z",
+    "IPAddress": "192.0.2.10",
+    "UserPrincipalName": "user4@example.invalid",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:05:04Z",
+    "IPAddress": "192.0.2.10",
+    "UserPrincipalName": "user5@example.invalid",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:05:05Z",
+    "IPAddress": "192.0.2.10",
+    "UserPrincipalName": "user1@example.invalid",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:05:06Z",
+    "IPAddress": "192.0.2.10",
+    "UserPrincipalName": "user2@example.invalid",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:05:07Z",
+    "IPAddress": "192.0.2.10",
+    "UserPrincipalName": "user3@example.invalid",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:05:08Z",
+    "IPAddress": "192.0.2.10",
+    "UserPrincipalName": "user4@example.invalid",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:05:09Z",
+    "IPAddress": "192.0.2.10",
+    "UserPrincipalName": "user5@example.invalid",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:10:00Z",
+    "Id": "spray-example-01",
+    "UserPrincipalName": "spray.user01@example.invalid",
+    "IPAddress": "192.0.2.10",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:10:20Z",
+    "Id": "spray-example-02",
+    "UserPrincipalName": "spray.user02@example.invalid",
+    "IPAddress": "198.51.100.20",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:10:40Z",
+    "Id": "spray-example-03",
+    "UserPrincipalName": "spray.user03@example.invalid",
+    "IPAddress": "203.0.113.30",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:11:00Z",
+    "Id": "spray-example-04",
+    "UserPrincipalName": "spray.user04@example.invalid",
+    "IPAddress": "192.0.2.10",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:11:20Z",
+    "Id": "spray-example-05",
+    "UserPrincipalName": "spray.user05@example.invalid",
+    "IPAddress": "198.51.100.20",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:11:40Z",
+    "Id": "spray-example-06",
+    "UserPrincipalName": "spray.user06@example.invalid",
+    "IPAddress": "203.0.113.30",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:12:00Z",
+    "Id": "spray-example-07",
+    "UserPrincipalName": "spray.user01@example.invalid",
+    "IPAddress": "198.51.100.20",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:12:20Z",
+    "Id": "spray-example-08",
+    "UserPrincipalName": "spray.user03@example.invalid",
+    "IPAddress": "192.0.2.10",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:12:40Z",
+    "Id": "spray-example-09",
+    "UserPrincipalName": "spray.user05@example.invalid",
+    "IPAddress": "203.0.113.30",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:13:00Z",
+    "Id": "spray-example-10",
+    "UserPrincipalName": "spray.user06@example.invalid",
+    "IPAddress": "198.51.100.20",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:20:00Z",
+    "Id": "targeted-example-01",
+    "UserId": "synthetic-admin-ops",
+    "UserPrincipalName": "admin.ops@example.invalid",
+    "IPAddress": "198.51.100.44",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:20:15Z",
+    "Id": "targeted-example-02",
+    "UserId": "synthetic-admin-ops",
+    "UserPrincipalName": "admin.ops@example.invalid",
+    "IPAddress": "198.51.100.44",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:20:30Z",
+    "Id": "targeted-example-03",
+    "UserId": "synthetic-admin-ops",
+    "UserPrincipalName": "admin.ops@example.invalid",
+    "IPAddress": "198.51.100.44",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:20:45Z",
+    "Id": "targeted-example-04",
+    "UserId": "synthetic-admin-ops",
+    "UserPrincipalName": "admin.ops@example.invalid",
+    "IPAddress": "198.51.100.44",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:21:00Z",
+    "Id": "targeted-example-05",
+    "UserId": "synthetic-admin-ops",
+    "UserPrincipalName": "admin.ops@example.invalid",
+    "IPAddress": "198.51.100.44",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:21:15Z",
+    "Id": "targeted-example-06",
+    "UserId": "synthetic-admin-ops",
+    "UserPrincipalName": "admin.ops@example.invalid",
+    "IPAddress": "198.51.100.44",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:21:30Z",
+    "Id": "targeted-example-07",
+    "UserId": "synthetic-admin-ops",
+    "UserPrincipalName": "admin.ops@example.invalid",
+    "IPAddress": "198.51.100.44",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:21:45Z",
+    "Id": "targeted-example-08",
+    "UserId": "synthetic-admin-ops",
+    "UserPrincipalName": "admin.ops@example.invalid",
+    "IPAddress": "198.51.100.44",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:22:00Z",
+    "Id": "targeted-example-09",
+    "UserId": "synthetic-admin-ops",
+    "UserPrincipalName": "admin.ops@example.invalid",
+    "IPAddress": "198.51.100.44",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:22:15Z",
+    "Id": "targeted-example-10",
+    "UserId": "synthetic-admin-ops",
+    "UserPrincipalName": "admin.ops@example.invalid",
+    "IPAddress": "198.51.100.44",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:22:30Z",
+    "Id": "targeted-example-11",
+    "UserId": "synthetic-admin-ops",
+    "UserPrincipalName": "admin.ops@example.invalid",
+    "IPAddress": "198.51.100.44",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:22:45Z",
+    "Id": "targeted-example-12",
+    "UserId": "synthetic-admin-ops",
+    "UserPrincipalName": "admin.ops@example.invalid",
+    "IPAddress": "198.51.100.44",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:23:00Z",
+    "Id": "targeted-example-13",
+    "UserId": "synthetic-admin-ops",
+    "UserPrincipalName": "admin.ops@example.invalid",
+    "IPAddress": "198.51.100.44",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:23:15Z",
+    "Id": "targeted-example-14",
+    "UserId": "synthetic-admin-ops",
+    "UserPrincipalName": "admin.ops@example.invalid",
+    "IPAddress": "198.51.100.44",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:23:30Z",
+    "Id": "targeted-example-15",
+    "UserId": "synthetic-admin-ops",
+    "UserPrincipalName": "admin.ops@example.invalid",
+    "IPAddress": "198.51.100.44",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:23:45Z",
+    "Id": "targeted-example-16",
+    "UserId": "synthetic-admin-ops",
+    "UserPrincipalName": "admin.ops@example.invalid",
+    "IPAddress": "198.51.100.44",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:24:00Z",
+    "Id": "targeted-example-17",
+    "UserId": "synthetic-admin-ops",
+    "UserPrincipalName": "admin.ops@example.invalid",
+    "IPAddress": "198.51.100.44",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:24:15Z",
+    "Id": "targeted-example-18",
+    "UserId": "synthetic-admin-ops",
+    "UserPrincipalName": "admin.ops@example.invalid",
+    "IPAddress": "198.51.100.44",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:24:30Z",
+    "Id": "targeted-example-19",
+    "UserId": "synthetic-admin-ops",
+    "UserPrincipalName": "admin.ops@example.invalid",
+    "IPAddress": "198.51.100.44",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:24:45Z",
+    "Id": "targeted-example-20",
+    "UserId": "synthetic-admin-ops",
+    "UserPrincipalName": "admin.ops@example.invalid",
+    "IPAddress": "198.51.100.44",
+    "ResultType": "50126"
+  },
+  {
+    "Type": "SigninLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:25:00Z",
+    "Id": "success-after-failures-example-01",
+    "UserId": "synthetic-admin-ops",
+    "UserPrincipalName": "admin.ops@example.invalid",
+    "IPAddress": "198.51.100.44",
+    "ResultType": "0"
+  },
+  {
+    "Type": "AADNonInteractiveUserSignInLogs",
+    "AADTenantId": "example-tenant",
+    "CreatedDateTime": "2026-10-21T10:03:00Z",
+    "Id": "noninteractive-user-signin-example-01",
+    "AppId": "example-automation-app",
+    "UserId": "synthetic-user-agent",
+    "UserPrincipalName": "automation@example.invalid",
+    "IPAddress": "192.0.2.60",
+    "ResultType": "0",
+    "Agent": {
+      "agentType": "AgentIdentity"
+    }
+  },
+  {
+    "event": "stream_auth_failure_summary",
+    "timestamp": "2026-10-21T10:26:00Z",
+    "run_id": "a1b2c3d4e5f60718",
+    "scope": "stream",
+    "method": "GET",
+    "failures_total": 4
+  }
+]

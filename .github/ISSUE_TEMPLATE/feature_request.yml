@@ -1,0 +1,45 @@
+name: Feature request
+description: Suggest a product improvement with its use case and operational constraints.
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Do not report security vulnerabilities here. Read SECURITY.md and use GitHub's
+        private vulnerability reporting. Use synthetic examples; do not attach operator
+        or inventory JSON, generated files containing real canary URLs, credentials,
+        production logs, or personal data.
+
+        脆弱性の詳細はここに投稿せず、SECURITY.mdに記載の非公開報告を利用してください。
+        架空の例を使い、operator/inventory JSON、実際のカナリアURLや認証情報を含む生成物、
+        本番ログ、個人情報は添付・記載しないでください。
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and use case / 課題と利用場面
+      description: Who needs this, and what are they trying to accomplish? / 誰が、何を実現するために必要としていますか？
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior / 希望する動作
+      description: Describe the outcome without prescribing an implementation. / 実装方法ではなく、実現したい結果を記載してください。
+    validations:
+      required: true
+
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Operational, privacy, or safety constraints / 運用・プライバシー・安全上の条件
+      description: Include deployment limits, expected signals, and ways to avoid affecting legitimate users. / 配置制限、期待する通知、正規利用者への影響を避ける条件を記載してください。
+
+  - type: checkboxes
+    id: safe_to_publish
+    attributes:
+      label: Safe-to-publish check / 公開前の確認
+      options:
+        - label: I did not attach operator or inventory JSON, generated files with real canary URLs or credentials, production logs, or personal data. / operator/inventory JSON、実URLや認証情報を含む生成物、本番ログ、個人情報を添付していません。
+          required: true

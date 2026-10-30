@@ -1,0 +1,4 @@
+# Copy this file to /etc/nginx/adg-stream-token.conf, replace the placeholder
+# with ADG_STREAM_TOKEN from the operator-only JSON, and restrict the file to
+# the Nginx configuration administrator (for example, root:root mode 0600).
+proxy_set_header Authorization "Bearer REPLACE_WITH_ADG_STREAM_TOKEN";

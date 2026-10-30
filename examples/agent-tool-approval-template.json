@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "notice": "Operator record template, not a runtime allowlist. Copy and fill with reviewed metadata only. Never put credentials, tokens, personal data, or secret values here. If recording a schema digest, hash the exact reviewed schema file bytes and retain that file in a protected review location.",
+  "agent": {
+    "name": "",
+    "environment": "",
+    "owner": "",
+    "identity_reference": ""
+  },
+  "review": {
+    "reviewed_at": "",
+    "reviewer": "",
+    "next_review_at": ""
+  },
+  "mcp_servers": [
+    {
+      "name": "",
+      "publisher": "",
+      "source": "",
+      "transport": "",
+      "package_or_image": "",
+      "version_or_digest": "",
+      "approved_tools": []
+    }
+  ],
+  "runtime_boundaries": {
+    "filesystem_allowlist": [],
+    "network_egress_allowlist": [],
+    "secret_store_access": "denied_by_default",
+    "high_impact_actions_require_independent_approval": true
+  },
+  "change_control": {
+    "reapprove_on_server_or_package_change": true,
+    "reapprove_on_tool_name_or_schema_change": true,
+    "compare_runtime_tool_definitions_when_available": true,
+    "retain_change_audit_record": true
+  }
+}

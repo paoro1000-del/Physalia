@@ -1,0 +1,16 @@
+# Keep text files stable across Windows, macOS and Linux checkouts.
+* text=auto eol=lf
+
+# Preserve generated and source binary assets byte-for-byte.
+*.db binary
+*.ico binary
+*.jpeg binary
+*.jpg binary
+*.pdf binary
+*.png binary
+*.pptx binary
+*.sqlite binary
+*.sqlite3 binary
+*.webp binary
+*.xlsx binary
+*.zip binary

@@ -1,0 +1,76 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+build/
+dist/
+*.egg-info/
+.env
+.env (*)
+.env.*
+!.env.example
+.envrc
+.secrets/
+# Local agent instructions, editor settings, and integration configuration.
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+.agents/
+.claude/
+.codex/
+.cursor/
+.cursorrules
+.mcp.json
+mcp.json
+.vscode/
+.idea/
+.github/copilot-instructions.md
+.github/instructions/
+*.pem
+*.key
+*.p12
+*.pfx
+generated/
+/*.adg
+/*.db
+/*.sqlite*
+# Common standalone canary output formats (may contain operator-issued URLs).
+# Use `git add -f` only when intentionally adding a reviewed source fixture.
+/*.json
+/*.txt
+!/requirements.txt
+!/requirements-dev.txt
+/*.html
+/*.csv
+/*.pdf
+/*.pptx
+/*.xlsx
+/*.env
+*.operator.json
+*.inventory.json
+# Browser-added duplicate-download suffixes for operator-only files and packages.
+*.operator ([0-9]*).json
+*.inventory ([0-9]*).json
+* ([0-9]*).env
+adg-settings.json
+adg-settings ([0-9]*).json
+*_deployment.zip
+*_deployment ([0-9]*).zip
+service.env.txt
+service.env ([0-9]*).txt
+portal.html
+portal ([0-9]*).html
+
+# Local test output and logs
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage*
+coverage.xml
+*.log
+adg-access.jsonl
+adg-access.jsonl.*
+adg-stream-access.jsonl
+adg-stream-access.jsonl.*
+playwright-report/
+test-results/

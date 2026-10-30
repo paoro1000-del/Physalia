@@ -1,0 +1,23 @@
+// High-velocity password-spray review candidate, not an ARTEX fingerprint.
+// Schedule the alert query every minute; tune thresholds and lookback for
+// your ingestion delay and normal sign-in volume. Fixed one-minute bins can
+// split activity at minute boundaries. This query omits user names and IPs.
+// If one table is unavailable, remove that union branch.
+union kind=outer
+  (SigninLogs
+   | where TimeGenerated >= ago(5m)
+   | project AADTenantId=tostring(AADTenantId), IPAddress, UserId, UserPrincipalName, CreatedDateTime, TimeGenerated, ResultType),
+  (AADNonInteractiveUserSignInLogs
+   | where TimeGenerated >= ago(5m)
+   | project AADTenantId=tostring(AADTenantId), IPAddress, UserId, UserPrincipalName, CreatedDateTime, TimeGenerated, ResultType)
+| where isnotempty(AADTenantId)
+| extend ErrorCode=toint(ResultType),
+         Account=tolower(iff(isnotempty(UserId), tostring(UserId), tostring(UserPrincipalName))),
+         EventTime=coalesce(todatetime(CreatedDateTime), TimeGenerated)
+| where isnotnull(ErrorCode) and ErrorCode != 0 and isnotempty(Account) and isnotnull(EventTime)
+| summarize Failures=count(), DistinctAccounts=dcount(Account),
+            DistinctSourceIPs=dcount(IPAddress), FirstFailure=min(EventTime), LastFailure=max(EventTime)
+  by AADTenantId, Minute=bin(EventTime, 1m)
+| where Failures >= 100 and DistinctAccounts >= 10
+| project AADTenantId, Minute, Failures, DistinctAccounts, DistinctSourceIPs, FirstFailure, LastFailure
+| order by Minute desc
