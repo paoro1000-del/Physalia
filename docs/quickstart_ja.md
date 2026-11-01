@@ -2,7 +2,9 @@
 
 ## 1. アプリを起動する
 
-起動スクリプトはPython 3.14、3.13、3.12、3.11の順に探します。3.15以降は現在未対応です。WindowsでPythonが未導入なら、[Python公式ページ](https://www.python.org/downloads/)からPython Install Managerを入れ、コマンドプロンプトを開き直して `pymanager install 3.14` を実行して対応版を入れてください。ManagerとPython実行環境は別です。起動スクリプトも、対応したPython実行環境が導入済みであることを確認してから起動します。macOSでは公式ページからPython 3.14.xのインストーラーを選んでください。Linuxでは、多くのディストリビューションが対応版Pythonを提供しています。見つからない場合は、[Python公式のLinux導入案内](https://docs.python.org/3.14/using/unix.html#on-linux)を参照してください。
+起動スクリプトはPython 3.14、3.13、3.12、3.11の順に探します。3.15以降は現在未対応です。
+
+**Windowsで初めて使う場合：** [Python公式の3.14.10ダウンロードページ](https://www.python.org/downloads/release/python-31410/)を開き、ページ下部の **Windows installer (64-bit)** をダウンロードして実行します。**Install Now** を選んでインストールしてください。macOSでは公式ページからPython 3.14.xのインストーラーを選びます。Linuxではディストリビューションのパッケージ管理ツールでPython 3.11〜3.14と仮想環境機能（venv）を導入してください。見つからない場合は、[Python公式のLinux導入案内](https://docs.python.org/3.14/using/unix.html#on-linux)を参照してください。
 
 - Windows: `start_windows.bat` をダブルクリックします。
 - macOS / Linux: ターミナルで `sh start_unix.sh` を実行します。

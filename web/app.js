@@ -91,8 +91,8 @@ const translations = {
     monitoring_not_placed: "A canary URL was provided, but random placement put it in none of the files. Increase placement or adjust the settings before deployment.",
     operator_files_title: "Operator-only files — keep out of deployment",
     operator_files_warning: "These files can contain passwords, canary URLs, archive layouts and verification details. Store them separately with restricted access; never upload them to the public site or include them in the deployed application.",
-    workspace: "Workspace", create: "Create a decoy", running: "Running locally", browser_save: "Find generated files in your browser's downloads list",
-    local_mode: "● Local mode", language: "Language", intro: "Choose a file type, configure it, and generate your decoy.",
+    workspace: "Workspace", create: "Create a decoy",
+    language: "Language", intro: "Choose a file type, configure it, and generate your decoy.",
     getting_started: "Getting started", notice: "Select a method and review its mechanism and target attacks before generating. Artifacts contain fictional data and are not deployed automatically. No canary alert occurs without a monitoring URL.",
     select_method: "Select a method", file_type: "Choose by intended role", settings: "Settings", method_settings: "Configure the selected method",
     canary_file: "Canary file", canary_card: "Detect suspicious contact when a monitoring URL is used", canary_formats_foot: "MULTIPLE FORMATS", nest_title: "Encrypted Deep Nest",
@@ -177,7 +177,6 @@ translations.ja.hints = "復元メモのデコイを配置";
 translations.ja.hints_none = "配置しない";
 translations.ja.password_help = "保守メモは、別の鍵台帳を探させるためのデコイです。実際のパスワード文字は含まず、伏せ字の文字数も利用可能な手掛かりではありません。パスワード本体は管理者専用ファイルにのみ保存されます。既定の9〜13文字では、段階設定により序盤を短くし、深い階層ほど長くします。ZIP取得後はオフラインで並列試行できるため、解読成功や遅延は保証されません。単語形式の候補が重複した場合はランダム値に切り替わります。9〜13文字でも解読困難な場合があり、所要時間はZIP形式や攻撃設備に左右されます。";
 translations.en.assets_eyebrow = "DECEPTION ASSETS";
-translations.en.workspace_badge = "LOCAL WORKSPACE";
 translations.ja.maze_estimate = "ディレクトリ{directories}個・デコイファイル{documents}個（上限400ディレクトリ）";
 translations.en.maze_estimate = "{directories} directories · {documents} files (limit: 400 directories)";
 translations.ja.maze_over_limit = "上限400ディレクトリを超えています。階層数か分岐数を減らしてください。";
@@ -770,6 +769,7 @@ function showWorkspacePage(page, focus = true) {
   });
   $("#workspace-page-title").textContent = t("workspace_page_" + page);
   if (focus) {
+    $("#main-content").scrollTop = 0;
     const heading = $("#page-" + page + " h1");
     if (heading) { heading.setAttribute("tabindex", "-1"); heading.focus(); }
   }

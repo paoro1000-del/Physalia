@@ -1,22 +1,65 @@
 # AiDeceptionGuard
 
-AiDeceptionGuard is a local tool for creating fictional decoy files and reviewing exported security logs. It does not deploy generated files.
+[English](README_en.md) | 日本語
 
-Generated artifacts may contain the canary URL you provide, and operator-only files may contain passwords or deployment details. Do not publish generated output or rely on `.gitignore` alone; review `git status` before committing.
+ローカル環境で、セキュリティ検証用の架空デコイファイルやサンプルを生成するツールです。生成物は自動配置されず、実際の監視・通知・本番認証との連携も行いません。効果は環境ごとに検証してください。
 
-## Choose a language
+## 準備と起動
 
-- [English documentation](READM.md)
-- [日本語のドキュメント](README_ja.md)
+Python 3.11〜3.14を用意し、ターミナルで次のコマンドを実行してソースを取得します。
 
-## Create your first sample
+```sh
+git clone https://github.com/paoro1000-del/AiDeceptionGuard.git
+cd AiDeceptionGuard
+```
 
-1. On GitHub, select **Code → Download ZIP** and extract the archive, or clone the repository. Open the extracted project folder.
-2. Install Python 3.11–3.14 if it is not already available. See the [first-sample guide](docs/quickstart_en.md) for installation help, including Windows Python Install Manager setup.
-3. In the repository folder, double-click `start_windows.bat` on Windows. On macOS or Linux, run `sh start_unix.sh` in a terminal.
-4. When the local page opens, the defaults create one standalone HTML file for Service management with 25 fictional records. Create it and preview it from the results area. To make a site you can deploy, choose **Create sample web page (HTML + deployment ZIP)**. Its ZIP contains `index.html` and six fictional PDF, Excel and CSV files; extract the ZIP and place its files together on a web server. The page has no login and is not published automatically. The `.env` sample is decoy-only; do not load it into a real application or production configuration. First launch may need internet access to install pinned, hash-verified packages.
+取得したフォルダーで、利用するOSに応じて起動してください。
 
-The monitoring URL is optional for creating a sample. A real canary alert requires a URL issued by your monitoring service; the generator never contacts that URL.
+**Windows（PowerShell）**
 
-- [First sample guide (English)](docs/quickstart_en.md)
-- [初回サンプル作成ガイド（日本語）](docs/quickstart_ja.md)
+初めて使う場合は、次の準備を一度だけ行ってください。
+
+1. [Python公式の3.14.10ダウンロードページ](https://www.python.org/downloads/release/python-31410/)を開きます。
+2. ページ下部の **Windows installer (64-bit)** をダウンロードして実行します。
+3. インストーラーの **Install Now** を選びます。インストールが終わったら、起動スクリプトを実行してください。
+
+準備ができたら、次のいずれかでアプリを起動します。
+
+- `start_windows.bat` をダブルクリック
+- PowerShellで次を実行
+
+```powershell
+.\start_windows.bat
+```
+
+**macOS / Linux（ターミナル）**
+
+```sh
+sh ./start_unix.sh
+```
+
+Linuxでは、Python 3.11〜3.14と `venv` が使える状態にしてから起動してください。ディストリビューションによっては `venv` が別パッケージ（例：`python3-venv`）です。起動スクリプトは対応するPythonを探し、見つからない場合は必要な導入方法を表示します。各OSの導入手順は[クイックスタートガイド](docs/quickstart_ja.md)を参照してください。
+
+起動スクリプトは仮想環境を作成し、固定済みの依存パッケージを初回インストールしてアプリを起動します。ブラウザーで画面が開きます。初回のパッケージ取得にはインターネット接続が必要です。
+
+## できること
+
+セキュリティ対策ごとに、狙いや仕組み、導入時の検討点をツール内で解説し、サンプルファイルやコードを生成します。内容を確認しながら、自組織の環境や運用に取り入れる価値があるかを検討するためのツールです。
+
+生成物は検証・導入判断の参考資料です。実環境への配置や監視サービスとの連携は利用者が行います。
+
+## 注意
+
+生成したデコイファイルや設定を公開Gitにアップロードしないでください。生成されたデコイファイルやデコイパターンが公開されると、実物との比較でデコイを見破られるリスクが高まります。生成物は公開せず、隔離した検証環境で扱ってください。
+
+## ドキュメント
+
+- [初回サンプルの作成](docs/quickstart_ja.md)
+- [配置・検知・対応](docs/deployment_ja.md)
+- [ログの確認](docs/log-review-guide_ja.md)
+- [評価方法](docs/deception_evaluation.md)
+- [セキュリティポリシー](SECURITY.md)
+
+ライセンス: [Apache License 2.0](LICENSE)
+
+バージョン番号は [VERSION](VERSION) で管理しています。変更後、アプリを再起動すると画面に反映されます。

@@ -12,9 +12,8 @@ from urllib.parse import unquote, urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 DOCUMENTS = (
     ROOT / ".github" / "README.md",
-    ROOT / "README_ja.md",
     ROOT / "README.md",
-    ROOT / "READM.md",
+    ROOT / "README_en.md",
     ROOT / "CONTRIBUTING.md",
     ROOT / "SECURITY.md",
     *sorted((ROOT / "docs").glob("*.md")),

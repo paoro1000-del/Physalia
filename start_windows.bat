@@ -46,12 +46,13 @@ pause
 exit /b 0
 
 :no_python
-echo A supported Python 3.11-3.14 runtime is required; the Install Manager alone is not a runtime.
-echo Download a supported Python 3.11-3.14 version from the official page:
-echo https://www.python.org/downloads/
-echo If Python Install Manager is already installed, run: pymanager install 3.14
-echo See docs/quickstart_ja.md or docs/quickstart_en.md for installation guidance.
-echo After installation, run this file again.
+echo Python 3.11-3.14 is not installed yet.
+echo.
+echo Open this official Python 3.14 download page:
+echo https://www.python.org/downloads/release/python-31410/
+echo Download and run Windows installer (64-bit), then choose Install Now.
+echo After installation finishes, double-click this file again.
+echo See docs/quickstart_ja.md for step-by-step guidance.
 pause
 exit /b 1
 

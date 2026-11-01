@@ -14,7 +14,7 @@
 <a class="skip-link" href="#main-content" data-i18n="skip_to_content">メインコンテンツへ移動</a>
 <div class="layout">
   <aside>
-    <div class="brand"><span class="mark">◁</span><span>AiDeceptionGuard<small>LOCAL WORKSPACE</small></span></div>
+    <div class="brand"><span class="mark">◁</span><span>AiDeceptionGuard</span></div>
     <p class="aside-label" data-i18n="workspace">メニュー</p>
     <nav class="side-nav" aria-label="メインメニュー" data-i18n-aria="main_navigation">
       <button type="button" data-page-target="intro" aria-current="page" data-i18n="nav_intro">初めに</button>
@@ -22,14 +22,17 @@
       <button type="button" data-page-target="logs" data-i18n="nav_logs">ログ分析解説</button>
       <button type="button" data-page-target="license" data-i18n="nav_license">ライセンス・著作権</button>
     </nav>
-    <div class="aside-bottom"><span class="dot"></span> <span data-i18n="running">ローカルで動作中</span><br><small data-i18n="browser_save">生成したファイルはブラウザーのダウンロード一覧から確認できます</small></div>
+    <div class="aside-bottom">
+      <div class="sidebar-language"><label for="language" class="language-label" data-i18n="language">言語</label><select id="language"><option value="ja">日本語</option><option value="en">English</option></select></div>
+      <p class="app-version">ver: __APP_VERSION__</p>
+    </div>
   </aside>
   <main id="main-content" tabindex="-1">
-    <header class="top"><span id="workspace-page-title" data-i18n="workspace_page_intro">初めに</span><div class="top-controls"><span class="local" data-i18n="local_mode">● ローカルモード</span><label for="language" class="language-label" data-i18n="language">言語</label><select id="language" aria-label="言語 / Language"><option value="ja">日本語</option><option value="en">English</option></select></div></header>
+    <header class="top"><span id="workspace-page-title" data-i18n="workspace_page_intro">初めに</span></header>
     <noscript><p class="notice" role="alert">JavaScriptを有効にしてください。この画面ではブラウザー上でサンプルを作成します。</p></noscript>
     <div class="content">
       <section id="page-intro" class="workspace-page intro-page" aria-labelledby="intro-page-title">
-        <div class="intro"><div><div class="eyebrow" data-i18n="intro_eyebrow">AiDeceptionGuard</div><h1 id="intro-page-title" tabindex="-1" data-i18n="intro_title">このツールについて</h1><p data-i18n="intro_lead">架空のデコイファイルやサンプルWebページを作り、侵入後の探索・持ち出しに備えるローカルツールです。</p></div><span class="version" data-i18n="workspace_badge">ローカル作業環境</span></div>
+        <div class="intro"><div><div class="eyebrow" data-i18n="intro_eyebrow">AiDeceptionGuard</div><h1 id="intro-page-title" tabindex="-1" data-i18n="intro_title">このツールについて</h1><p data-i18n="intro_lead">架空のデコイファイルやサンプルWebページを作り、侵入後の探索・持ち出しに備えるローカルツールです。</p></div></div>
         <div class="notice"><strong data-i18n="intro_purpose_label">目的</strong><span data-i18n="intro_purpose">本物らしい架空データを使ったデコイやカナリアを準備し、攻撃者の探索を誘導したり、指定URLへのアクセスを監視サービスで検知したりするための素材を作ります。防御・監視・自動配置を代替するものではありません。</span></div>
         <section class="panel intro-panel" aria-labelledby="intro-how-title">
           <h2 id="intro-how-title" data-i18n="intro_how_title">使い方</h2>
@@ -87,7 +90,7 @@
         </section>
       </section>
       <section id="page-generator" class="workspace-page" aria-label="対策サンプル生成" data-i18n-aria="nav_generator" hidden>
-      <div class="intro"><div><div class="eyebrow" data-i18n="assets_eyebrow">デコイ生成</div><h1 data-i18n="create">デコイを作成</h1><p data-i18n="intro">手法を選び、仕組みや対象となる攻撃を確認してから生成します。</p></div><span class="version" data-i18n="workspace_badge">ローカル作業環境</span></div>
+      <div class="intro"><div><div class="eyebrow" data-i18n="assets_eyebrow">デコイ生成</div><h1 data-i18n="create">デコイを作成</h1><p data-i18n="intro">手法を選び、仕組みや対象となる攻撃を確認してから生成します。</p></div></div>
       <div class="notice"><strong data-i18n="getting_started">はじめに</strong><span data-i18n="notice">手法を選び、仕組みや対象となる攻撃を確認してから生成します。生成物は架空データで、自動配置されません。監視URLを入れない場合、カナリア通知は発生しません。</span></div>
       <div class="section-head"><div><span class="step">01</span><h2 data-i18n="select_method">手法を選択</h2></div><span data-i18n="file_type">狙う役割から選択</span></div>
       <p class="category-intro" data-i18n="category_intro">タグは各手法が狙う役割です。複数の役割を持つ手法もあります。効果は配置や攻撃者の行動により変わります。</p>

@@ -173,6 +173,13 @@ class HttpTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn(b"example.invalid", base64.b64decode(json.loads(body)["content"]))
 
+    def test_page_uses_configured_version(self):
+        with patch.object(app, "APP_VERSION", "2.1.0 <preview>"):
+            status, body = self.request("GET", "/")
+        self.assertEqual(status, 200)
+        self.assertIn(b"ver: 2.1.0 &lt;preview&gt;", body)
+        self.assertNotIn(b"__APP_VERSION__", body)
+
     def test_cross_origin_and_dns_rebinding_are_rejected(self):
         payload = json.dumps({"kind": "env", "settings": {}})
         status, _ = self.request("POST", "/api/generate", payload, {

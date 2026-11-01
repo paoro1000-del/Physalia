@@ -2,7 +2,7 @@
 
 ## 1. Start the app
 
-The launcher checks for Python 3.14, 3.13, 3.12 and 3.11, in that order. Python 3.15 and later are not currently supported. If Python is not installed on Windows, install the Python Install Manager from the [official Python page](https://www.python.org/downloads/), reopen Command Prompt, then install the supported runtime with `pymanager install 3.14`. The manager and the Python runtime are separate; the launcher explicitly requests an installed supported runtime, starting with Python 3.14. On macOS, choose a Python 3.14.x installer from the official page. Linux distributions often include a supported Python version; if yours does not, see the [official Python Linux installation guide](https://docs.python.org/3.14/using/unix.html#on-linux).
+The launcher checks for Python 3.14, 3.13, 3.12 and 3.11, in that order. Python 3.15 and later are not currently supported. For a first Windows setup, open the [official Python 3.14.10 download page](https://www.python.org/downloads/release/python-31410/), download **Windows installer (64-bit)** near the bottom of the page, run it and choose **Install Now**. On macOS, choose a Python 3.14.x installer from the official page. On Linux, install Python 3.11–3.14 and the `venv` module using your distribution's package manager. If you need guidance, see the [official Python Linux installation guide](https://docs.python.org/3.14/using/unix.html#on-linux).
 
 - Windows: double-click `start_windows.bat`.
 - macOS / Linux: run `sh start_unix.sh` in a terminal.

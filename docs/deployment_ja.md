@@ -1,6 +1,6 @@
 # 小規模組織向け：配置・検知・対応ガイド
 
-[English](deployment_en.md) | [設計書](agent_deception_strategy_and_design.html)
+[English](deployment_en.md)
 
 ## 今回の分析と改善方針
 

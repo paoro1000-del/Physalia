@@ -26,10 +26,11 @@ from aideceptionguard.i18n import translate
 from aideceptionguard.database import public_templates
 
 STATIC = Path(__file__).parent / "web"
+APP_VERSION = (STATIC.parent / "VERSION").read_text(encoding="utf-8").strip()
 INTEGRATION_BUNDLE_FILES = (
-    "LICENSE", "README.md", "READM.md", "README_ja.md", "SECURITY.md",
+    "LICENSE", "README.md", "README_en.md", "SECURITY.md",
     "docs/deployment_ja.md", "docs/deployment_en.md", "docs/legal_ja.md", "docs/legal_en.md",
-    "docs/agent_deception_strategy_and_design.html", "docs/ai.md", "docs/deception_evaluation.md",
+    "docs/deception_evaluation.md",
     "docs/log-review-guide_ja.md", "docs/log-review-guide_en.md",
     "examples/nginx-decoy.conf", "examples/nginx-stream-proxy.conf",
     "examples/nginx-stream-token.conf.example", "examples/decoy_state.py",
@@ -365,6 +366,7 @@ class Handler(BaseHTTPRequestHandler):
         if name == "index.html":
             content = content.replace(b"__SESSION_TOKEN__", SESSION_TOKEN.encode("ascii"))
             content = content.replace(b"__MAX_GENERATION_REQUEST_BYTES__", str(MAX_REQUEST).encode("ascii"))
+            content = content.replace(b"__APP_VERSION__", html.escape(APP_VERSION).encode("utf-8"))
         self._headers(200, mime, content)
 
     def do_POST(self):
