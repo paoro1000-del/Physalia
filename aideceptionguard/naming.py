@@ -78,6 +78,7 @@ PURPOSE_NAMES = {
     "directory_maze": ("shared_documents", "department_archive", "project_files", "portal_documents", "operations_workspace", "regional_reports", "customer_materials", "team_resources", "service_archive", "business_records", "support_library", "account_documents"),
     "encoding_maze": ("customer_export", "monthly_report", "service_snapshot", "legacy_archive", "account_history", "billing_extract", "regional_summary", "migration_records", "support_export", "usage_report", "vendor_register", "data_reconciliation"),
     "stream": ("archive_stream", "report_stream", "document_service", "export_service", "account_export", "billing_feed", "operations_feed", "records_download", "service_archive", "data_transfer", "reporting_endpoint", "customer_export"),
+    "fake_trap": ("auth_status", "session_callback", "request_status", "access_result", "identity_check", "portal_response", "sso_return", "account_validation", "user_session", "service_access", "signin_response", "verification_result", "token_exchange", "login_complete", "workspace_status", "profile_sync", "access_review", "session_refresh"),
 }
 DATABASE_PROFILE_NAMES = {
     "customers": ("customer_archive", "account_ledger", "client_directory", "customer_export", "account_snapshot", "customer_history"),
@@ -85,8 +86,11 @@ DATABASE_PROFILE_NAMES = {
     "companies": ("organization_directory", "company_register", "business_accounts", "enterprise_roster", "company_snapshot", "company_archive"),
     "passwords": ("vault_backup", "saved_logins", "credential_archive", "password_vault", "access_register", "vault_export"),
     "orders": ("order_history", "sales_records", "fulfillment_queue", "order_archive", "shipment_register", "order_snapshot"),
+    "sales": ("sales_transactions", "quarterly_sales", "revenue_ledger", "transaction_export", "sales_archive", "sales_snapshot"),
     "invoices": ("invoice_register", "billing_ledger", "accounts_receivable", "monthly_billing", "payment_reconciliation", "invoice_archive"),
     "employees": ("staff_roster", "employee_directory", "workforce_snapshot", "personnel_register", "hr_records", "employee_archive"),
+    "users": ("user_accounts", "account_directory", "identity_roster", "access_register", "user_archive", "account_snapshot"),
+    "api_credentials": ("service_tokens", "integration_keys", "api_access_registry", "application_credentials", "service_accounts", "credential_inventory"),
     "vendors": ("vendor_register", "supplier_directory", "partner_roster", "vendor_archive", "contract_register", "supplier_snapshot"),
     "tickets": ("support_queue", "service_requests", "case_history", "ticket_archive", "customer_cases", "support_snapshot"),
     "assets": ("asset_register", "hardware_inventory", "endpoint_inventory", "device_roster", "asset_snapshot", "equipment_archive"),
@@ -101,6 +105,14 @@ CONTEXT_FILENAME_NAMES = {
                 "support_metrics", "support_dashboard", "incident_followup", "ticket_archive"),
     "reports": ("quarterly_report", "regional_summary", "report_center", "export_history",
                 "usage_summary", "operations_update", "regional_performance", "reporting_store"),
+    "operations": ("operations_portal", "service_archive", "operations_records", "recovery_library",
+                   "service_inventory", "operations_workspace"),
+    "shared": ("shared_documents", "document_workspace", "team_files", "project_library",
+               "shared_archive", "document_index"),
+    "archive": ("business_archive", "archive_index", "records_archive", "document_archive",
+                "business_records", "retention_archive"),
+    "records": ("records_center", "access_review", "vendor_register", "export_history",
+                "business_records", "records_snapshot"),
 }
 CONTEXT_PREFIXES = (
     "", "", "", "finance", "operations", "customer", "regional", "service", "vendor",

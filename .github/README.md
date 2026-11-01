@@ -2,7 +2,7 @@
 
 AiDeceptionGuard is a local tool for generating synthetic decoy artifacts and reviewing security events. The generator does not contact canary URLs or deploy files; an HTTP alert generally requires a request to an embedded URL. Use it only in environments you own or are authorized to manage.
 
-- [English guide](../README.md)
+- [English guide](../READM.md)
 - [日本語ガイド](../README_ja.md)
 
 The project is an early prototype. Deception and delay effects depend on the attacker and deployment; they are not guaranteed. Keep operator-only inventories, canary URLs and passwords out of public directories and Git.

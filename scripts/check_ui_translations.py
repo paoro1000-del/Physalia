@@ -1,6 +1,5 @@
 """Check that every HTML translation key has an English UI translation."""
 from html.parser import HTMLParser
-import ast
 from pathlib import Path
 import re
 import sys
@@ -13,16 +12,22 @@ class TranslationKeyParser(HTMLParser):
     def __init__(self):
         super().__init__(convert_charrefs=True)
         self.app_keys = set()
-        self.cloud_keys = set()
+        self.corrupt_text = []
 
     def handle_starttag(self, tag, attrs):
         for name, value in attrs:
-            if name in ("data-i18n", "data-i18n-aria") and value:
+            if isinstance(value, str) and ("???" in value or "\ufffd" in value):
+                self.corrupt_text.append(f"{name}={value[:80]!r}")
+            if name in ("data-i18n", "data-i18n-aria", "data-i18n-placeholder") and value:
                 self.app_keys.add(value)
-            elif name == "data-cloud-i18n" and value:
-                self.cloud_keys.add(value)
 
     handle_startendtag = handle_starttag
+
+    def handle_data(self, data):
+        if "???" in data or "\ufffd" in data:
+            sample = " ".join(data.split())
+            if sample:
+                self.corrupt_text.append(sample[:100])
 
 
 def english_translation_keys(source, container_marker, english_marker, assignment_prefix):
@@ -122,7 +127,92 @@ def english_translation_keys(source, container_marker, english_marker, assignmen
         if match:
             keys.add(match.group(1))
     keys.update(re.findall(rf"{re.escape(assignment_prefix)}\.([A-Za-z_$][\w$]*)\s*=", source))
+    # Several translation groups are appended with Object.assign rather than
+    # direct property assignments. Parse their top-level keys while ignoring
+    # commas and braces inside strings, so translated UI keys are not reported
+    # as missing merely because they use that common JavaScript pattern.
+    marker = f"Object.assign({assignment_prefix}, {{"
+    cursor = 0
+    while True:
+        call = source.find(marker, cursor)
+        if call < 0:
+            break
+        opening = call + len(marker) - 1
+        keys.update(top_level_object_keys(source, opening))
+        cursor = opening + 1
     return keys
+
+
+def overwritten_translation_appends(source):
+    """Find appended UI text that a later direct or object assignment replaces."""
+    events = {}
+    pattern = re.compile(r"\btranslations\.(ja|en)\.([A-Za-z_$][\w$]*)\s*(\+=|=(?!=))")
+    for match in pattern.finditer(source):
+        events.setdefault((match.group(1), match.group(2)), []).append(
+            (match.group(3), match.start()))
+    object_assign = re.compile(r"Object\.assign\(translations\.(ja|en),\s*\{")
+    for match in object_assign.finditer(source):
+        opening = match.end() - 1
+        for key in top_level_object_keys(source, opening):
+            events.setdefault((match.group(1), key), []).append(("=", match.start()))
+    overwritten = []
+    for (language, key), assignments in events.items():
+        for index, (operator, position) in enumerate(assignments):
+            if operator == "+=" and any(next_operator == "=" and next_position > position
+                                        for next_operator, next_position in assignments[index + 1:]):
+                overwritten.append(f"{language}.{key}")
+                break
+    return sorted(overwritten)
+
+
+def top_level_object_keys(source, opening):
+    """Read property names from a JavaScript object literal at opening."""
+    depth = 0
+    quote = None
+    escaped = False
+    line_comment = False
+    block_comment = False
+    last = opening + 1
+    parts = []
+    index = opening
+    while index < len(source):
+        char = source[index]
+        following = source[index + 1] if index + 1 < len(source) else ""
+        if line_comment:
+            if char in "\r\n":
+                line_comment = False
+        elif block_comment:
+            if char == "*" and following == "/":
+                block_comment = False
+                index += 1
+        elif quote:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = None
+        elif char == "/" and following == "/":
+            line_comment = True
+            index += 1
+        elif char == "/" and following == "*":
+            block_comment = True
+            index += 1
+        elif char in "'\"`":
+            quote = char
+        elif char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                parts.append(source[last:index])
+                break
+        elif char == "," and depth == 1:
+            parts.append(source[last:index])
+            last = index + 1
+        index += 1
+    return {match.group(1) for part in parts
+            if (match := re.match(r"\s*([A-Za-z_$][\w$]*)\s*:", part))}
 
 
 def literal_translation_calls(source, function_name):
@@ -150,60 +240,40 @@ def literal_translation_calls(source, function_name):
     return keys
 
 
-def backend_review_rule_keys(source):
-    module = ast.parse(source)
-    for node in module.body:
-        if isinstance(node, ast.Assign) and any(
-                isinstance(target, ast.Name) and target.id == "FINDING_PRIORITY"
-                for target in node.targets):
-            if isinstance(node.value, ast.Dict):
-                return {key.value for key in node.value.keys
-                        if isinstance(key, ast.Constant) and isinstance(key.value, str)}
-    raise ValueError("Could not inspect backend review rule priorities")
-
-
-def cloud_render_rule_keys(source):
-    keys = set()
-    for body in re.findall(r"rules\s*:\s*\{([^}]*)\}", source):
-        keys.update(re.findall(r"(?:^|,)\s*([A-Za-z_$][\w$]*)\s*:\s*\[", body))
-    keys.update(re.findall(r"copy\.(?:ja|en)\.rules\.([A-Za-z_$][\w$]*)\s*=", source))
-    keys.update(re.findall(r"finding\.rule\s*===\s*['\"]([A-Za-z_$][\w$]*)['\"]", source))
-    return keys
-
-
 def main():
     parser = TranslationKeyParser()
     parser.feed((ROOT / "web" / "index.html").read_text(encoding="utf-8"))
     app_source = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
-    cloud_source = (ROOT / "web" / "cloud_review.js").read_text(encoding="utf-8")
-    backend_source = (ROOT / "aideceptionguard" / "cloud_review.py").read_text(encoding="utf-8")
+    corrupt_scripts = {
+        name: [marker for marker in ("???", "\ufffd") if marker in source]
+        for name, source in (("web/app.js", app_source),)
+    }
+    corrupt_scripts = {name: markers for name, markers in corrupt_scripts.items() if markers}
     try:
         app_english = english_translation_keys(
             app_source, "const translations = {", "  en: {", "translations.en")
-        cloud_english = english_translation_keys(
-            cloud_source, "const copy = {", "    en: {", "copy.en")
         app_keys = parser.app_keys | literal_translation_calls(app_source, "t")
-        cloud_keys = parser.cloud_keys | literal_translation_calls(cloud_source, "tr")
         missing_app = sorted(app_keys - app_english)
-        missing_cloud = sorted(cloud_keys - cloud_english)
-        backend_rules = backend_review_rule_keys(backend_source)
-        missing_rules = sorted(backend_rules - cloud_render_rule_keys(cloud_source))
+        overwritten_appends = overwritten_translation_appends(app_source)
     except (ValueError, IndexError) as exc:
         print(f"Cannot inspect English translations: {exc}", file=sys.stderr)
         return 2
-    if missing_app or missing_cloud or missing_rules:
+    if (missing_app or overwritten_appends or parser.corrupt_text or corrupt_scripts):
         if missing_app:
             print("Missing English translations for app UI keys:", file=sys.stderr)
             print("\n".join(f"- {key}" for key in missing_app), file=sys.stderr)
-        if missing_cloud:
-            print("Missing English translations for cloud-panel keys:", file=sys.stderr)
-            print("\n".join(f"- {key}" for key in missing_cloud), file=sys.stderr)
-        if missing_rules:
-            print("Backend review rules without a cloud-panel translation or explicit fallback:", file=sys.stderr)
-            print("\n".join(f"- {key}" for key in missing_rules), file=sys.stderr)
+        if overwritten_appends:
+            print("App translation text appended before a later overwrite:", file=sys.stderr)
+            print("\n".join(f"- {key}" for key in overwritten_appends), file=sys.stderr)
+        if parser.corrupt_text:
+            print("Suspicious placeholder or replacement characters in the HTML UI:", file=sys.stderr)
+            print("\n".join(f"- {text!r}" for text in parser.corrupt_text), file=sys.stderr)
+        if corrupt_scripts:
+            print("Suspicious placeholder or replacement characters in UI scripts:", file=sys.stderr)
+            for name, markers in corrupt_scripts.items():
+                print(f"- {name}: {', '.join(markers)}", file=sys.stderr)
         return 1
-    print(f"English translations cover all {len(app_keys)} app UI and {len(cloud_keys)} cloud-panel keys; "
-          f"all {len(backend_rules)} backend review rules have a panel description or fallback.")
+    print(f"English translations cover all {len(app_keys)} app UI keys.")
     return 0
 
 

@@ -5,8 +5,7 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCES = (ROOT / "web" / "app.js", ROOT / "web" / "cloud_review.js",
-           ROOT / "web" / "json_utils.js")
+SOURCES = (ROOT / "web" / "app.js", ROOT / "web" / "json_utils.js")
 FORBIDDEN = {
     "HTML assignment": re.compile(
         r"(?:\.\s*(?:innerHTML|outerHTML)\b|\[\s*['\"](?:innerHTML|outerHTML)['\"]\s*\])\s*="),

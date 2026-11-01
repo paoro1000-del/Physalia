@@ -17,7 +17,9 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 from reportlab.pdfgen import canvas
 
-from aideceptionguard.database import DEFAULT_COLUMNS, records, sqlite_bytes
+from aideceptionguard.database import (
+    DATABASE_TEMPLATES, DEFAULT_COLUMNS, _template_columns_with_labels, records, sqlite_bytes,
+)
 from aideceptionguard.i18n import translate
 from aideceptionguard.naming import plausible_filename
 from aideceptionguard.validation import canary_url, filename, identifier, integer, is_public_host, is_reserved_example_url, text
@@ -30,6 +32,7 @@ FORMATS = {
     "pptx": ("pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation"),
     "sqlite": ("db", "application/vnd.sqlite3"),
 }
+PREVIEW_ROW_LIMIT = 10
 
 STATIC_HTML_SECURITY_META = """<meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; object-src 'none'; base-uri 'none'; form-action 'none'">"""
 
@@ -57,6 +60,12 @@ CONTEXTS = {
                 "title_ja": "サポート対応一覧", "title_en": "Support request register"},
     "reports": {"field": "report_portal_url", "ja": "関連レポート", "en": "Related reports", "table": "report_links",
                 "title_ja": "業務レポート", "title_en": "Operations report"},
+}
+CONTEXT_DATA_TEMPLATES = {
+    "service": "cloud",
+    "billing": "invoices",
+    "support": "tickets",
+    "reports": "sales",
 }
 
 DOCUMENT_AUTHORS = {
@@ -87,7 +96,10 @@ def resolve_context(settings, language):
     profile_name = secrets.choice(tuple(CONTEXTS)) if mode == "auto" else mode
     profile = CONTEXTS[profile_name]
     field = identifier(settings.get("canary_field") or profile["field"], language)
-    reserved = {"app_env", "archive_reference", "title", "reference", "records"} | {c["name"].lower() for c in DEFAULT_COLUMNS}
+    context_columns = _template_columns_with_labels(CONTEXT_DATA_TEMPLATES[profile_name], language)
+    reserved = ({"app_env", "archive_reference", "title", "reference", "records"}
+                | {c["name"].lower() for c in DEFAULT_COLUMNS}
+                | {c["name"].lower() for c in context_columns})
     if field.lower() in reserved:
         raise ValueError(translate("canary_field_conflict", language))
     label = text(settings.get("canary_label") or profile[language], "canary_label", 80, language) or profile[language]
@@ -113,6 +125,14 @@ def spreadsheet_csv_value(value):
         if probe.startswith(("=", "+", "-", "@")):
             return "'" + value
     return value
+
+
+def localized_sheet_title(table, language):
+    """Return the localized display name for a known synthetic database table."""
+    for template in DATABASE_TEMPLATES.values():
+        if template["table"].casefold() == str(table).casefold():
+            return template.get(language, template["en"])[0]
+    return str(table).replace("_", " ").title()
 
 
 def render_switchable_env(settings, title, url, language, environment=None):
@@ -176,16 +196,20 @@ def dotenv_value(value, language):
 
 
 def render(fmt, title, url, data, language="ja", reference=None, context=None, app_env="production",
-           columns=None, table="customers", canary_cell=None):
+           columns=None, table="customers", canary_cell=None, sheet_title=None):
     """Render without fetching URLs, macros, scripts, external images or formulas."""
     columns = DEFAULT_COLUMNS if columns is None else columns
     headers = [column["name"] for column in columns]
+    display_headers = [column.get("label") or column["name"] for column in columns]
     owned_login_index = next((index for index, column in enumerate(columns)
                               if column["name"].casefold() == "login_url"
                               and column.get("vault_decoy_domain")), None)
     ref = reference or secrets.token_hex(6).upper()
     field = context["field"] if context else "archive_endpoint"
     label = context["label"] if context else translate("web_link", language)
+    csv_link_label = label if context else ("アーカイブ接続先" if language == "ja" else "Archive endpoint")
+    csv_link_header = f"{csv_link_label} ({field})"
+    reference_label = "参照番号" if language == "ja" else "Reference"
     if fmt == "env":
         if app_env not in ("production", "staging", "development", "test"):
             raise ValueError(translate("invalid_input", language))
@@ -194,9 +218,10 @@ def render(fmt, title, url, data, language="ja", reference=None, context=None, a
         content = f"# {title}\nAPP_ENV={app_env}\nARCHIVE_REFERENCE={ref}\n{env_field}={env_url}\n"
         return content.encode("utf-8")
     if fmt == "txt":
-        content = (f"{title}\nReference: {ref}\n\n" + " | ".join(headers) + "\n"
+        content = (f"{title}\n{reference_label}: {ref}\n\n" + " | ".join(display_headers) + "\n"
                    + "\n".join(" | ".join(map(str, row)) for row in data))
-        return (content + (f"\n\n{label if context else 'Archive endpoint'}: {url}\n"
+        endpoint_label = label if context else csv_link_label
+        return (content + (f"\n\n{endpoint_label}: {url}\n"
                            if url and canary_cell is None else "\n")).encode("utf-8")
     if fmt == "json":
         payload = {"title": title, "reference": ref, "records": [dict(zip(headers, r)) for r in data]}
@@ -206,17 +231,19 @@ def render(fmt, title, url, data, language="ja", reference=None, context=None, a
     if fmt == "csv":
         stream = io.StringIO(newline="")
         writer = csv.writer(stream)
-        safe_headers = [spreadsheet_csv_value(value) for value in headers]
-        writer.writerow(safe_headers + ([spreadsheet_csv_value(field)] if url and canary_cell is None else []))
+        safe_headers = [spreadsheet_csv_value(value) for value in display_headers]
+        writer.writerow(safe_headers + ([spreadsheet_csv_value(csv_link_header)] if url and canary_cell is None else []))
         for index, row in enumerate(data):
             safe_row = [spreadsheet_csv_value(value) for value in row]
             writer.writerow(safe_row + ([url if index == 0 else ""] if url and canary_cell is None else []))
         return stream.getvalue().encode("utf-8-sig")
     if fmt == "sqlite":
         return sqlite_bytes(table, columns, data, url if canary_cell is None else "",
-                            connection_table=context["table"] if context else None,
+                            connection_table=f'{context["table"]}_connections' if context else None,
                             connection_name=field if context else "archive", language=language)
     if fmt == "html":
+        table_scroll_hint = ("表を左右にスクロールできます。" if language == "ja"
+                             else "Scroll the table horizontally to see all columns.")
         def cell_markup(value, row_index, column_index):
             if url and canary_cell == (row_index, column_index):
                 target = url
@@ -233,15 +260,18 @@ def render(fmt, title, url, data, language="ja", reference=None, context=None, a
                 for column_index, value in enumerate(row)
             ) + "</tr>" for row_index, row in enumerate(data)
         )
-        link = (f'<p><a href="{html.escape(url, quote=True)}" rel="noreferrer">{html.escape(label)}</a></p>'
+        link = (f'<p class="document-link"><a href="{html.escape(url, quote=True)}" rel="noreferrer">{html.escape(label)}</a></p>'
                 if url and canary_cell is None else "")
         return (f'<!doctype html><html lang="{language}"><head><meta charset="utf-8">'
                 f'<meta name="viewport" content="width=device-width, initial-scale=1">{STATIC_HTML_SECURITY_META}'
                 f'<title>{html.escape(title)}</title>'
-                '<style>body{font-family:system-ui;margin:3rem;color:#203748}table{border-collapse:collapse}td,th{padding:10px;border:1px solid #ddd}</style>'
-                f'</head><body><h1>{html.escape(title)}</h1><p>{ref}</p>{link}<table><tr>'
-                + "".join(f"<th>{html.escape(str(value))}</th>" for value in headers)
-                + f"</tr>{rows}</table></body></html>").encode("utf-8")
+                '<style>:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#f2f5f7;color:#233746;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5}.page-shell{max-width:1200px;margin:2.5rem auto;padding:0 1.5rem}.document-header{padding:1.5rem 1.75rem;background:#fff;border:1px solid #dbe3e8;border-radius:12px;box-shadow:0 3px 14px #2037480d}.document-reference{margin:0 0 .4rem;color:#5d7180;font-size:.82rem;font-weight:600;letter-spacing:.04em}.document-header h1{margin:0;color:#18384d;font-size:clamp(1.4rem,3vw,2rem);line-height:1.25}.document-link{margin:1rem 0 0}.document-link a{color:#176b91;font-weight:600;text-underline-offset:3px}.table-scroll-hint{display:none}.table-scroll{max-width:100%;margin-top:1.25rem;overflow-x:auto;background:#fff;border:1px solid #dbe3e8;border-radius:10px;box-shadow:0 3px 14px #2037480d}.table-scroll:focus-visible{outline:3px solid #397ca7;outline-offset:3px}table{width:100%;min-width:560px;border-collapse:collapse;text-align:left}caption{padding:.9rem 1rem;color:#526873;text-align:left;font-size:.88rem;font-weight:600}th,td{padding:.75rem 1rem;border-top:1px solid #e5ebef;white-space:nowrap}th{background:#edf2f5;color:#314b5b;font-size:.84rem;font-weight:650}tbody tr:nth-child(even){background:#f8fafb}tbody tr:hover{background:#eef6fa}td a{color:#176b91;text-underline-offset:2px}@media(max-width:640px){.page-shell{margin:1rem auto;padding:0 .75rem}.document-header{padding:1.1rem 1rem;border-radius:9px}.table-scroll-hint{display:block;margin:.75rem .2rem 0;color:#526873;font-size:.82rem}.table-scroll{margin-top:.6rem;border-radius:8px}th,td{padding:.65rem .8rem}}@media print{body{background:#fff}.page-shell{max-width:none;margin:0;padding:0}.document-header,.table-scroll{box-shadow:none}.table-scroll{overflow:visible}table{min-width:0}thead{display:table-header-group}tr{break-inside:avoid;page-break-inside:avoid}th,td{white-space:normal;overflow-wrap:anywhere;padding:.35rem .5rem}.table-scroll-hint{display:none}}</style>'
+                f'</head><body><main class="page-shell"><header class="document-header"><p class="document-reference">{reference_label}: {ref}</p>'
+                f'<h1>{html.escape(title)}</h1>{link}</header>'
+                f'<p class="table-scroll-hint">{html.escape(table_scroll_hint)}</p>'
+                f'<div class="table-scroll" role="region" tabindex="0" aria-label="{html.escape(title, quote=True)}"><table><caption>{html.escape(title)}</caption><thead><tr>'
+                + "".join(f'<th scope="col">{html.escape(str(value))}</th>' for value in display_headers)
+                + f"</tr></thead><tbody>{rows}</tbody></table></div></main></body></html>").encode("utf-8")
     output = io.BytesIO()
     if fmt == "xlsx":
         workbook = Workbook()
@@ -251,10 +281,10 @@ def render(fmt, title, url, data, language="ja", reference=None, context=None, a
         workbook.properties.title = title
         workbook.properties.subject = title
         sheet = workbook.active
-        sheet.title = table.replace("_", " ").title()[:31]
+        sheet.title = (sheet_title or localized_sheet_title(table, language))[:31]
         sheet.append([title])
         spreadsheet_text(sheet["A1"], title)
-        sheet.append(headers)
+        sheet.append(display_headers)
         for cell in sheet[2]:
             # Keep even future operator-configurable column names as literal text.
             spreadsheet_text(cell, cell.value)
@@ -290,9 +320,14 @@ def render(fmt, title, url, data, language="ja", reference=None, context=None, a
                 sheet[f"{link_column}3"].style = "Hyperlink"
                 sheet.column_dimensions[link_column].width = 30
             else:
-                links = workbook.create_sheet("Connections")
-                links.append(["Service", "Endpoint"])
-                links.append(["Archive", url])
+                if language == "ja":
+                    links = workbook.create_sheet("接続先")
+                    links.append(["項目", "URL"])
+                    links.append(["アーカイブ接続先", url])
+                else:
+                    links = workbook.create_sheet("Connections")
+                    links.append(["Service", "Endpoint"])
+                    links.append(["Archive", url])
                 links["B2"].hyperlink = url
                 links["B2"].style = "Hyperlink"
                 links.column_dimensions["B"].width = 72
@@ -329,7 +364,7 @@ def render(fmt, title, url, data, language="ja", reference=None, context=None, a
                 summary_title = f"{title} ({start + 1}-{start + len(chunk)} of {len(data)})"
             set_slide_title(summary.shapes.title, summary_title)
             table = summary.shapes.add_table(len(chunk) + 1, len(headers), Inches(.35), Inches(1.5), Inches(9.2), Inches(4.5)).table
-            for j, value in enumerate(headers):
+            for j, value in enumerate(display_headers):
                 table.cell(0, j).text = value
             for i, row in enumerate(chunk, 1):
                 for j, value in enumerate(row):
@@ -378,7 +413,7 @@ def render(fmt, title, url, data, language="ja", reference=None, context=None, a
                 lines.append("".join(current))
             return lines
 
-        header_lines = wrapped_lines(" | ".join(headers))
+        header_lines = wrapped_lines(" | ".join(display_headers))
         title_lines = wrapped_lines(title, size=16)
 
         def page_heading():
@@ -387,7 +422,7 @@ def render(fmt, title, url, data, language="ja", reference=None, context=None, a
                 pdf.drawString(40, 795 - index * 18, line)
             reference_y = 775 - (len(title_lines) - 1) * 18
             pdf.setFont(font, 9)
-            pdf.drawString(40, reference_y, ref)
+            pdf.drawString(40, reference_y, f"{reference_label}: {ref}")
             pdf.setFont(font, 7)
             header_y = reference_y - 17
             for index, line in enumerate(header_lines):
@@ -418,7 +453,7 @@ def render(fmt, title, url, data, language="ja", reference=None, context=None, a
                 pdf.drawString(40, y, visible_text)
                 y -= 10
             if link_target and column_index is not None:
-                link_text = f"{headers[column_index]}: {label}"
+                link_text = f"{display_headers[column_index]}: {label}"
                 if y < 55:
                     pdf.showPage()
                     y = page_heading()
@@ -458,13 +493,69 @@ def generate_canary(settings, language="ja", include_metadata=False):
         context = resolve_context(settings, language)
         resolved_context = context
         context_profile = CONTEXTS[context["profile"]] if context else None
+        if context:
+            context_template = CONTEXT_DATA_TEMPLATES[context["profile"]]
+            columns = _template_columns_with_labels(context_template, language)
+            table = DATABASE_TEMPLATES[context_template]["table"]
+            sheet_title = DATABASE_TEMPLATES[context_template][language][0]
+        else:
+            columns = DEFAULT_COLUMNS
+            table = "customers"
+            sheet_title = "顧客データ" if language == "ja" else "Customer Data"
         default_title = (context_profile[f"title_{language}"] if context_profile else "Operations archive")
         title = text(settings.get("title", ""), "title", 80, language) or default_title
         context_name = context["profile"] if context else None
         basename = (filename(settings["filename"], language) if settings.get("filename") else
                     plausible_filename("canary", extension=FORMATS[fmt][0], context=context_name))
-        content = render(fmt, title, url, list(records(DEFAULT_COLUMNS, count, language)), language, context=context)
+        sample_rows = list(records(columns, count, language))
+        content = render(fmt, title, url, sample_rows, language, context=context, columns=columns,
+                         table=table, sheet_title=sheet_title)
     extension, mime = FORMATS[fmt]
     name = (f".env.{suffix}" if layout == "commented_production" else ".env") if fmt == "env" and not settings.get("filename") else f"{basename}.{extension}"
     result = (name, mime, content)
-    return (*result, resolved_context) if include_metadata else result
+    if include_metadata:
+        metadata = {"resolved_canary_context": resolved_context} if resolved_context else {}
+        if url:
+            field = resolved_context["field"] if resolved_context else "archive_endpoint"
+            label = resolved_context["label"] if resolved_context else translate("web_link", language)
+            if fmt == "env":
+                if layout == "commented_production":
+                    field = identifier(settings.get("env_variable") or "URL", language).upper()
+                    location_label = (f"{field}（コメントアウトされた本番設定）" if language == "ja"
+                                      else f"{field} (commented production setting)")
+                else:
+                    field = resolved_context["field"].upper() if resolved_context else "SERVICE_URL"
+                    location_label = f".env: {field}"
+            elif fmt == "txt":
+                location_label = label if resolved_context else ("アーカイブ接続先" if language == "ja" else "Archive endpoint")
+            elif fmt == "json":
+                location_label = field
+            elif fmt == "csv":
+                csv_link_label = (label if resolved_context else
+                                  ("アーカイブ接続先" if language == "ja" else "Archive endpoint"))
+                csv_link_header = f"{csv_link_label} ({field})"
+                location_label = (f"{csv_link_header}列（先頭レコード）" if language == "ja"
+                                  else f"{csv_link_header} column (first record)")
+            elif fmt == "sqlite":
+                table_name = (f'{resolved_context["table"]}_connections'
+                              if resolved_context else "service_connections")
+                field = field if resolved_context else "archive"
+                location_label = f"{table_name}.endpoint (name={field})"
+            elif fmt == "xlsx":
+                if resolved_context:
+                    location_label = label
+                else:
+                    location_label = ("Connections sheet: Endpoint" if language == "en"
+                                      else "接続先シート: URL")
+            elif fmt in ("html", "pdf", "pptx"):
+                location_label = label
+            else:
+                location_label = field
+            metadata["canary_locations"] = [{"artifact": name, "element": fmt, "label": location_label}]
+        if fmt in ("xlsx", "pptx", "sqlite"):
+            metadata.update({"kind": "canary_file_preview", "format": fmt, "rows": count,
+                             "preview_columns": [column["name"] for column in columns],
+                             "preview_labels": [column.get("label", column["name"]) for column in columns],
+                             "preview_rows": sample_rows[:PREVIEW_ROW_LIMIT]})
+        return (*result, metadata)
+    return result

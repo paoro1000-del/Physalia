@@ -188,15 +188,6 @@ class HttpTests(unittest.TestCase):
         })
         self.assertEqual(status, 403)
 
-    def test_cloud_analysis_requires_local_origin_and_token(self):
-        payload = json.dumps({"records": [{"event": "decoy_contact", "outcome": "served"}]})
-        headers = {"Content-Type": "application/json", "Origin": "http://" + self.host, "X-ADG-Token": app.SESSION_TOKEN}
-        status, body = self.request("POST", "/api/analyze", payload, headers)
-        self.assertEqual(status, 200)
-        self.assertEqual(json.loads(body)["findings"][0]["rule"], "decoy_contact")
-        headers["Origin"] = "https://attacker.invalid"
-        self.assertEqual(self.request("POST", "/api/analyze", payload, headers)[0], 403)
-
     def test_api_errors_follow_selected_language(self):
         payload = json.dumps({"kind": "database", "settings": {"rows": 0}})
         for language, expected in (("ja", "件数"), ("en", "Record count")):

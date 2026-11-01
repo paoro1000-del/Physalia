@@ -1,7 +1,7 @@
 """Consistent synthetic business scenarios for archive and directory decoys."""
 import secrets
 
-from aideceptionguard.database import DATABASE_TEMPLATES
+from aideceptionguard.database import DATABASE_TEMPLATES, _template_columns
 from aideceptionguard.i18n import translate
 from aideceptionguard.validation import vault_decoy_domain
 
@@ -106,6 +106,16 @@ SCENARIOS = {
         "archive_stems": ("asset_archive", "device_backup", "equipment_history", "license_register",
                           "endpoint_snapshot", "hardware_records", "asset_reconciliation", "inventory_export"),
     },
+    "api_credentials": {
+        "title_ja": "\u0041\u0050\u0049\u8a8d\u8a3c\u60c5\u5831\u53f0\u5e33", "title_en": "API credential inventory",
+        "schema": "api_credentials", "context": "service", "env_key": "INTEGRATION_API_URL",
+        "canary_field": "api_endpoint",
+        "file_stems": ("api_credentials", "integration_keys", "service_tokens", "client_registry",
+                       "access_tokens", "application_access", "integration_registry", "credential_map",
+                       "api_consumers", "service_integrations"),
+        "archive_stems": ("integration_backup", "service_credentials", "api_registry", "client_secrets",
+                          "token_inventory", "application_access", "service_integration", "credential_records"),
+    },
     "cloud": {
         "title_ja": "クラウド資産一覧", "title_en": "Cloud resource inventory",
         "schema": "cloud", "context": "service", "env_key": "CLOUD_API_URL",
@@ -124,10 +134,7 @@ def scenario_for(settings, language="ja"):
     scenario = dict(SCENARIOS[name])
     template = DATABASE_TEMPLATES[scenario["schema"]]
     scenario["table"] = template["table"]
-    scenario["columns"] = [
-        {**column, **({"values": list(column["values"])} if "values" in column else {})}
-        for column in template["columns"]
-    ]
+    scenario["columns"] = _template_columns(scenario["schema"], language)
     if name == "passwords":
         domain = vault_decoy_domain(settings.get("vault_domain", ""),
                                     settings.get("vault_domain_authorized", False), language)

@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import argparse
 import base64
+import errno
+import html
 import json
 import io
 import math
+import re
 import secrets
 import socket
 import stat
@@ -21,24 +24,16 @@ from pathlib import Path, PurePosixPath
 from aideceptionguard.generators import generate
 from aideceptionguard.i18n import translate
 from aideceptionguard.database import public_templates
-from aideceptionguard.cloud_review import analyze
 
 STATIC = Path(__file__).parent / "web"
 INTEGRATION_BUNDLE_FILES = (
-    "LICENSE", "README_ja.md", "README.md", "SECURITY.md",
+    "LICENSE", "README.md", "READM.md", "README_ja.md", "SECURITY.md",
     "docs/deployment_ja.md", "docs/deployment_en.md", "docs/legal_ja.md", "docs/legal_en.md",
     "docs/agent_deception_strategy_and_design.html", "docs/ai.md", "docs/deception_evaluation.md",
+    "docs/log-review-guide_ja.md", "docs/log-review-guide_en.md",
     "examples/nginx-decoy.conf", "examples/nginx-stream-proxy.conf",
-    "examples/nginx-stream-token.conf.example", "examples/access_events.py",
-    "examples/nginx-recon-log.conf", "examples/review_http_recon.py",
-    "examples/recon-access-sample.jsonl",
-    "examples/decoy_state.py", "examples/cloud-review-sample.json",
-    "examples/cloud-review-stream-auth-sample.csv", "examples/entra-export-for-review.kql",
-    "examples/entra-signin-burst.kql", "examples/entra-distributed-signin-spray.kql",
-    "examples/entra-signin-velocity.kql",
-    "examples/entra-targeted-signin-failures.kql", "examples/entra-signin-after-failures.kql",
-    "examples/entra-audit-changes.kql", "examples/entra-app-graph.kql",
-    "examples/entra-agent-signins.kql",
+    "examples/nginx-stream-token.conf.example", "examples/decoy_state.py",
+    "examples/decoy-contact-sample.jsonl",
     "examples/agent-tool-approval-template.json",
     "examples/evaluate_deception.py", "examples/deception-evaluation-sample.json",
     "scripts/check_study_metadata_schema.py",
@@ -52,10 +47,8 @@ MAX_INTEGRATION_BUNDLE_BYTES = 64 * 1024 * 1024
 # Covers the UI's bounded 30-column schema and up to 820,000 characters of
 # canary URL assignments, including UTF-8 and JSON escaping overhead.
 MAX_REQUEST = 4 * 1024 * 1024
-MAX_ANALYSIS_REQUEST = 8 * 1024 * 1024
 SESSION_TOKEN = secrets.token_urlsafe(32)
 GENERATION_SLOT = threading.BoundedSemaphore(1)
-ANALYSIS_SLOT = threading.BoundedSemaphore(2)
 MAX_HTTP_WORKERS = 16
 REQUEST_TIMEOUT_SECONDS = 10
 REQUEST_HEADER_DEADLINE_SECONDS = 10
@@ -110,6 +103,67 @@ def _parse_finite_json_float(value, language):
     if not math.isfinite(number):
         raise ValueError(translate("invalid_input", language))
     return number
+
+
+def render_quickstart(content: bytes, language: str) -> bytes:
+    """Render the bundled quick-start Markdown without adding a dependency."""
+    language = language if language in ("ja", "en") else "ja"
+    detailed_guide = f"/guide/{language}"
+
+    def inline(text):
+        parts, position = [], 0
+        pattern = re.compile(r"`([^`]+)`|\*\*([^*]+)\*\*")
+        for match in pattern.finditer(text):
+            parts.append(html.escape(text[position:match.start()]))
+            if match.group(1) is not None:
+                value = match.group(1)
+                if value == detailed_guide:
+                    parts.append(f'<a href="{detailed_guide}">{html.escape(value)}</a>')
+                else:
+                    parts.append(f"<code>{html.escape(value)}</code>")
+            else:
+                parts.append(f"<strong>{html.escape(match.group(2))}</strong>")
+            position = match.end()
+        parts.append(html.escape(text[position:]))
+        return "".join(parts)
+
+    blocks, paragraph, list_items = [], [], []
+
+    def flush():
+        if paragraph:
+            blocks.append("<p>" + inline(" ".join(paragraph)) + "</p>")
+            paragraph.clear()
+        if list_items:
+            blocks.append("<ul>" + "".join(f"<li>{inline(item)}</li>" for item in list_items) + "</ul>")
+            list_items.clear()
+
+    for raw_line in content.decode("utf-8").splitlines():
+        line = raw_line.strip()
+        if not line:
+            flush()
+        elif line.startswith("# "):
+            flush()
+            blocks.append(f"<h1>{inline(line[2:])}</h1>")
+        elif line.startswith("## "):
+            flush()
+            blocks.append(f"<h2>{inline(line[3:])}</h2>")
+        elif line.startswith("- "):
+            if paragraph:
+                flush()
+            list_items.append(line[2:])
+        else:
+            if list_items:
+                flush()
+            paragraph.append(line)
+    flush()
+    title = "Create your first sample" if language == "en" else "まずはサンプルを作る"
+    back_label = "Back to the generator" if language == "en" else "生成画面に戻る"
+    page = f'''<!doctype html>
+<html lang="{language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; object-src 'none'; base-uri 'none'; form-action 'none">
+<title>{html.escape(title)}</title><style>*{{box-sizing:border-box}}body{{margin:0;background:#f3f6fa;color:#233247;font:16px/1.7 system-ui,-apple-system,"Segoe UI",sans-serif}}main{{max-width:780px;margin:32px auto;padding:28px;background:white;border:1px solid #dfe7eb;border-radius:10px}}h1{{margin-top:0;font-size:26px}}h2{{margin-top:28px;font-size:19px;color:#214e4c}}p,ul{{margin:12px 0}}li{{padding:3px 0}}code{{padding:2px 5px;background:#f0f4f6;border-radius:4px;font-size:.92em}}a{{color:#126653}}.back-link{{display:inline-block;margin-bottom:18px;font-size:14px}}a:focus-visible{{outline:3px solid #397ca7;outline-offset:3px}}@media(max-width:820px){{main{{margin:12px;padding:20px;border-radius:0}}}}</style></head>
+<body><main><nav aria-label="{html.escape(back_label)}"><a class="back-link" href="/">← {html.escape(back_label)}</a></nav>{''.join(blocks)}</main></body></html>'''
+    return page.encode("utf-8")
 
 
 class LocalThreadingHTTPServer(ThreadingHTTPServer):
@@ -203,7 +257,7 @@ class Handler(BaseHTTPRequestHandler):
         self._header_deadline_timer.cancel()
         return parsed
 
-    def _headers(self, status: int, mime: str, body: bytes):
+    def _headers(self, status: int, mime: str, body: bytes, csp: str | None = None):
         # Request parsing uses a short timeout to bound slow clients. Give
         # finite artifact responses a longer write window so large downloads
         # are not cut off by the request-header timeout.
@@ -218,7 +272,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Cross-Origin-Resource-Policy", "same-origin")
         self.send_header("Cross-Origin-Opener-Policy", "same-origin")
         self.send_header("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=()")
-        self.send_header("Content-Security-Policy", "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
+        self.send_header("Content-Security-Policy", csp or "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
         if self.close_connection:
             self.send_header("Connection", "close")
         self.end_headers()
@@ -272,12 +326,27 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(403, {"error": translate("forbidden_host", language)})
         if self.path == "/api/database-templates":
             return self._json(200, {"templates": public_templates(language)})
-        if self.path == "/cloud-review-sample.json":
-            return self._headers(200, "application/json; charset=utf-8", (STATIC.parent / "examples" / "cloud-review-sample.json").read_bytes())
+        if self.path == "/license":
+            content = (STATIC.parent / "LICENSE").read_bytes()
+            return self._headers(200, "text/plain; charset=utf-8", content)
         if self.path in ("/guide", "/guide/en", "/guide/ja"):
             suffix = "en" if self.path.endswith("/en") else "ja"
             content = (STATIC.parent / "docs" / f"deployment_{suffix}.md").read_bytes()
             return self._headers(200, "text/plain; charset=utf-8", content)
+        if self.path in ("/quickstart/en", "/quickstart/ja"):
+            suffix = "en" if self.path.endswith("/en") else "ja"
+            content = (STATIC.parent / "docs" / f"quickstart_{suffix}.md").read_bytes()
+            return self._headers(
+                200, "text/html; charset=utf-8", render_quickstart(content, suffix),
+                csp="default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
+            )
+        if self.path in ("/log-guide/en", "/log-guide/ja"):
+            suffix = "en" if self.path.endswith("/en") else "ja"
+            content = (STATIC.parent / "docs" / f"log-review-guide_{suffix}.md").read_bytes()
+            return self._headers(
+                200, "text/html; charset=utf-8", render_quickstart(content, suffix),
+                csp="default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
+            )
         if self.path in ("/legal/en", "/legal/ja"):
             suffix = "en" if self.path.endswith("/en") else "ja"
             content = (STATIC.parent / "docs" / f"legal_{suffix}.md").read_bytes()
@@ -288,7 +357,7 @@ class Handler(BaseHTTPRequestHandler):
                  "/app.js": ("app.js", "text/javascript; charset=utf-8"),
                  "/json_utils.js": ("json_utils.js", "text/javascript; charset=utf-8"),
                  "/style.css": ("style.css", "text/css; charset=utf-8"),
-                 "/cloud_review.js": ("cloud_review.js", "text/javascript; charset=utf-8")}
+                 }
         if self.path not in files:
             return self._json(404, {"error": translate("not_found", language)})
         name, mime = files[self.path]
@@ -310,14 +379,13 @@ class Handler(BaseHTTPRequestHandler):
         if (not self._valid_host() or self._single_header("Origin") != origin
                 or not token_valid):
             return self._json(403, {"error": translate("forbidden", language)})
-        if self.path not in ("/api/generate", "/api/analyze"):
+        if self.path != "/api/generate":
             return self._json(404, {"error": translate("not_found", language)})
         content_types = self.headers.get_all("Content-Type", [])
         charset = self.headers.get_content_charset()
         if (len(content_types) != 1 or self.headers.get_content_type() != "application/json"
                 or (charset is not None and charset.casefold() not in ("utf-8", "utf8"))):
             return self._json(415, {"error": translate("json_required", language)})
-        analysis_acquired = False
         try:
             lengths = self.headers.get_all("Content-Length", [])
             if self.headers.get_all("Transfer-Encoding") or len(lengths) != 1:
@@ -326,13 +394,8 @@ class Handler(BaseHTTPRequestHandler):
             if not raw_length.isascii() or not raw_length.isdecimal():
                 raise ValueError(translate("invalid_input", language))
             size = int(raw_length)
-            limit = MAX_ANALYSIS_REQUEST if self.path == "/api/analyze" else MAX_REQUEST
-            if not 0 < size <= limit:
+            if not 0 < size <= MAX_REQUEST:
                 raise ValueError(translate("request_size", language))
-            if self.path == "/api/analyze":
-                if not ANALYSIS_SLOT.acquire(blocking=False):
-                    return self._json(429, {"error": translate("analysis_in_progress", language)})
-                analysis_acquired = True
             body = self._read_body(size)
             if len(body) != size:
                 raise ValueError(translate("invalid_input", language))
@@ -345,8 +408,6 @@ class Handler(BaseHTTPRequestHandler):
                               parse_float=lambda value: _parse_finite_json_float(value, language))
             if not isinstance(data, dict):
                 raise ValueError(translate("invalid_input", language))
-            if self.path == "/api/analyze":
-                return self._json(200, analyze(data.get("records"), language))
             if not GENERATION_SLOT.acquire(blocking=False):
                 return self._json(429, {"error": translate("generation_in_progress", language)})
             try:
@@ -374,11 +435,6 @@ class Handler(BaseHTTPRequestHandler):
             self._json(400, {"error": str(exc)})
         except Exception:
             self._json(500, {"error": translate("generation_failed", language)})
-        finally:
-            if analysis_acquired:
-                ANALYSIS_SLOT.release()
-
-
 def main():
     language_parser = argparse.ArgumentParser(add_help=False)
     language_parser.add_argument("--lang", choices=("ja", "en"), default="ja")
@@ -389,7 +445,12 @@ def main():
     args = parser.parse_args()
     if not 0 <= args.port <= 65535:
         parser.error(translate("port_error", language))
-    server = LocalThreadingHTTPServer(("127.0.0.1", args.port), Handler)
+    try:
+        server = LocalThreadingHTTPServer(("127.0.0.1", args.port), Handler)
+    except OSError as exc:
+        if exc.errno == errno.EADDRINUSE:
+            parser.exit(1, translate("port_in_use", language, port=args.port) + "\n")
+        raise
     url = f"http://127.0.0.1:{server.server_port}/"
     print(translate("server_started", language, url=url), flush=True)
     if args.open:

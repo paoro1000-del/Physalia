@@ -14,6 +14,7 @@ DOCUMENTS = (
     ROOT / ".github" / "README.md",
     ROOT / "README_ja.md",
     ROOT / "README.md",
+    ROOT / "READM.md",
     ROOT / "CONTRIBUTING.md",
     ROOT / "SECURITY.md",
     *sorted((ROOT / "docs").glob("*.md")),
@@ -22,7 +23,6 @@ DOCUMENTS = (
 UI_SOURCE_FILES = (
     ROOT / "web" / "index.html",
     ROOT / "web" / "app.js",
-    ROOT / "web" / "cloud_review.js",
     ROOT / "aideceptionguard" / "i18n.py",
 )
 CODE_SOURCE_FILES = (

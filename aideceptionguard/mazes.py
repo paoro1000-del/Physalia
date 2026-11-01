@@ -86,7 +86,7 @@ def validate_bundle_files(files, language="ja"):
         seen_directories.update(prefixes)
 
 
-def bundle(name, files, inventory, summary, language="ja"):
+def bundle(name, files, inventory, summary, language="ja", size_error_key="maze_size_limit"):
     validate_bundle_files(files, language)
     output = io.BytesIO()
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as archive:
@@ -94,7 +94,7 @@ def bundle(name, files, inventory, summary, language="ja"):
             write_archive_member(archive, path, data, language=language)
     deployment = output.getvalue()
     if len(deployment) > MAX_MAZE_BYTES:
-        raise ValueError(translate("maze_size_limit", language))
+        raise ValueError(translate(size_error_key, language))
     operator = Artifact(name + ".operator.json", "application/json",
                         json.dumps(inventory, ensure_ascii=False, indent=2, allow_nan=False).encode("utf-8"))
     return Artifact(name + "_deployment.zip", "application/zip", deployment, [operator], summary)
@@ -176,7 +176,7 @@ def generate_directory_maze(settings, language="ja"):
                                                    canary_cell=canary_cell))
             size += len(content)
             if size > MAX_MAZE_BYTES:
-                raise ValueError(translate("maze_size_limit", language))
+                raise ValueError(translate("directory_maze_size_limit", language))
             files.append((path, content))
             documents.append(path)
             if token_url:
@@ -226,7 +226,7 @@ def generate_directory_maze(settings, language="ja"):
                 '</main></body></html>').encode("utf-8")
         size += len(page)
         if size > MAX_MAZE_BYTES:
-            raise ValueError(translate("maze_size_limit", language))
+            raise ValueError(translate("directory_maze_size_limit", language))
         files.append((posixpath.join(node, "index.html"), page))
         inventory.append({"directory": node or ".", "links": links, "documents": documents,
                           "canary_files": canary_files})
@@ -236,7 +236,7 @@ def generate_directory_maze(settings, language="ja"):
                "canary_placements": canary_placements}
     return bundle(name, files, {"warning": translate("maze_operator_warning", language), "entrypoint": "index.html",
                                 "scenario": scenario_name, "schema": scenario["schema"],
-                                "nodes": inventory, "summary": summary}, summary, language)
+                                "nodes": inventory, "summary": summary}, summary, language, "directory_maze_size_limit")
 
 
 def encode_payload(data, codec):
@@ -295,12 +295,12 @@ def generate_encoding_maze(settings, language="ja"):
             # Limit before expansion and after serialization; no archive bomb or unbounded allocation.
             multiplier = 3 if codec == "percent" else 2 if codec == "hex" else 1.4
             if len(content) * multiplier + 1024 > MAX_MAZE_BYTES:
-                raise ValueError(translate("maze_size_limit", language))
+                raise ValueError(translate("encoding_maze_size_limit", language))
             content = json.dumps({"encoding": codec, "payload": encode_payload(content, codec)},
                                  separators=(",", ":"), allow_nan=False).encode("utf-8")
             pipeline.insert(0, codec)
         if size + len(content) > MAX_MAZE_BYTES:
-            raise ValueError(translate("maze_size_limit", language))
+            raise ValueError(translate("encoding_maze_size_limit", language))
         size += len(content)
         files.append((path, content))
         detail = {"path": path, "decode_order": pipeline,
@@ -316,12 +316,12 @@ def generate_encoding_maze(settings, language="ja"):
     index = {"exports": [{"path": path} for path in public_paths]}
     index_content = json.dumps(index, indent=2, allow_nan=False).encode("utf-8")
     if size + len(index_content) > MAX_MAZE_BYTES:
-        raise ValueError(translate("maze_size_limit", language))
+        raise ValueError(translate("encoding_maze_size_limit", language))
     rng.shuffle(files)
     files.append(("index.json", index_content))
     summary = {"kind": "encoding_maze", "scenario": scenario_name, "candidates": count, "layers": layers,
                "canary_placements": sum(bool(item["canary"]) for item in inventory)}
-    return bundle(name, files, {"warning": translate("maze_operator_warning", language), "candidates": inventory, "summary": summary}, summary, language)
+    return bundle(name, files, {"warning": translate("maze_operator_warning", language), "candidates": inventory, "summary": summary}, summary, language, "encoding_maze_size_limit")
 
 
 def generate_stream_sample(settings, language="ja"):

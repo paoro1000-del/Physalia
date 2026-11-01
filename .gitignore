@@ -56,6 +56,8 @@ adg-settings.json
 adg-settings ([0-9]*).json
 *_deployment.zip
 *_deployment ([0-9]*).zip
+*_site.zip
+*_site ([0-9]*).zip
 service.env.txt
 service.env ([0-9]*).txt
 portal.html
@@ -67,6 +69,7 @@ portal ([0-9]*).html
 .ruff_cache/
 .coverage*
 coverage.xml
+logs/
 *.log
 adg-access.jsonl
 adg-access.jsonl.*

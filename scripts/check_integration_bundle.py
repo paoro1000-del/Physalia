@@ -14,12 +14,12 @@ FORBIDDEN_SUFFIXES = {
     ".operator.json", ".inventory.json", ".pem", ".key", ".p12", ".pfx",
 }
 REQUIRED_FILES = {
-    "LICENSE", "README_ja.md", "README.md",
+    "LICENSE", "README.md", "READM.md", "README_ja.md",
     "docs/deployment_ja.md", "docs/deployment_en.md",
+    "docs/log-review-guide_ja.md", "docs/log-review-guide_en.md",
     "docs/legal_ja.md", "docs/legal_en.md",
-    "examples/nginx-decoy.conf", "examples/nginx-recon-log.conf",
+    "examples/nginx-decoy.conf", "examples/decoy-contact-sample.jsonl",
     "examples/nginx-stream-proxy.conf", "examples/nginx-stream-token.conf.example",
-    "examples/access_events.py", "examples/review_http_recon.py",
     "examples/verify_inventory.py",
 }
 

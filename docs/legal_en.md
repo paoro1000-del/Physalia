@@ -27,7 +27,6 @@ The National Police Agency's current illegal-information guidance also lists imp
 | Infinite Stream | Serving an endless response from an authorized server ordinarily does not itself constitute unauthorized access. | Bypassing another party's access controls to deploy it can implicate Articles 2 and 3. Harm to an authorized third party may raise separate obstruction or civil-liability questions. Neither public access alone nor authentication alone determines the outcome. |
 | Directory Maze | Creating finite directories and links on authorized hosting ordinarily is not unauthorized access. | Bypassing a third party's access controls without authority to deploy them can implicate Articles 2 and 3. |
 | Encoding Maze | Encoding and restoring synthetic files ordinarily is not unauthorized access. | Unauthorized login using recovered third-party credentials can implicate Articles 2 and 3. Offline encoding or decoding alone is not unauthorized access under this Act. |
-| Identity/cloud log review | Analyzing logs the operator is authorized to access locally ordinarily is not unauthorized access. | Unauthorized login using another person's credentials can implicate Articles 2 and 3. Handling personal information in logs is a separate issue. |
 
 ## Samples and design concepts
 
