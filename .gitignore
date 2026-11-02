@@ -73,6 +73,7 @@ portal ([0-9]*).html
 .coverage*
 coverage.xml
 logs/
+temp/
 *.log
 adg-access.jsonl
 adg-access.jsonl.*

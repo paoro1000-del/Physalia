@@ -18,37 +18,45 @@
     <p class="aside-label" data-i18n="workspace">メニュー</p>
     <nav class="side-nav" aria-label="メインメニュー" data-i18n-aria="main_navigation">
       <button type="button" data-page-target="intro" aria-current="page" data-i18n="nav_intro">初めに</button>
-      <button type="button" data-page-target="generator" data-i18n="nav_generator">対策サンプル生成</button>
+      <button type="button" data-page-target="generator" data-i18n="nav_generator">対策紹介とサンプル生成</button>
+      <button type="button" data-page-target="canary" data-i18n="nav_canary">カナリア接触ログ</button>
       <button type="button" data-page-target="logs" data-i18n="nav_logs">ログ分析解説</button>
       <button type="button" data-page-target="license" data-i18n="nav_license">ライセンス・著作権</button>
     </nav>
     <div class="aside-bottom">
-      <div class="sidebar-language"><label for="language" class="language-label" data-i18n="language">言語</label><select id="language"><option value="ja">日本語</option><option value="en">English</option></select></div>
+      <div class="sidebar-language"><label for="language" class="language-label">Language</label><select id="language"><option value="ja">日本語</option><option value="en">English</option></select></div>
       <p class="app-version">ver: __APP_VERSION__</p>
     </div>
   </aside>
   <main id="main-content" tabindex="-1">
-    <header class="top"><span id="workspace-page-title" data-i18n="workspace_page_intro">初めに</span></header>
     <noscript><p class="notice" role="alert">JavaScriptを有効にしてください。この画面ではブラウザー上でサンプルを作成します。</p></noscript>
     <div class="content">
       <section id="page-intro" class="workspace-page intro-page" aria-labelledby="intro-page-title">
-        <div class="intro"><div><div class="eyebrow" data-i18n="intro_eyebrow">Physalia</div><h1 id="intro-page-title" tabindex="-1" data-i18n="intro_title">このツールについて</h1><p data-i18n="intro_lead">架空のデコイファイルやサンプルWebページを作り、侵入後の探索・持ち出しに備えるローカルツールです。</p></div></div>
-        <div class="notice"><strong data-i18n="intro_purpose_label">目的</strong><span data-i18n="intro_purpose">本物らしい架空データを使ったデコイやカナリアを準備し、攻撃者の探索を誘導したり、指定URLへのアクセスを監視サービスで検知したりするための素材を作ります。防御・監視・自動配置を代替するものではありません。</span></div>
+        <div class="intro intro-overview"><div><div class="eyebrow" data-i18n="intro_eyebrow">初めに</div><h1 id="intro-page-title" tabindex="-1" data-i18n="intro_title">Physaliaについて</h1><p data-i18n-emphasis="intro_lead">Physaliaは、<strong>攻撃者の侵入後に備える対策</strong>を紹介し、架空のファイルやサンプルを生成するローカルツールです。</p><p data-i18n="intro_purpose">予算や人手が限られる環境でも、対策の仕組みや注意点を学び、自分の環境に合う方法を探せます。一部の手法は説明のみを提供します。</p></div></div>
+        <img class="intro-hero-image" src="/images/00-0001_Main.jpg" alt="" width="2848" height="1504">
+        <section class="panel intro-panel intro-concept" aria-labelledby="intro-concept-title">
+          <h2 id="intro-concept-title" data-i18n="intro_concept_title">コンセプト（対策の考え方）</h2>
+          <p data-i18n-emphasis="intro_prevention">そもそもの侵入を防ぎたい場合や、定期バックアップなどの一般的なランサムウェア対策を重視する場合は、まず<strong>市販のアンチウイルスソフトなどのセキュリティ製品</strong>の導入をおすすめします。</p>
+          <p data-i18n-emphasis="intro_after_intrusion">それでも侵入を許す場合に備え、Physaliaはデコイなどで<strong>攻撃者の探索に手間を加え、検知・対応の機会を作る</strong>対策を紹介します。AIやスクリプトによる自動探索でも、デコイが必ず見分けられるとは限りません。</p>
+          <p data-i18n="intro_concept_scope">手法には、従来の考え方を使うものや、AIが普及した環境に合わせたものがあります。効果は配置や攻撃者の行動によって異なります。</p>
+          <p data-i18n-emphasis="intro_inspiration">完全に防げるかだけでなく、<strong>攻撃者の手間を増やし、対応の機会を作れるか</strong>も対策を考える軸です。紹介する手法が、その検討のヒントになればと考えています。</p>
+          <p data-i18n-emphasis="intro_boundary">紹介する対策について、<strong>攻撃者の立場から「どうすれば突破できるか」</strong>を考えてみてください。AIと壁打ちして、突破方法が思いつくのか確認してみるのもよいでしょう。突破に手間がかかる、あるいは突破方法が思いつかない対策は、採用を検討する価値があります。</p>
+        </section>
         <section class="panel intro-panel" aria-labelledby="intro-how-title">
           <h2 id="intro-how-title" data-i18n="intro_how_title">使い方</h2>
           <ol class="intro-steps">
-            <li data-i18n="intro_step_1">「対策サンプル生成」を開き、手法の説明を読んでから設定を選びます。</li>
-            <li data-i18n="intro_step_2">架空のファイルを作成し、プレビューまたはダウンロードで内容を確認します。</li>
-            <li data-i18n="intro_step_3">利用する場合は、自分が管理する隔離環境へ手動で配置し、ログ・通知・撤去手順を別途用意します。</li>
+            <li data-i18n-emphasis="intro_step_1">「対策紹介とサンプル生成」を開き、<strong>心配なことから対策を探します</strong>。</li>
+            <li data-i18n-emphasis="intro_step_2"><strong>対策の仕組みや注意点</strong>を読み、必要に応じてサンプルを生成します。</li>
+            <li data-i18n-emphasis="intro_step_3">生成した内容を確認し、<strong>自分が管理する環境に手動で配置</strong>します。監視が必要な手法では、通知先などを別途用意します。</li>
           </ol>
-          <button type="button" class="intro-primary" data-page-target="generator" data-i18n="intro_start">サンプルを作成する</button>
+          <button type="button" class="intro-primary" data-page-target="generator" data-i18n="intro_start">対策を探す</button>
         </section>
         <section class="panel intro-panel" aria-labelledby="intro-limits-title">
-          <h2 id="intro-limits-title" data-i18n="intro_limits_title">知っておくこと</h2>
+          <h2 id="intro-limits-title" data-i18n="intro_limits_title">補足情報</h2>
           <ul class="intro-limits">
-            <li data-i18n="intro_limit_synthetic">生成データは架空です。実在の個人情報、実際に使える認証情報、決済カード番号は生成しません。</li>
-            <li data-i18n="intro_limit_canary">カナリアURLは任意です。空欄なら実際の監視通知はありません。生成器はURLへ接続せず、ファイルを読むだけでも通常はHTTP通知されません。</li>
-            <li data-i18n="intro_limit_effect">デコイは侵入を防止せず、検知や遅滞も保証しません。配置先と攻撃者の行動により効果が変わります。</li>
+            <li data-i18n-emphasis="intro_limit_synthetic"><strong>生成データは架空です。</strong>実在の個人情報、実際に使える認証情報、決済カード番号は生成しません。</li>
+            <li data-i18n-emphasis="intro_limit_canary">カナリアページURLは任意です。空欄なら実際の監視通知はありません。生成器はURLへ接続せず、<strong>ファイルを読むだけでも通常はHTTP通知されません。</strong></li>
+            <li data-i18n-emphasis="intro_limit_effect"><strong>対策の効果は、配置先や攻撃者の行動によって変わります。</strong>自分の環境に合わせて、仕組みと注意点を確認してください。</li>
           </ul>
           <p class="intro-help"><a href="/quickstart/ja" id="intro-quick-guide" target="_blank" rel="noopener" data-i18n="quick_guide_link">はじめての作成・配置ガイド</a></p>
           <p class="intro-help"><a href="/log-guide/ja" id="intro-log-guide" target="_blank" rel="noopener" data-i18n="log_guide_link">ログの記録と手動確認ガイド</a></p>
@@ -56,7 +64,7 @@
       </section>
       <section id="page-logs" class="workspace-page" aria-labelledby="logs-page-title" hidden>
         <div class="intro"><div><div class="eyebrow" data-i18n="logs_eyebrow">MANUAL LOG REVIEW</div><h1 id="logs-page-title" tabindex="-1" data-i18n="logs_title">ログ分析解説</h1><p data-i18n="logs_intro">このページは、デコイへの接触を自社の既存ログで確認するための考え方と記録例です。</p></div><span class="version" data-i18n="logs_badge">手動確認</span></div>
-        <div class="notice"><strong data-i18n="logs_scope_title">この機能について</strong><span data-i18n="logs_scope">このアプリはログを取り込まず、自動分析・判定もしません。ここでは記録項目と担当者が確認する手順を説明します。</span></div>
+        <div class="notice"><strong data-i18n="logs_scope_title">この機能について</strong><span data-i18n="logs_scope">このページでは既存ログの確認方法を説明します。外部ログの取り込みや自動分析は行いません。このPCの接触記録は「カナリア接触ログ」で確認できます。</span></div>
         <section class="panel intro-panel" aria-labelledby="logs-fields-title">
           <h2 id="logs-fields-title" data-i18n="logs_fields_title">必要最小限の記録項目</h2>
           <ul class="intro-limits">
@@ -89,76 +97,87 @@
           <p class="intro-help"><a id="log-guide-full" href="/log-guide/ja" target="_blank" rel="noopener" data-i18n="logs_full_guide">詳細な記録例・運用上の注意を読む</a></p>
         </section>
       </section>
-      <section id="page-generator" class="workspace-page" aria-label="対策サンプル生成" data-i18n-aria="nav_generator" hidden>
-      <div class="intro"><div><div class="eyebrow" data-i18n="assets_eyebrow">デコイ生成</div><h1 data-i18n="create">デコイを作成</h1><p data-i18n="intro">手法を選び、仕組みや対象となる攻撃を確認してから生成します。</p></div></div>
+      <section id="page-canary" class="workspace-page" aria-labelledby="local-canary-title" hidden>
+        <div class="intro"><div><h1 id="local-canary-title" tabindex="-1" data-i18n="local_canary_title">このPCのカナリア接触ログ</h1><p data-i18n="local_canary_help">Physaliaが起動中の同じPCからの接触を記録します。ログは最大500件、アプリ終了時に消えます。</p><p><span data-i18n="local_canary_url">現在のカナリアページURL</span>: <a id="local-canary-url" href="__LOCAL_CANARY_URL__" target="_blank" rel="noopener noreferrer"><code>__LOCAL_CANARY_URL__</code></a></p></div></div>
+        <section class="local-canary-panel" aria-label="接触ログ" data-i18n-aria="nav_canary">
+          <p data-i18n="local_canary_privacy">接続時の情報、ブラウザーが提供する画面・端末情報、許可された場合の位置情報を記録します。値は偽装・省略される場合があり、自動操作フラグだけでサンドボックスを判定できません。利用許可を得た環境で使い、閲覧を制限してください。</p>
+          <p data-i18n="local_canary_limit">この機能は同じPCからの接触のみを受け付けます。送信元IPは通常127.0.0.1です。</p>
+          <ol id="local-canary-events" aria-live="polite"><li data-i18n="local_canary_empty">接触ログはありません。</li></ol>
+          <p><a class="canary-kit-link" href="/canary-homepage-kit.zip" download data-i18n="canary_kit_download">カナリアページ作製キットをダウンロード</a></p>
+        </section>
+      </section>
+      <section id="page-generator" class="workspace-page" aria-label="対策紹介とサンプル生成" data-i18n-aria="nav_generator" hidden>
+      <div class="intro"><div><h1 data-i18n="create">対策紹介とサンプル生成</h1></div></div>
       <div class="notice"><strong data-i18n="getting_started">はじめに</strong><span data-i18n="notice">手法を選び、仕組みや対象となる攻撃を確認してから生成します。生成物は架空データで、自動配置されません。監視URLを入れない場合、カナリア通知は発生しません。</span></div>
-      <div class="section-head"><div><span class="step">01</span><h2 data-i18n="select_method">手法を選択</h2></div><span data-i18n="file_type">狙う役割から選択</span></div>
-      <p class="category-intro" data-i18n="category_intro">タグは各手法が狙う役割です。複数の役割を持つ手法もあります。効果は配置や攻撃者の行動により変わります。</p>
-      <details class="category-guide"><summary data-i18n="category_guide">タグの意味を見る</summary><p data-i18n="category_description">検知：デコイ接触や使用の把握。遅延：攻撃者の作業を増やす。デコイ誘導：偽の資産や画面へ誘う。流出後の攪乱：持ち出された候補の判断や利用を難しくする。AI攻撃を想定：AIエージェントなどを使った攻撃も評価対象で、人間やスクリプトによる攻撃にも作用し得ます。検知・通知は別途設定が必要な場合があり、どの効果も保証されません。</p></details>
-      <div class="cards" role="radiogroup" aria-label="作成する手法" data-i18n-aria="select_method">
-        <label class="card"><input type="radio" name="kind" value="env" checked><span class="icon teal">⌁</span><strong data-i18n="canary_file">カナリアファイル</strong><small data-i18n="canary_card">監視URLの利用を手掛かりに不審な接触を検知</small><span class="method-tags"><span class="method-tag detect" data-i18n="tag_detect">検知</span></span><span class="card-foot"><span data-i18n="canary_formats_foot">複数形式</span> <b>↗</b></span></label>
-        <label class="card"><input type="radio" name="kind" value="nest"><span class="icon violet">◇</span><strong data-i18n="nest_title">エンクリプテッド・ディープ・ネスト</strong><small data-i18n="nest_card">暗号化された偽候補を重ねて探索を遅らせる</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span><span class="method-tag leak" data-i18n="tag_leak">流出後の攪乱</span><span class="method-tag ai" data-i18n="tag_ai">AI攻撃を想定</span></span><span class="card-foot">AES ZIP <b>↗</b></span></label>
-        <label class="card"><input type="radio" name="kind" value="database"><span class="icon blue">▤</span><strong data-i18n="database_title">デコイ・データベース</strong><small data-i18n="database_card">架空のデータベースで真偽の判断を迷わせる</small><span class="method-tags"><span class="method-tag lure" data-i18n="tag_lure">デコイ誘導</span><span class="method-tag leak" data-i18n="tag_leak">流出後の攪乱</span><span class="method-tag delay" data-i18n="tag_delay">遅延</span></span><span class="card-foot">SQLITE <b>↗</b></span></label>
-        <label class="card"><input type="radio" name="kind" value="web"><span class="icon amber">▦</span><strong data-i18n="web_title">スタティック・デコイ・ポータル</strong><small data-i18n="web_card">偽のポータル画面で探索を誘い込む</small><span class="method-tags"><span class="method-tag lure" data-i18n="tag_lure">デコイ誘導</span><span class="method-tag detect" data-i18n="tag_detect">検知</span></span><span class="card-foot">HTML <b>↗</b></span></label>
-        <label class="card"><input type="radio" name="kind" value="fake_trap"><span class="icon amber">⚑</span><strong data-i18n="fake_title">フェイクトラップ</strong><small data-i18n="fake_card">警告や待機表示で再確認を促す</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span><span class="method-tag ai" data-i18n="tag_ai">AI攻撃を想定</span></span><span class="card-foot">HTML <b>↗</b></span></label>
-        <label class="card"><input type="radio" name="kind" value="data_dilution"><span class="icon blue">≋</span><strong data-i18n="dilution_title">データ・ディルーション</strong><small data-i18n="dilution_card">本物に偽レコードを混ぜて選別を困難に</small><span class="method-tags"><span class="method-tag leak" data-i18n="tag_leak">流出後の攪乱</span></span><span class="card-foot"><span data-i18n="overview_only">解説のみ・生成機能なし</span> <b>↗</b></span></label>
-        <label class="card"><input type="radio" name="kind" value="honeyword"><span class="icon violet">◇</span><strong data-i18n="honeyword_title">プリビレッジ・ハニーワード・セッション</strong><small data-i18n="honeyword_card">偽パスワードで隔離デコイへ誘導</small><span class="method-tags"><span class="method-tag detect" data-i18n="tag_detect">検知</span><span class="method-tag lure" data-i18n="tag_lure">デコイ誘導</span><span class="method-tag delay" data-i18n="tag_delay">遅延</span></span><span class="card-foot"><span data-i18n="overview_only">解説のみ・生成機能なし</span> <b>↗</b></span></label>
-        <label class="card"><input type="radio" name="kind" value="stream"><span class="icon violet">∞</span><strong data-i18n="stream_title">インフィニット・ストリーム</strong><small data-i18n="stream_card">終わりのない配信でダウンロードを引き延ばす</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span><span class="method-tag lure" data-i18n="tag_lure">デコイ誘導</span></span><span class="card-foot">PYTHON SERVER <b>↗</b></span></label>
-        <label class="card"><input type="radio" name="kind" value="directory_maze"><span class="icon teal">⌘</span><strong data-i18n="directory_title">ディレクトリ・メイズ</strong><small data-i18n="directory_card">偽ファイルを階層に配置して探索を増やす</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span><span class="method-tag lure" data-i18n="tag_lure">デコイ誘導</span><span class="method-tag ai" data-i18n="tag_ai">AI攻撃を想定</span></span><span class="card-foot">STATIC ZIP <b>↗</b></span></label>
-        <label class="card"><input type="radio" name="kind" value="encoding_maze"><span class="icon blue">≋</span><strong data-i18n="encoding_title">エンコーディング・メイズ</strong><small data-i18n="encoding_card">多段変換した偽候補で内容の確認を増やす</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span><span class="method-tag leak" data-i18n="tag_leak">流出後の攪乱</span><span class="method-tag ai" data-i18n="tag_ai">AI攻撃を想定</span></span><span class="card-foot">ENCODED ZIP <b>↗</b></span></label>
+      <div class="section-head"><div><span class="step">01</span><h2 data-i18n="fit_question">まず、備えたい環境や状況を選ぶ</h2></div><span data-i18n="fit_optional">後から変更できます</span></div>
+      <div class="method-filters" role="group" aria-label="環境・状況で候補を絞る" data-i18n-aria="fit_question">
+        <button type="button" class="method-filter" data-fit-filter="all" aria-pressed="true" data-i18n="fit_all">すべて</button>
+        <button type="button" class="method-filter" data-fit-filter="files" aria-pressed="false" data-i18n="fit_files">ファイル・設定情報</button>
+        <button type="button" class="method-filter" data-fit-filter="ransomware" aria-pressed="false" data-i18n="fit_ransomware">ランサムウェアでファイルを暗号化されそう</button>
+        <button type="button" class="method-filter" data-fit-filter="website" aria-pressed="false" data-i18n="fit_website">Webサイト・パス探索</button>
+        <button type="button" class="method-filter" data-fit-filter="database" aria-pressed="false" data-i18n="fit_database">データベース</button>
+        <button type="button" class="method-filter" data-fit-filter="credentials" aria-pressed="false" data-i18n="fit_credentials">認証情報・アカウント</button>
+        <button type="button" class="method-filter" data-fit-filter="exfiltration" aria-pressed="false" data-i18n="fit_exfiltration">持ち出し・流出後</button>
       </div>
-      <div class="section-head second"><div><span class="step">02</span><h2 data-i18n="settings">設定</h2></div><span data-i18n="method_settings">選択した手法の設定</span></div>
+      <div class="section-head candidate-method-heading"><div><span class="step">02</span><h2 data-i18n="select_method">候補から対策を選ぶ</h2></div><div class="method-list-tools"><span id="method-result-count" role="status" aria-live="polite"></span><details class="category-guide"><summary data-i18n="category_guide">タグの意味を見る</summary><p data-i18n="category_description">検知：デコイ接触や使用の把握。遅延：攻撃者の作業を増やす。デコイ誘導：偽の資産や画面へ誘う。流出後の攪乱：持ち出された候補の判断や利用を難しくする。AI攻撃を想定：AIエージェントなどを使った攻撃も評価対象で、人間やスクリプトによる攻撃にも作用し得ます。検知・通知は別途設定が必要な場合があり、どの効果も保証されません。</p></details></div></div>
+      <div class="cards" role="radiogroup" aria-label="作成する手法" data-i18n-aria="select_method">
+        <label class="card" data-fit="files credentials"><input type="radio" name="kind" value="env" checked><span class="icon teal">⌁</span><strong data-i18n="canary_file">カナリアファイル</strong><small data-i18n="canary_card">監視URLへのアクセスを接触の手掛かりに</small><span class="method-tags"><span class="method-tag detect" data-i18n="tag_detect">検知</span></span><span class="card-foot"><span data-i18n="canary_formats_foot">複数形式</span> <b>↗</b></span></label>
+        <label class="card" data-fit="files credentials exfiltration"><input type="radio" name="kind" value="nest"><span class="icon violet">◇</span><strong data-i18n="nest_title">エンクリプテッド・ディープ・ネスト</strong><small data-i18n="nest_card">暗号化された偽候補を重ねて探索を遅らせる</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span><span class="method-tag leak" data-i18n="tag_leak">流出後の攪乱</span><span class="method-tag ai" data-i18n="tag_ai">AI攻撃を想定</span></span><span class="card-foot">AES ZIP <b>↗</b></span></label>
+        <label class="card" data-fit="database exfiltration"><input type="radio" name="kind" value="database"><span class="icon blue">▤</span><strong data-i18n="database_title">デコイ・データベース</strong><small data-i18n="database_card">架空のデータベースで真偽の判断を迷わせる</small><span class="method-tags"><span class="method-tag lure" data-i18n="tag_lure">デコイ誘導</span><span class="method-tag leak" data-i18n="tag_leak">流出後の攪乱</span><span class="method-tag delay" data-i18n="tag_delay">遅延</span></span><span class="card-foot">SQLITE <b>↗</b></span></label>
+        <label class="card" data-fit="website"><input type="radio" name="kind" value="web"><span class="icon amber">▦</span><strong data-i18n="web_title">スタティック・デコイ・ポータル</strong><small data-i18n="web_card">偽のポータル画面で探索を誘い込む</small><span class="method-tags"><span class="method-tag lure" data-i18n="tag_lure">デコイ誘導</span></span><span class="card-foot">HTML <b>↗</b></span></label>
+        <label class="card" data-fit="website"><input type="radio" name="kind" value="fake_trap"><span class="icon amber">⚑</span><strong data-i18n="fake_title">フェイクトラップ</strong><small data-i18n="fake_card">警告や待機表示で再確認を促す</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span><span class="method-tag ai" data-i18n="tag_ai">AI攻撃を想定</span></span><span class="card-foot">HTML <b>↗</b></span></label>
+        <label class="card" data-fit="files exfiltration ransomware"><input type="radio" name="kind" value="ransomware_tripwire"><span class="icon amber">⏱</span><strong data-i18n="tripwire_title">ランサムウェア・デコイフラッド</strong><small data-i18n="tripwire_card">処理された架空ファイルを補充</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span></span><span class="card-foot">LOCAL SCRIPT <b>↗</b></span></label>
+        <label class="card" data-fit="files ransomware"><input type="radio" name="kind" value="path_maze"><span class="icon teal">⌘</span><strong data-i18n="path_maze_title">パス・メイズ</strong><small data-i18n="path_maze_card">架空ファイルを通常のフォルダーに分散</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span></span><span class="card-foot">STATIC ZIP <b>↗</b></span></label>
+        <label class="card" data-fit="files ransomware"><input type="radio" name="kind" value="sparse_decoy"><span class="icon amber">◫</span><strong data-i18n="sparse_title">スパース・デコイ</strong><small data-i18n="sparse_card">見かけ上大きな架空ファイルを作成</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span></span><span class="card-foot">LOCAL SCRIPT <b>↗</b></span></label>
+        <label class="card" data-fit="database exfiltration"><input type="radio" name="kind" value="data_dilution"><span class="icon blue">≋</span><strong data-i18n="dilution_title">データ・ディルーション</strong><small data-i18n="dilution_card">本物に偽レコードを混ぜて選別を困難に</small><span class="method-tags"><span class="method-tag leak" data-i18n="tag_leak">流出後の攪乱</span></span><span class="card-foot"><span data-i18n="overview_only">解説のみ・生成機能なし</span> <b>↗</b></span></label>
+        <label class="card" data-fit="credentials"><input type="radio" name="kind" value="honeyword"><span class="icon violet">◇</span><strong data-i18n="honeyword_title">プリビレッジ・ハニーワード・セッション</strong><small data-i18n="honeyword_card">偽パスワードで隔離デコイへ誘導</small><span class="method-tags"><span class="method-tag lure" data-i18n="tag_lure">デコイ誘導</span><span class="method-tag delay" data-i18n="tag_delay">遅延</span></span><span class="card-foot"><span data-i18n="overview_only">解説のみ・生成機能なし</span> <b>↗</b></span></label>
+        <label class="card" data-fit="exfiltration"><input type="radio" name="kind" value="stream"><span class="icon violet">∞</span><strong data-i18n="stream_title">インフィニット・ストリーム</strong><small data-i18n="stream_card">終わりのない配信でダウンロードを引き延ばす</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span><span class="method-tag lure" data-i18n="tag_lure">デコイ誘導</span></span><span class="card-foot">PYTHON SERVER <b>↗</b></span></label>
+        <label class="card" data-fit="files website exfiltration"><input type="radio" name="kind" value="directory_maze"><span class="icon teal">⌘</span><strong data-i18n="directory_title">ディレクトリ・メイズ</strong><small data-i18n="directory_card">偽ファイルを階層に配置して探索を増やす</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span><span class="method-tag lure" data-i18n="tag_lure">デコイ誘導</span><span class="method-tag ai" data-i18n="tag_ai">AI攻撃を想定</span></span><span class="card-foot">STATIC ZIP <b>↗</b></span></label>
+        <label class="card" data-fit="files exfiltration"><input type="radio" name="kind" value="encoding_maze"><span class="icon blue">≋</span><strong data-i18n="encoding_title">エンコーディング・メイズ</strong><small data-i18n="encoding_card">多段変換した偽候補で内容の確認を増やす</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span><span class="method-tag leak" data-i18n="tag_leak">流出後の攪乱</span><span class="method-tag ai" data-i18n="tag_ai">AI攻撃を想定</span></span><span class="card-foot">ENCODED ZIP <b>↗</b></span></label>
+      </div>
+      <div class="section-head second"><div><span class="step">03</span><h2 data-i18n="review_method">選んだ対策を確認</h2></div><span data-i18n="review_method_help">仕組み・期待できること・限界</span></div>
         <p id="csv-safety-note" class="explanation-note" role="status" aria-live="polite" data-i18n="csv_safety_note" hidden>CSVにはセル型の情報がありません。数式として解釈され得るテキストには先頭にアポストロフィを付けてリスクを下げますが、CSV上にもアポストロフィが残り、表計算ソフトの取込動作は異なります。配置前に利用するソフトで確認してください。</p>
       <form id="generator" class="panel" novalidate>
-        <section class="method-explanation" aria-live="polite" aria-labelledby="method-explanation-title">
+        <section id="method-explanation" class="method-explanation" aria-live="polite" aria-labelledby="method-explanation-title">
           <div class="explanation-heading"><span data-i18n="method_explainer">この手法を知る</span><h3 id="method-explanation-title"></h3></div>
           <figure class="method-flow" aria-labelledby="flow-title">
             <figcaption id="flow-title" data-i18n="flow_title">仕組みの流れ</figcaption>
+            <img id="method-explanation-image" class="method-explanation-image" alt="" hidden>
             <p id="method-flow-scenario" class="flow-scenario"></p>
             <p id="method-flow-context" class="flow-context"></p>
             <ol id="method-flow-steps" class="method-flow-steps"></ol>
-            <div class="flow-branches"><div><strong data-i18n="flow_if">効果が期待できる場合</strong><p id="method-flow-if"></p></div><div><strong data-i18n="flow_else">効果が弱まる条件</strong><p id="method-flow-else"></p></div></div>
-            <div class="flow-response"><strong data-i18n="flow_response">検知・対応の準備</strong><p id="method-flow-response"></p></div>
+            <div class="flow-branches"><div><strong data-i18n="flow_if">効果が期待できる場合</strong><div id="method-flow-if"></div></div><div><strong data-i18n="flow_else">効果が弱まる条件</strong><div id="method-flow-else"></div></div></div>
+            <div class="flow-response"><strong data-i18n="flow_response">ポイント</strong><div id="method-flow-response"></div></div>
             <p id="method-flow-note" class="method-flow-note"></p>
           </figure>
-          <details class="method-details" open>
-          <summary data-i18n="flow_details">手法の詳しい説明</summary>
-          <div class="explanation-grid">
-            <div><strong data-i18n="explain_how">どういう対策か</strong><p id="explain-how"></p></div>
-            <div><strong data-i18n="explain_target">どの攻撃を想定するか</strong><p id="explain-target"></p></div>
-            <div><strong data-i18n='explain_deception'>What makes it look genuine</strong><p id='explain-deception'></p></div>
-            <div><strong data-i18n='explain_delay'>How it can delay an attacker</strong><p id='explain-delay'></p></div>
-            <div><strong data-i18n="explain_limit">できないこと・限界</strong><p id="explain-limit"></p></div>
-          </div>
-          <p class="explanation-note" data-i18n="explain_measurement">本物らしさ・遅滞は配置環境と攻撃者の自動化度で変わります。ここに示すのは期待条件であり、実測結果や保証ではありません。</p>
-          </details>
-          <p class="legal-opinion-note" data-i18n="legal_disclaimer">以下は日本法・米国法に関する一般的な一見解です。個別の適法性を保証するものではありません。実際の導入前に、適用地域に詳しい法律の専門家へ確認してください。</p>
           <details class="legal-explanation">
-            <summary data-i18n="legal_title">日本法上の見解（不正アクセス禁止法）</summary>
+            <summary data-i18n="legal_title">対策実施の日本法上の見解（不正アクセス禁止法）</summary>
+            <p class="legal-opinion-note" data-i18n="legal_disclaimer">以下は日本法に関する一般的な一見解です。個別の適法性を保証するものではありません。実際の導入前に、適用地域に詳しい法律の専門家へ確認してください。</p>
             <p><strong data-i18n="legal_normal">通常の利用</strong> <span id="legal-normal"></span></p>
             <p><strong data-i18n="legal_risk">抵触し得る行為</strong> <span id="legal-risk"></span></p>
             <p id="legal-other"></p>
             <p class="legal-sources"><span data-i18n="legal_scope">自組織または設置権限のある環境での一般的な評価です。具体的な権限・操作によって結論は変わり、他の法律も関係します。</span> <a id="legal-guide-link" href="/legal/ja" target="_blank" rel="noopener" data-i18n="legal_more">根拠と各手法の詳細</a> · <a href="https://laws.e-gov.go.jp/law/411AC0000000128" target="_blank" rel="noopener">e-Gov</a> · <a href="https://www.npa.go.jp/bureau/cyber/pdf/1_kaisetsu.pdf" target="_blank" rel="noopener" data-i18n="legal_police">警察庁の解説</a></p>
           </details>
           <details class="legal-explanation">
-            <summary data-i18n="legal_us_title">米国法上の見解（連邦法・州法）</summary>
+            <summary data-i18n="legal_us_title">対策実施の米国法上の見解（連邦法・州法）</summary>
+            <p class="legal-opinion-note" data-i18n="legal_us_disclaimer">以下は米国法に関する一般的な一見解です。個別の適法性を保証するものではありません。実際の導入前に、適用地域に詳しい法律の専門家へ確認してください。</p>
             <p><strong data-i18n="legal_normal">通常の利用</strong> <span id="legal-us-normal"></span></p>
             <p><strong data-i18n="legal_us_risk">具体的な注意点</strong> <span id="legal-us-risk"></span></p>
             <p data-i18n="legal_us_scope">連邦法のほか州法・契約等が関係し、通信の内容や保存方法、関係者の所在地で評価が変わります。自己管理の設備であっても通信内容の監視が常に認められるわけではありません。</p>
             <p class="legal-sources"><a href="https://uscode.house.gov/view.xhtml?req=(title:18%20section:1030%20edition:prelim)" target="_blank" rel="noopener">18 U.S.C. § 1030 (CFAA)</a> · <a href="https://uscode.house.gov/view.xhtml?req=(title:18%20section:2511%20edition:prelim)" target="_blank" rel="noopener">18 U.S.C. § 2511</a> · <a id="legal-us-guide-link" href="/legal/ja" target="_blank" rel="noopener" data-i18n="legal_us_more">米国法の根拠と補足</a></p>
           </details>
         </section>
-        <div class="settings-actions"><button type="button" class="secondary" id="save-settings" data-i18n="save_settings">設定を保存（URL・ドメイン所有確認は除外）</button><button type="button" class="secondary" id="load-settings" data-i18n="load_settings">設定を読み込む</button><input type="file" id="settings-file" accept="application/json,.json" hidden><a id="guide-link" href="/guide/ja" target="_blank" rel="noopener" data-i18n="guide_link">導入・監視ガイド</a><a href="/integration-kit.zip" download="adg-integration-examples.zip" data-i18n="samples_link">連携サンプルZIP</a></div>
-        <p class="help" data-i18n="settings_privacy_help">カナリアURL欄、環境接続先などのURL形式入力欄、所有確認チェックは保存しません。隔離デコイ用ドメイン欄の値は設定JSONに残り、所有確認チェックだけが外れます。設定保存時に自由入力欄のURLや秘密情報を検出・除去する機能はありません。生成時には自由入力に含まれる未承認のURL・メール・公開ドメイン・IPアドレスと、一般的な認証情報・カード番号形式を拒否します（カナリアURLと所有確認付きデコイドメインは専用欄で別途検証します）。example.invalidなどの予約済み例示値は使用できます。検査は限定的で、接続先や秘密情報を網羅的に検出する機能ではありません。設定JSONには他の入力値や候補値が含まれるため、実データや秘密を入力せず安全に保管してください。</p>
+        <div class="section-head second" id="sample-settings-heading"><div><span class="step">04</span><h2 data-i18n="settings">サンプルを作成する</h2></div><span data-i18n="method_settings">選択した対策の設定</span></div>
         <div id="env-fields" class="fields">
-          <div class="panel-title"><h3 data-i18n="canary_file">カナリアファイル</h3><p data-i18n="canary_desc">形式・ファイル名・タイトルを変えて、監視URLを含む文書を生成します。</p></div>
-        <div class="form-grid"><div><label for="canary-format" data-i18n="format">ファイル形式</label><select id="canary-format"><option value="env" data-i18n="format_env">.env</option><option value="txt" data-i18n="format_txt">テキスト（.txt）</option><option value="json" data-i18n="format_json">JSON</option><option value="csv" data-i18n="format_csv">CSV</option><option value="html" data-i18n="format_html" selected>HTML文書（架空レコード）</option><option value="pdf" data-i18n="format_pdf">PDF</option><option value="xlsx" data-i18n="format_xlsx">Excel（.xlsx）</option><option value="pptx" data-i18n="format_pptx">PowerPoint（.pptx）</option><option value="sqlite" data-i18n="format_sqlite">SQLite（.db）</option></select></div>
-          <div><label for="canary-name" data-i18n="filename">ファイル名（半角英数字で開始、英数字・-・_のみ、空欄で自動、拡張子不要）</label><input id="canary-name" type="text" maxlength="64" data-filename-input placeholder="accounts_2026"></div>
-          <div><label for="canary-title" data-i18n="document_title">文書タイトル</label><input id="canary-title" data-i18n-placeholder="context_title_auto" maxlength="80"></div>
-          <div id="canary-rows-field"><label for="canary-rows" data-i18n="document_rows">文書内のレコード件数</label><input id="canary-rows" type="number" min="1" max="500" value="25" required></div></div>
-          <label for="env-url"><span data-i18n="canary_url">カナリアURL</span> <span class="optional" data-i18n="optional">任意</span></label><textarea id="env-url" rows="1" inputmode="url" spellcheck="false" autocapitalize="none" placeholder="https://..." maxlength="2048" autocomplete="off"></textarea>
-          <p class="help" data-i18n="canary_help">利用中のカナリアサービスで発行したHTTPS URLを入力してください。空欄の場合は通知されないプレースホルダーを出力します。公開到達可能な監視先を指定してください。非公開IPやlocalhost等の内部用ホスト名は拒否しますが、DNS解決先は確認しません。PowerPointは指定件数をすべて収録し、1枚あたり最大10件のスライドに分けます。通常の.env形式ではURLを一重引用符で囲みます。一重引用符を含むURLは開発・本番切替メモ形式か別形式を選んでください。切替メモ形式では別の入力制限があります。URLに$が含まれる場合は.env形式を使わず、別形式を選んでください。</p>
-          <details class="canary-details"><summary data-i18n="canary_advanced_summary">URL・入力制限</summary><p data-i18n="canary_advanced_help">通知を受け取るには監視サービスが発行したHTTPS URLを入力します。URLを空欄にすると、.env形式には予約済みのexample.invalidを例として含めますが、他の形式では省略します。生成器はURLへ接続しません。標準.env形式ではURLを引用符で囲むため、シングルクォートを含むURLは使えません。開発・本番切替形式では別の入力制限があります。PowerPointではレコードを最大10件ずつスライドに分けます。</p></details>
+          <div class="panel-title"><h3 data-i18n="canary_file">カナリアファイル</h3><p data-i18n="canary_desc">形式を選んで架空データ入りの文書を作ります。監視URLは任意で追加できます。</p></div>
+        <div class="form-grid"><div><label for="canary-format" data-i18n="format">ファイル形式</label><select id="canary-format"><option value="env" data-i18n="format_env">.env</option><option value="txt" data-i18n="format_txt">テキスト（.txt）</option><option value="json" data-i18n="format_json">JSON</option><option value="csv" data-i18n="format_csv">CSV</option><option value="html" data-i18n="format_html" selected>HTML文書（架空レコード）</option><option value="pdf" data-i18n="format_pdf">PDF</option><option value="xlsx" data-i18n="format_xlsx">Excel（.xlsx）</option><option value="pptx" data-i18n="format_pptx">PowerPoint（.pptx）</option><option value="sqlite" data-i18n="format_sqlite">SQLite（.db）</option></select></div><div><label for="canary-context" data-i18n="context_profile">用途</label><select id="canary-context"><option value="service" data-i18n="context_service">サービス管理</option><option value="billing" data-i18n="context_billing">請求</option><option value="support" data-i18n="context_support">サポート</option><option value="reports" data-i18n="context_reports">レポート</option><option value="auto" data-i18n="context_auto">自動選択</option></select></div>
+          <input id="canary-name" type="hidden" value="">
+          <input id="canary-title" type="hidden" value="">
+          <input id="canary-rows" type="hidden" value="25"></div>
+          <label for="env-url"><span data-i18n="canary_url">カナリアURL</span> <span class="optional" data-i18n="optional">任意</span></label><textarea id="env-url" rows="1" inputmode="url" spellcheck="false" autocapitalize="none" placeholder="https://..." maxlength="2048" autocomplete="off">__LOCAL_CANARY_URL__</textarea>
+          <p class="help" data-i18n="local_canary_scope">初期のカナリアページURLは、このPCでPhysaliaを起動している間だけ動作確認に使えます。別PCからは届きません。本番運用では、HTTPSで外部ネットワークからアクセスできる場所にカナリアページを公開し、そのURLをここに指定してください。</p>
+          <p class="help" data-i18n="canary_help">動作確認：HTML形式でファイルを生成し、その中のリンクを押すと、左メニューの「カナリア接触ログ」で確認できます。</p>
+          <div id="canary-link-style-field"><label for="canary-link-style" data-i18n="canary_redirect_method">カナリアページへの誘導方法</label><select id="canary-link-style"><option value="text" data-i18n="canary_redirect_text">文書内のテキストリンク</option><option value="button" data-i18n="canary_redirect_button">ボタン風リンク</option><option value="image" data-i18n="canary_redirect_image">アイコン画像リンク</option><option value="next" data-i18n="canary_redirect_next">「次へ」ボタン</option><option value="pagination" data-i18n="canary_redirect_pagination">ページ番号</option><option value="fullpage" data-i18n="canary_redirect_fullpage">ページ全体（どこを押しても遷移）</option></select><p class="help" data-i18n="canary_redirect_help">表示方法を選びます。リンクは、利用者がクリックしたときだけアクセスします。HTMLを開いただけで自動アクセスする仕掛けはありません。</p></div>
           <details id="env-template-details" class="env-template-details"><summary data-i18n="env_advanced_summary">ファイル名・設定項目</summary>
           <fieldset id="env-template-options"><legend data-i18n="env_layout_title">.envの構成</legend>
             <label for="env-layout" data-i18n="env_layout_label">設定パターン</label><select id="env-layout"><option value="commented_production" data-i18n="env_layout_switch">環境切替メモ（代替URLはコメント）</option><option value="standard" data-i18n="env_layout_standard">通常のURL設定</option></select>
@@ -171,12 +190,7 @@
               <div><label for="env-prod-comment" data-i18n="env_prod_comment_label">代替URLのメモ（任意）</label><input id="env-prod-comment" maxlength="160"></div>
             </div><p class="help" data-i18n="env_switch_help">ファイル名が空欄なら .env.development になります。環境サフィックスはAPP_ENVと既定URLのホストに反映されます。手入力するURLもその環境に合わせてください。有効なURLの下に本番用に見えるカナリアURLをコメントで配置します。既定URLはexample.invalidです。別のホストを入力する場合は所有を確認し、本番認証のない隔離検証先のみに向けてください。クローラやエージェントが有効URLへアクセスする可能性があります。生成器は名前解決・接続を行いません。内部・本番接続先は入力せず、本番アプリに読み込ません。空欄のコメントは生成ごとに変わり、入力した文面は保持します。カナリアURLはそのURLへ実際にアクセスされた時に通知されます。</p></div>
           </fieldset></details>
-          <fieldset id="canary-context-options"><legend data-i18n="canary_context">URLを記載する文脈</legend><div class="form-grid">
-            <div><label for="canary-context" data-i18n="context_profile">用途</label><select id="canary-context"><option value="service" data-i18n="context_service">サービス管理</option><option value="billing" data-i18n="context_billing">請求</option><option value="support" data-i18n="context_support">サポート</option><option value="reports" data-i18n="context_reports">レポート</option><option value="auto" data-i18n="context_auto">自動選択</option></select></div>
-            <div><label for="canary-field" data-i18n="context_field">URLの項目名（任意・英数字と_）</label><input id="canary-field" maxlength="48" placeholder="billing_portal_url"></div>
-            <div><label for="canary-label" data-i18n="context_label">リンクの表示文言（任意）</label><input id="canary-label" maxlength="80" placeholder="Billing portal"></div>
-          </div><p class="help" data-i18n="context_help">用途に合わせて項目名と表示文言を調整できます。文書形式では、ファイル名とタイトルも空欄なら選んだ用途に合わせます。通常の.envではタイトルとURL項目名に反映し、開発・本番切替メモ形式では環境設定を優先します。CSVは先頭レコードにURLを置き、Excelはデータシートにリンクを配置します。URLは変更せず、自動通信もしません。URLのドメインやリンク先の情報は解析可能です。</p></fieldset>
-           <div class="inline-note" data-i18n="canary_note">監視サービスが自分のアカウント向けに発行したHTTPSカナリアURLだけを使ってください。ファイルの読み取りだけでは通知されず、URLにアクセスされたときに連携先から通知される場合があります。メール・文書スキャナーやリンクプレビューが自動アクセスする場合もあります。通知はURLへの要求を示すだけで、攻撃者やファイル閲覧者の特定にはなりません。既知のスキャンと照合してください。生成器はURLに接続しません。空白と # 以降のフラグメントは指定できません。フラグメントはHTTPリクエストで送信されないためです。</div>
+          <input id="canary-field" type="hidden" value=""><input id="canary-label" type="hidden" value="">
         </div>
         <div id="nest-fields" class="fields" hidden>
           <div class="panel-title"><h3 data-i18n="nest_title">エンクリプテッド・ディープ・ネスト</h3><p data-i18n="nest_desc">ZIPごとに方針に沿ったパスワードを生成し、分岐構造と選択形式を中心にしたダミーファイルを作ります。重複を検出し、必要に応じてランダム方式で置き換えて一意にします。</p></div>
@@ -249,6 +263,21 @@
           <label for="fake-name" data-i18n="filename">ファイル名（半角英数字で開始、英数字・-・_のみ、空欄で自動、拡張子不要）</label><input id="fake-name" maxlength="64" data-filename-input placeholder="security_notice">
           <p class="inline-note" data-i18n="fake_note">ファイル名を空欄にすると認証・セッション処理に使われる名前から自動で選びます。表示だけの静的ページです。検知・通報・認証・情報収集は行わず、外部への通信やプログラム送信もありません。監視・通知は配信側で別途設定してください。通報済みの表示は実際の通報を意味しません。正規利用者の誤接触に配慮してください。</p>
         </div>
+        <div id="ransomware_tripwire-fields" class="fields" hidden>
+          <div class="panel-title"><h3 data-i18n="tripwire_title">ランサムウェア・デコイフラッド</h3><p data-i18n="tripwire_desc">架空ファイルと、その変更時に別の架空ファイルを補充するスクリプトを作成します。</p></div>
+          <label for="tripwire-files" data-i18n="tripwire_files_label">配置する架空ファイル数（4〜8）</label><input id="tripwire-files" type="number" value="6" min="4" max="8" required>
+          <p class="inline-note" data-i18n="tripwire_note">配置ZIPには架空ファイルだけを入れます。監視スクリプトは運用者専用ファイルとして別に保存し、監視先でPython 3.11以降を使って実行します。ファイル内容の変更・削除・差し替えを最短約1秒間隔でローカル記録します。読み取りだけは検知せず、自動停止もしません。見逃しや誤検知があり、本番データの保護や復元にはなりません。対象ディレクトリは正規アプリの書き込み経路から外し、ログは別の保護された場所へ保存してください。</p>
+        </div>
+        <div id="path_maze-fields" class="fields" hidden>
+          <div class="panel-title"><h3 data-i18n="path_maze_title">パス・メイズ</h3><p data-i18n="path_maze_desc">有限の通常フォルダーに架空ファイルを配置します。</p></div>
+          <div class="form-grid"><div><label for="path-depth" data-i18n="path_depth">階層の深さ（1〜4）</label><input id="path-depth" type="number" min="1" max="4" value="3" required></div><div><label for="path-branches" data-i18n="path_branches">各フォルダーの分岐数（1〜3）</label><input id="path-branches" type="number" min="1" max="3" value="3" required></div><div><label for="path-files" data-i18n="path_files">各フォルダーのファイル数（1〜4）</label><input id="path-files" type="number" min="1" max="4" value="2" required></div></div>
+          <p class="inline-note" data-i18n="path_note">通常のフォルダーと架空ファイルを有限個作ります。リンクや常駐プログラムは使いません。攻撃がデコイを処理する場合に追加の仕事が生じます。並列処理や対象の絞り込みでは実ファイルが先に処理されることがあります。バックアップや検索にもファイルが増えます。</p>
+        </div>
+        <div id="sparse_decoy-fields" class="fields" hidden>
+          <div class="panel-title"><h3 data-i18n="sparse_title">スパース・デコイ</h3><p data-i18n="sparse_desc">配置先で見かけ上大きな架空ファイルを作るスクリプトを生成します。</p></div>
+          <div class="form-grid"><div><label for="sparse-size" data-i18n="sparse_size">1ファイルの見かけのサイズ（GiB、1〜32）</label><input id="sparse-size" type="number" min="1" max="32" value="1" required></div><div><label for="sparse-files" data-i18n="sparse_files">ファイル数（1〜4）</label><input id="sparse-files" type="number" min="1" max="4" value="1" required></div></div>
+          <p class="inline-note" data-i18n="sparse_note">生成するZIPには作成スクリプトと説明書が入り、配置先で手動実行するまで大きなファイルは作りません。Python 3.11以降と対応ファイルシステムが必要です。コピー・バックアップ・同期時には見かけのサイズ分の容量や時間を使う場合があり、ディスクを圧迫することがあります。暗号化結果の書き込みでも容量を消費します。部分暗号化やサイズによる除外では遅延が小さくなります。</p>
+        </div>
         <div id="data_dilution-fields" class="fields" hidden><p class="inline-note" data-i18n="technology_only">技術紹介のみです。生成や本番環境への変更は行いません。</p></div>
         <div id="honeyword-fields" class="fields" hidden><p class="inline-note" data-i18n="technology_only">技術紹介のみです。生成や本番環境への変更は行いません。</p></div>
         <div id="stream-fields" class="fields" hidden>
@@ -302,6 +331,21 @@
         <div class="panel-bottom"><p id="result" role="status" aria-live="polite" tabindex="-1"></p><button type="submit" id="submit"><span data-i18n="generate">ファイルを生成</span> <span>↗</span></button></div>
         <section id="downloads" class="downloads" role="region" aria-label="生成ファイル" data-i18n-aria="downloads_region" hidden></section>
       </form>
+      <details class="method-details">
+        <summary data-i18n="flow_details">手法の詳しい説明</summary>
+        <div id="canary-method-notes">
+          <p class="explanation-note" data-i18n="canary_note">ファイルを読むだけでは通知されません。URLへのアクセスはスキャナーやリンクプレビューでも発生し、攻撃者や閲覧者の特定には使えません。初期URLは起動中のサンプルで共通のため、接触したファイルを区別できません。再起動後は新しいURLになります。生成器はURLへ接続しません。</p>
+          <p class="explanation-note" data-i18n="canary_advanced_help">外部の監視サービスを使う場合は、自分のアカウント用に発行されたHTTPS URLを指定します。URLに空白やフラグメント（#以降）は使えません。.env形式では$を含むURLは使えず、通常形式ではシングルクォートも使えません。</p>
+        </div>
+        <div class="explanation-grid">
+          <div><strong data-i18n="explain_how">どういう対策か</strong><p id="explain-how"></p></div>
+          <div><strong data-i18n="explain_target">どの攻撃を想定するか</strong><p id="explain-target"></p></div>
+          <div><strong data-i18n="explain_deception">本物らしさを高める要素</strong><p id="explain-deception"></p></div>
+          <div><strong data-i18n="explain_delay">攻撃者を遅らせる可能性</strong><p id="explain-delay"></p></div>
+          <div><strong data-i18n="explain_limit">できないこと・限界</strong><p id="explain-limit"></p></div>
+        </div>
+        <p class="explanation-note" data-i18n="explain_measurement">本物らしさや遅滞は、配置環境や攻撃者の行動によって変わります。</p>
+      </details>
       </section>
       <section id="page-license" class="workspace-page" aria-labelledby="license-page-title" hidden>
         <div class="intro"><div><div class="eyebrow" data-i18n="license_eyebrow">PROJECT INFORMATION</div><h1 id="license-page-title" tabindex="-1" data-i18n="license_title">ライセンス・著作権</h1><p data-i18n="license_intro">このリポジトリのソフトウェアと寄稿の利用条件です。</p></div></div>
@@ -316,7 +360,7 @@
           <p data-i18n="license_dependencies_body">Pythonなどの依存ライブラリは、それぞれ個別のライセンスに従います。このページの説明は依存ライブラリの条件を置き換えません。</p>
         </section>
       </section>
-      <footer><span>Physalia</span><span data-i18n="footer">管理権限のある環境で利用してください</span></footer>
+      <footer><span>Physalia</span></footer>
     </div>
   </main>
 </div>

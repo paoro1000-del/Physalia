@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>カナリアページ</title>
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="/canary.js" data-event-id="__EVENT_ID__" data-nonce="__EVENT_NONCE__"></script>
+</head>
+<body>
+  <main>
+    <h1 data-ja="カナリアページ" data-en="Canary page">カナリアページ</h1>
+    <p data-ja="このページへのアクセス時に、接続元IPアドレス、ブラウザーから送信された情報、画面・端末情報を記録します。これらの情報は偽装または省略される場合があります。"
+       data-en="When this page is opened, it records the source IP address, request headers, and browser-provided screen and device information. These values may be omitted or falsified.">
+      このページへのアクセス時に、接続元IPアドレス、ブラウザーから送信された情報、画面・端末情報を記録します。これらの情報は偽装または省略される場合があります。
+    </p>
+    <section aria-labelledby="location-title">
+      <h2 id="location-title" data-ja="位置情報" data-en="Location">位置情報</h2>
+      <p data-ja="位置情報はブラウザーの許可がある場合に取得します。許可しなくてもページは表示されます。"
+         data-en="Location is requested through your browser. The page works if you decline.">
+        位置情報はブラウザーの許可がある場合に取得します。許可しなくてもページは表示されます。
+      </p>
+      <button id="location-button" type="button" hidden data-ja="位置情報を再試行" data-en="Retry location">位置情報を再試行</button>
+      <span id="location-status" role="status" aria-live="polite"></span>
+    </section>
+    <p id="event-reference"></p>
+  </main>
+</body>
+</html>

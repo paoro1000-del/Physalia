@@ -24,6 +24,8 @@ from physalia.nesting import MAX_LAYERS, Artifact, generate_nest
 from physalia.mazes import generate_directory_maze, generate_encoding_maze, generate_stream_sample
 from physalia.naming import plausible_filename
 from physalia.inventory import attach_inventory
+from physalia.tripwire import generate_ransomware_tripwire
+from physalia.ransomware_decoys import generate_path_maze, generate_sparse_decoy
 
 MAGIC = b"ADG1"
 def _derive_key(password: str, salt: bytes) -> bytes:
@@ -290,20 +292,25 @@ main{{max-width:580px;margin:auto;padding:2rem;background:white;border:1px solid
     return basename + ".html", "text/html; charset=utf-8", markup.encode("utf-8")
 
 
-GENERATORS = {"env": generate_env, "database": generate_database, "web": generate_web, "nest": generate_nest, "fake_trap": generate_fake_trap}
+GENERATORS = {"env": generate_env, "database": generate_database, "web": generate_web, "nest": generate_nest, "fake_trap": generate_fake_trap,
+              "ransomware_tripwire": generate_ransomware_tripwire}
 GENERATORS.update(directory_maze=generate_directory_maze, encoding_maze=generate_encoding_maze, stream=generate_stream_sample)
+GENERATORS.update(path_maze=generate_path_maze, sparse_decoy=generate_sparse_decoy)
 
 # Keep the API surface aligned with the settings assembled by web/app.js.
 # Silently ignored keys are easy to mistype and would otherwise be copied into
 # the operator inventory even though they had no effect on the generated file.
 SETTING_KEYS = {
-    "env": {"format", "canary_url", "canary_context", "canary_field", "canary_label",
+    "env": {"format", "canary_url", "canary_link_style", "canary_context", "canary_field", "canary_label",
             "env_layout", "env_suffix", "env_variable", "env_dev_url",
             "env_dev_url_authorized", "env_dev_comment", "env_prod_comment", "title", "rows", "filename"},
     "database": {"template", "email_domain", "email_domain_authorized", "vault_domain",
                  "vault_domain_authorized", "rows", "table", "columns", "canary_url", "filename"},
     "web": {"scenario", "title", "canary_url", "filename"},
     "fake_trap": {"variant", "filename"},
+    "ransomware_tripwire": {"files"},
+    "path_maze": {"depth", "branches", "files"},
+    "sparse_decoy": {"size_gib", "files"},
     "nest": {"scenario", "vault_domain", "vault_domain_authorized", "layers", "branches", "decoys",
              "directory_depth", "rows", "format", "varied_formats", "directories", "canary_urls",
              "canary_url", "canary_percent", "filename", "password_policy"},

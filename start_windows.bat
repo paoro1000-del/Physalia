@@ -38,11 +38,8 @@ if errorlevel 1 (
 .venv\Scripts\python.exe -m pip check
 if errorlevel 1 goto :dependency_check_failed
 
-echo Starting Physalia. Press Ctrl+C in this window to stop it.
-.venv\Scripts\python.exe app.py --open %*
-if errorlevel 1 goto :app_failed
-echo Physalia has stopped.
-pause
+echo Starting Physalia in a separate window. Press Ctrl+C there to stop it.
+start "Physalia" /D "%~dp0" "%~dp0.venv\Scripts\python.exe" app.py --open %*
 exit /b 0
 
 :no_python

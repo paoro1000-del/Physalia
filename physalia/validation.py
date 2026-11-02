@@ -293,12 +293,16 @@ def canary_url(value, language="ja"):
         host, port = parsed.hostname, parsed.port
     except ValueError as exc:
         raise ValueError(translate("invalid_url", language)) from exc
-    if parsed.scheme != "https" or not host or parsed.username is not None or parsed.password is not None:
+    local_canary = (parsed.scheme == "http" and host == "127.0.0.1"
+                    and parsed.path.startswith("/canary/")
+                    and re.fullmatch(r"/canary/[A-Za-z0-9_-]{32,64}", parsed.path)
+                    and not parsed.query)
+    if (parsed.scheme != "https" and not local_canary) or not host or parsed.username is not None or parsed.password is not None:
         raise ValueError(translate("https_url", language))
     if port is not None and not 1 <= port <= 65535:
         raise ValueError(translate("invalid_url", language))
     # A generated lure may later be opened by a crawler or an AI agent.
-    if not is_public_host(host):
+    if not local_canary and not is_public_host(host):
         raise ValueError(translate("invalid_url", language))
     return value
 

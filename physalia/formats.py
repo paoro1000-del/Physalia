@@ -196,7 +196,7 @@ def dotenv_value(value, language):
 
 
 def render(fmt, title, url, data, language="ja", reference=None, context=None, app_env="production",
-           columns=None, table="customers", canary_cell=None, sheet_title=None):
+           columns=None, table="customers", canary_cell=None, sheet_title=None, canary_link_style="text"):
     """Render without fetching URLs, macros, scripts, external images or formulas."""
     columns = DEFAULT_COLUMNS if columns is None else columns
     headers = [column["name"] for column in columns]
@@ -242,6 +242,9 @@ def render(fmt, title, url, data, language="ja", reference=None, context=None, a
                             connection_table=f'{context["table"]}_connections' if context else None,
                             connection_name=field if context else "archive", language=language)
     if fmt == "html":
+        if canary_link_style not in ("text", "button", "image", "next", "pagination", "fullpage"):
+            raise ValueError(translate("invalid_input", language))
+        fullpage_link = bool(url and canary_cell is None and canary_link_style == "fullpage")
         table_scroll_hint = ("表を左右にスクロールできます。" if language == "ja"
                              else "Scroll the table horizontally to see all columns.")
         def cell_markup(value, row_index, column_index):
@@ -251,7 +254,7 @@ def render(fmt, title, url, data, language="ja", reference=None, context=None, a
                 target = str(value)
             else:
                 target = ""
-            if target:
+            if target and not fullpage_link:
                 return f'<td><a href="{html.escape(target, quote=True)}" rel="noreferrer">{html.escape(str(value))}</a></td>'
             return f"<td>{html.escape(str(value))}</td>"
         rows = "".join(
@@ -260,18 +263,45 @@ def render(fmt, title, url, data, language="ja", reference=None, context=None, a
                 for column_index, value in enumerate(row)
             ) + "</tr>" for row_index, row in enumerate(data)
         )
-        link = (f'<p class="document-link"><a href="{html.escape(url, quote=True)}" rel="noreferrer">{html.escape(label)}</a></p>'
-                if url and canary_cell is None else "")
+        link = ""
+        if url and canary_cell is None and not fullpage_link:
+            safe_url = html.escape(url, quote=True)
+            safe_label = html.escape(label)
+            if canary_link_style == "button":
+                content = f'<a class="document-link-button" href="{safe_url}" rel="noreferrer">{safe_label}</a>'
+            elif canary_link_style == "image":
+                content = (f'<a class="document-link-image" href="{safe_url}" rel="noreferrer" aria-label="{safe_label}">'
+                           '<svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect x="5" y="8" width="38" height="32" rx="4" fill="#e7f1f7" stroke="#397ca7" stroke-width="2"/><circle cx="17" cy="19" r="4" fill="#397ca7"/><path d="M9 35l11-10 7 6 5-5 7 9" fill="none" stroke="#397ca7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+                           f'<span>{safe_label}</span></a>')
+            elif canary_link_style == "next":
+                next_label = "次へ" if language == "ja" else "Next"
+                content = f'<a class="document-link-button" href="{safe_url}" rel="noreferrer">{next_label} <span aria-hidden="true">→</span></a>'
+            elif canary_link_style == "pagination":
+                pages_label = "ページ" if language == "ja" else "Pages"
+                pages = "".join(f'<a href="{safe_url}" rel="noreferrer" aria-label="{pages_label} {number}">{number}</a>' for number in (1, 2, 3))
+                content = f'<nav class="document-pagination" aria-label="{pages_label}">{pages}</nav>'
+            else:
+                content = f'<a class="document-link-text" href="{safe_url}" rel="noreferrer">{safe_label}</a>'
+            link = f'<div class="document-link">{content}</div>'
+        if fullpage_link:
+            safe_url = html.escape(url, quote=True)
+            document_open = f'<a class="document-full-link" href="{safe_url}" rel="noreferrer" aria-label="{html.escape(label, quote=True)}"><main class="page-shell">'
+            document_close = "</main></a>"
+            table_tabindex = ""
+        else:
+            document_open = '<main class="page-shell">'
+            document_close = "</main>"
+            table_tabindex = ' tabindex="0"'
         return (f'<!doctype html><html lang="{language}"><head><meta charset="utf-8">'
                 f'<meta name="viewport" content="width=device-width, initial-scale=1">{STATIC_HTML_SECURITY_META}'
                 f'<title>{html.escape(title)}</title>'
-                '<style>:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#f2f5f7;color:#233746;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5}.page-shell{max-width:1200px;margin:2.5rem auto;padding:0 1.5rem}.document-header{padding:1.5rem 1.75rem;background:#fff;border:1px solid #dbe3e8;border-radius:12px;box-shadow:0 3px 14px #2037480d}.document-reference{margin:0 0 .4rem;color:#5d7180;font-size:.82rem;font-weight:600;letter-spacing:.04em}.document-header h1{margin:0;color:#18384d;font-size:clamp(1.4rem,3vw,2rem);line-height:1.25}.document-link{margin:1rem 0 0}.document-link a{color:#176b91;font-weight:600;text-underline-offset:3px}.table-scroll-hint{display:none}.table-scroll{max-width:100%;margin-top:1.25rem;overflow-x:auto;background:#fff;border:1px solid #dbe3e8;border-radius:10px;box-shadow:0 3px 14px #2037480d}.table-scroll:focus-visible{outline:3px solid #397ca7;outline-offset:3px}table{width:100%;min-width:560px;border-collapse:collapse;text-align:left}caption{padding:.9rem 1rem;color:#526873;text-align:left;font-size:.88rem;font-weight:600}th,td{padding:.75rem 1rem;border-top:1px solid #e5ebef;white-space:nowrap}th{background:#edf2f5;color:#314b5b;font-size:.84rem;font-weight:650}tbody tr:nth-child(even){background:#f8fafb}tbody tr:hover{background:#eef6fa}td a{color:#176b91;text-underline-offset:2px}@media(max-width:640px){.page-shell{margin:1rem auto;padding:0 .75rem}.document-header{padding:1.1rem 1rem;border-radius:9px}.table-scroll-hint{display:block;margin:.75rem .2rem 0;color:#526873;font-size:.82rem}.table-scroll{margin-top:.6rem;border-radius:8px}th,td{padding:.65rem .8rem}}@media print{body{background:#fff}.page-shell{max-width:none;margin:0;padding:0}.document-header,.table-scroll{box-shadow:none}.table-scroll{overflow:visible}table{min-width:0}thead{display:table-header-group}tr{break-inside:avoid;page-break-inside:avoid}th,td{white-space:normal;overflow-wrap:anywhere;padding:.35rem .5rem}.table-scroll-hint{display:none}}</style>'
-                f'</head><body><main class="page-shell"><header class="document-header"><p class="document-reference">{reference_label}: {ref}</p>'
+                '<style>:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#f2f5f7;color:#233746;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5}.page-shell{max-width:1200px;min-height:100vh;margin:2.5rem auto;padding:0 1.5rem}.document-full-link{display:block;min-height:100vh;color:inherit;text-decoration:none;cursor:pointer}.document-full-link:focus-visible{outline:3px solid #397ca7;outline-offset:-3px}.document-header{padding:1.5rem 1.75rem;background:#fff;border:1px solid #dbe3e8;border-radius:12px;box-shadow:0 3px 14px #2037480d}.document-reference{margin:0 0 .4rem;color:#5d7180;font-size:.82rem;font-weight:600;letter-spacing:.04em}.document-header h1{margin:0;color:#18384d;font-size:clamp(1.4rem,3vw,2rem);line-height:1.25}.document-link{margin:1rem 0 0}.document-link a{color:#176b91;font-weight:600;text-underline-offset:3px}.document-link-button{display:inline-block;padding:.6rem 1rem;border-radius:6px;background:#176b91;color:#fff!important;text-decoration:none}.document-link-button:hover{background:#125774}.document-link-button:focus-visible,.document-link-image:focus-visible,.document-pagination a:focus-visible{outline:3px solid #397ca7;outline-offset:3px}.document-link-image{display:inline-flex;align-items:center;gap:.6rem}.document-link-image svg{width:48px;height:48px}.document-pagination{display:flex;gap:.4rem}.document-pagination a{min-width:2.4rem;padding:.45rem .7rem;border:1px solid #cbd8e0;border-radius:5px;text-align:center;background:#fff}.table-scroll-hint{display:none}.table-scroll{max-width:100%;margin-top:1.25rem;overflow-x:auto;background:#fff;border:1px solid #dbe3e8;border-radius:10px;box-shadow:0 3px 14px #2037480d}.table-scroll:focus-visible{outline:3px solid #397ca7;outline-offset:3px}table{width:100%;min-width:560px;border-collapse:collapse;text-align:left}caption{padding:.9rem 1rem;color:#526873;text-align:left;font-size:.88rem;font-weight:600}th,td{padding:.75rem 1rem;border-top:1px solid #e5ebef;white-space:nowrap}th{background:#edf2f5;color:#314b5b;font-size:.84rem;font-weight:650}tbody tr:nth-child(even){background:#f8fafb}tbody tr:hover{background:#eef6fa}td a{color:#176b91;text-underline-offset:2px}@media(max-width:640px){.page-shell{margin:1rem auto;padding:0 .75rem}.document-header{padding:1.1rem 1rem;border-radius:9px}.table-scroll-hint{display:block;margin:.75rem .2rem 0;color:#526873;font-size:.82rem}.table-scroll{margin-top:.6rem;border-radius:8px}th,td{padding:.65rem .8rem}}@media print{body{background:#fff}.page-shell{max-width:none;margin:0;padding:0}.document-header,.table-scroll{box-shadow:none}.table-scroll{overflow:visible}table{min-width:0}thead{display:table-header-group}tr{break-inside:avoid;page-break-inside:avoid}th,td{white-space:normal;overflow-wrap:anywhere;padding:.35rem .5rem}.table-scroll-hint{display:none}}</style>'
+                f'</head><body>{document_open}<header class="document-header"><p class="document-reference">{reference_label}: {ref}</p>'
                 f'<h1>{html.escape(title)}</h1>{link}</header>'
                 f'<p class="table-scroll-hint">{html.escape(table_scroll_hint)}</p>'
-                f'<div class="table-scroll" role="region" tabindex="0" aria-label="{html.escape(title, quote=True)}"><table><caption>{html.escape(title)}</caption><thead><tr>'
+                f'<div class="table-scroll" role="region"{table_tabindex} aria-label="{html.escape(title, quote=True)}"><table><caption>{html.escape(title)}</caption><thead><tr>'
                 + "".join(f'<th scope="col">{html.escape(str(value))}</th>' for value in display_headers)
-                + f"</tr></thead><tbody>{rows}</tbody></table></div></main></body></html>").encode("utf-8")
+                + f"</tr></thead><tbody>{rows}</tbody></table></div>{document_close}</body></html>").encode("utf-8")
     output = io.BytesIO()
     if fmt == "xlsx":
         workbook = Workbook()
@@ -478,6 +508,9 @@ def generate_canary(settings, language="ja", include_metadata=False):
         raise ValueError(translate("invalid_format", language))
     count = integer(settings.get("rows", 25), "rows", 1, 500, language)
     url = canary_url(settings.get("canary_url", ""), language)
+    canary_link_style = settings.get("canary_link_style", "text")
+    if not isinstance(canary_link_style, str) or canary_link_style not in ("text", "button", "image", "next", "pagination", "fullpage"):
+        raise ValueError(translate("invalid_input", language))
     layout = settings.get("env_layout", "standard") if fmt == "env" else "standard"
     if layout not in ("standard", "commented_production"):
         raise ValueError(translate("invalid_input", language))
@@ -509,7 +542,7 @@ def generate_canary(settings, language="ja", include_metadata=False):
                     plausible_filename("canary", extension=FORMATS[fmt][0], context=context_name))
         sample_rows = list(records(columns, count, language))
         content = render(fmt, title, url, sample_rows, language, context=context, columns=columns,
-                         table=table, sheet_title=sheet_title)
+                         table=table, sheet_title=sheet_title, canary_link_style=canary_link_style)
     extension, mime = FORMATS[fmt]
     name = (f".env.{suffix}" if layout == "commented_production" else ".env") if fmt == "env" and not settings.get("filename") else f"{basename}.{extension}"
     result = (name, mime, content)
