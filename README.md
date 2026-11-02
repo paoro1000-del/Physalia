@@ -1,4 +1,4 @@
-# AiDeceptionGuard
+# Physalia
 
 [English](README_en.md) | 日本語
 
@@ -9,8 +9,8 @@
 Python 3.11〜3.14を用意し、ターミナルで次のコマンドを実行してソースを取得します。
 
 ```sh
-git clone https://github.com/paoro1000-del/AiDeceptionGuard.git
-cd AiDeceptionGuard
+git clone https://github.com/paoro1000-del/Physalia.git
+cd Physalia
 ```
 
 取得したフォルダーで、利用するOSに応じて起動してください。

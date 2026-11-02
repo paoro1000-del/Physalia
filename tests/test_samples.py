@@ -16,9 +16,9 @@ from pathlib import Path
 from urllib.parse import unquote_to_bytes
 import zipfile
 
-from aideceptionguard.generators import generate
-from aideceptionguard.mazes import CODECS
-from aideceptionguard.stream_runtime import StreamServer
+from physalia.generators import generate
+from physalia.mazes import CODECS
+from physalia.stream_runtime import StreamServer
 
 
 class MazeTests(unittest.TestCase):
@@ -95,7 +95,7 @@ class MazeTests(unittest.TestCase):
 
     def test_encoding_size_is_bounded(self):
         from unittest.mock import patch
-        with patch("aideceptionguard.mazes.MAX_MAZE_BYTES", 100):
+        with patch("physalia.mazes.MAX_MAZE_BYTES", 100):
             with self.assertRaises(ValueError):
                 generate("encoding_maze", {})
 

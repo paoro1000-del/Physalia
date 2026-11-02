@@ -8,8 +8,8 @@ import stat
 import sys
 
 from cryptography.exceptions import InvalidTag
-from aideceptionguard.generators import MAGIC, MAX_LAYERS, decrypt_layer
-from aideceptionguard.i18n import translate
+from physalia.generators import MAGIC, MAX_LAYERS, decrypt_layer
+from physalia.i18n import translate
 
 MAX_INPUT_BYTES = 64 * 1024 * 1024
 

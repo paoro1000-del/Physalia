@@ -68,7 +68,7 @@ jobs:
         run: python scripts/check_connection_limit_status_parity.py
 
       - name: Compile all Python sources
-        run: python -m compileall -q app.py decrypt.py aideceptionguard examples scripts tests
+        run: python -m compileall -q app.py decrypt.py physalia examples scripts tests
 
       - name: Check pinned releases for known PyPI advisories
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.14'

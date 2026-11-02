@@ -13,15 +13,15 @@ import time
 from urllib.parse import quote_from_bytes
 import zipfile
 
-from aideceptionguard.archive_metadata import write_archive_member
-from aideceptionguard.database import records
-from aideceptionguard.formats import FORMATS, STATIC_HTML_SECURITY_META, render, render_switchable_env, resolve_context
-from aideceptionguard.i18n import translate
-from aideceptionguard.nesting import Artifact
-from aideceptionguard.naming import FORMAT_NAMES, plausible_filename
-from aideceptionguard.stream_runtime import validate_config
-from aideceptionguard.scenarios import place_canary, scenario_for
-from aideceptionguard.validation import CanaryURLCycle, canary_url_list, filename, integer, text
+from physalia.archive_metadata import write_archive_member
+from physalia.database import records
+from physalia.formats import FORMATS, STATIC_HTML_SECURITY_META, render, render_switchable_env, resolve_context
+from physalia.i18n import translate
+from physalia.nesting import Artifact
+from physalia.naming import FORMAT_NAMES, plausible_filename
+from physalia.stream_runtime import validate_config
+from physalia.scenarios import place_canary, scenario_for
+from physalia.validation import CanaryURLCycle, canary_url_list, filename, integer, text
 
 CODECS = ("base64", "base64url", "hex", "percent", "gzip_base64")
 MAX_MAZE_BYTES = 16 * 1024 * 1024

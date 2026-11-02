@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 import pyzipper
 
-from aideceptionguard.generators import generate
+from physalia.generators import generate
 from examples.evaluate_deception import MAX_BYTES, evaluate, main
 
 

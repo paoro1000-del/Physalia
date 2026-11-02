@@ -1,8 +1,8 @@
-# Contributing to AiDeceptionGuard
+# Contributing to Physalia
 
 [日本語](#日本語)
 
-AiDeceptionGuard is an early-stage defensive deception project. Contributions should improve two primary outcomes: make decoys credible to people and AI-assisted attackers, and consume enough attacker time or effort to create a useful response opportunity. Detection quality and impact on authorized users matter too.
+Physalia is an early-stage defensive deception project. Contributions should improve two primary outcomes: make decoys credible to people and AI-assisted attackers, and consume enough attacker time or effort to create a useful response opportunity. Detection quality and impact on authorized users matter too.
 
 ## Design and safety
 
@@ -29,7 +29,7 @@ Describe the user problem, attacker model, expected benefit, bypasses, authorize
 
 ## 日本語
 
-AiDeceptionGuardは開発初期の防御用ディセプション・プロジェクトです。主な目的は、デコイを人やAI支援型の攻撃者に本物らしく見せることと、攻撃者の時間・作業を消費して対応機会を作ることです。検知の質と正規利用者への影響も重視します。
+Physaliaは開発初期の防御用ディセプション・プロジェクトです。主な目的は、デコイを人やAI支援型の攻撃者に本物らしく見せることと、攻撃者の時間・作業を消費して対応機会を作ることです。検知の質と正規利用者への影響も重視します。
 
 ### 設計と安全性
 

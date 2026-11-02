@@ -5,7 +5,7 @@ import secrets
 import unicodedata
 import zipfile
 
-from aideceptionguard.i18n import translate
+from physalia.i18n import translate
 
 _WINDOWS_DEVICE_NAME = re.compile(
     r"(?i)(?:CON|PRN|AUX|NUL|COM[1-9\u00b9\u00b2\u00b3]|LPT[1-9\u00b9\u00b2\u00b3])(?:\..*)?\Z")

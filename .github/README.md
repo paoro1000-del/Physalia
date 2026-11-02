@@ -1,6 +1,6 @@
-# AiDeceptionGuard
+# Physalia
 
-AiDeceptionGuard is a local tool for generating synthetic decoy artifacts and reviewing security events. The generator does not contact canary URLs or deploy files; an HTTP alert generally requires a request to an embedded URL. Use it only in environments you own or are authorized to manage.
+Physalia is a local tool for generating synthetic decoy artifacts and reviewing security events. The generator does not contact canary URLs or deploy files; an HTTP alert generally requires a request to an embedded URL. Use it only in environments you own or are authorized to manage.
 
 - [English guide](../README_en.md)
 - [日本語ガイド](../README.md)

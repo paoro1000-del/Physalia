@@ -9,8 +9,8 @@ import sqlite3
 import string
 import uuid
 
-from aideceptionguard.i18n import translate
-from aideceptionguard.validation import canary_url, identifier, integer, synthetic_candidate, text, vault_decoy_domain
+from physalia.i18n import translate
+from physalia.validation import canary_url, identifier, integer, synthetic_candidate, text, vault_decoy_domain
 
 MAX_ROWS = 10000
 MAX_DATABASE_BYTES = 32 * 1024 * 1024

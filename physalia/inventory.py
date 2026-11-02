@@ -3,9 +3,9 @@ from datetime import datetime, timedelta, timezone
 import hashlib
 import json
 
-from aideceptionguard.nesting import Artifact
-from aideceptionguard.i18n import translate
-from aideceptionguard.validation import is_reserved_example_url
+from physalia.nesting import Artifact
+from physalia.i18n import translate
+from physalia.validation import is_reserved_example_url
 
 
 def attach_inventory(asset, kind, settings, language):

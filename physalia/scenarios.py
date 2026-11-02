@@ -1,9 +1,9 @@
 """Consistent synthetic business scenarios for archive and directory decoys."""
 import secrets
 
-from aideceptionguard.database import DATABASE_TEMPLATES, _template_columns
-from aideceptionguard.i18n import translate
-from aideceptionguard.validation import vault_decoy_domain
+from physalia.database import DATABASE_TEMPLATES, _template_columns
+from physalia.i18n import translate
+from physalia.validation import vault_decoy_domain
 
 
 SCENARIOS = {

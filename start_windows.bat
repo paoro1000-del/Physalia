@@ -38,10 +38,10 @@ if errorlevel 1 (
 .venv\Scripts\python.exe -m pip check
 if errorlevel 1 goto :dependency_check_failed
 
-echo Starting AiDeceptionGuard. Press Ctrl+C in this window to stop it.
+echo Starting Physalia. Press Ctrl+C in this window to stop it.
 .venv\Scripts\python.exe app.py --open %*
 if errorlevel 1 goto :app_failed
-echo AiDeceptionGuard has stopped.
+echo Physalia has stopped.
 pause
 exit /b 0
 
@@ -82,7 +82,7 @@ pause
 exit /b 1
 
 :app_failed
-echo AiDeceptionGuard could not start or exited with an error. Review the messages above.
+echo Physalia could not start or exited with an error. Review the messages above.
 echo If the local port is already in use, run this file with --port 8766.
 pause
 exit /b 1

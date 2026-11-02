@@ -17,12 +17,12 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 from reportlab.pdfgen import canvas
 
-from aideceptionguard.database import (
+from physalia.database import (
     DATABASE_TEMPLATES, DEFAULT_COLUMNS, _template_columns_with_labels, records, sqlite_bytes,
 )
-from aideceptionguard.i18n import translate
-from aideceptionguard.naming import plausible_filename
-from aideceptionguard.validation import canary_url, filename, identifier, integer, is_public_host, is_reserved_example_url, text
+from physalia.i18n import translate
+from physalia.naming import plausible_filename
+from physalia.validation import canary_url, filename, identifier, integer, is_public_host, is_reserved_example_url, text
 
 FORMATS = {
     "env": ("env", "text/plain; charset=utf-8"), "txt": ("txt", "text/plain; charset=utf-8"),

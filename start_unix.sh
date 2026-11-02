@@ -58,12 +58,12 @@ if ! .venv/bin/python -m pip check; then
   exit 1
 fi
 
-echo "Starting AiDeceptionGuard. Press Ctrl+C in this terminal to stop it."
+echo "Starting Physalia. Press Ctrl+C in this terminal to stop it."
 if .venv/bin/python app.py --open "$@"; then
-  echo "AiDeceptionGuard stopped."
+  echo "Physalia stopped."
 else
   APP_STATUS=$?
-  echo "AiDeceptionGuard exited with an error (status $APP_STATUS). Review the message above." >&2
+  echo "Physalia exited with an error (status $APP_STATUS). Review the message above." >&2
   echo "If the message says the port is already in use, rerun this script with --port 8766." >&2
   exit "$APP_STATUS"
 fi

@@ -12,9 +12,9 @@ from openpyxl import load_workbook
 from pptx import Presentation
 import pyzipper
 
-from aideceptionguard.formats import FORMATS
-from aideceptionguard.generators import generate
-from aideceptionguard.passwords import make_password, validate_policy
+from physalia.formats import FORMATS
+from physalia.generators import generate
+from physalia.passwords import make_password, validate_policy
 
 try:
     from pypdf import PdfReader
@@ -284,13 +284,13 @@ class NestTests(unittest.TestCase):
         for setting in ({"layers": 8, "branches": 3}, {"layers": 0}, {"decoys": 11}, {"format": "unsupported"},
                         {"formats": ["txt", "xlsx"]}, {"format_weights": {"txt": 1}},
                         {"directories": ["../"]}, {"canary_percent": 101}):
-            with self.subTest(setting=setting), patch("aideceptionguard.nesting.render") as renderer:
+            with self.subTest(setting=setting), patch("physalia.nesting.render") as renderer:
                 with self.assertRaises(ValueError):
                     generate("nest", setting)
                 renderer.assert_not_called()
 
     def test_content_budget_is_enforced(self):
-        with patch("aideceptionguard.nesting.MAX_CONTENT_BYTES", 10):
+        with patch("physalia.nesting.MAX_CONTENT_BYTES", 10):
             with self.assertRaises(ValueError):
                 generate("nest", {"layers": 1, "decoys": 1})
 

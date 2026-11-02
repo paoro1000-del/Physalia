@@ -144,7 +144,7 @@ def browser_builders(source):
 def main():
     try:
         backend = backend_allowlist(
-            (ROOT / "aideceptionguard" / "generators.py").read_text(encoding="utf-8"))
+            (ROOT / "physalia" / "generators.py").read_text(encoding="utf-8"))
         browser = browser_builders((ROOT / "web" / "app.js").read_text(encoding="utf-8"))
     except (OSError, UnicodeError, SyntaxError, ValueError, TypeError) as exc:
         print(f"Cannot inspect generation setting parity: {exc}", file=sys.stderr)

@@ -6,7 +6,7 @@ import secrets
 import unicodedata
 from urllib.parse import urlsplit
 
-from aideceptionguard.i18n import translate
+from physalia.i18n import translate
 
 MAX_CANARY_URLS = 400
 MAX_CANARY_URL_LENGTH = 2048

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "AiDeceptionGuard deception study metadata",
+  "title": "Physalia deception study metadata",
   "type": "object",
   "additionalProperties": false,
   "required": [

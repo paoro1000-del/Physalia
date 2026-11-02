@@ -56,7 +56,7 @@ jobs:
         run: python3 scripts/check_connection_limit_status_parity.py
 
       - name: Compile Python sources
-        run: python3 -m compileall -q app.py decrypt.py aideceptionguard examples scripts tests
+        run: python3 -m compileall -q app.py decrypt.py physalia examples scripts tests
 
       - name: Check JavaScript syntax
         run: |

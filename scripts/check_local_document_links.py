@@ -22,12 +22,12 @@ DOCUMENTS = (
 UI_SOURCE_FILES = (
     ROOT / "web" / "index.html",
     ROOT / "web" / "app.js",
-    ROOT / "aideceptionguard" / "i18n.py",
+    ROOT / "physalia" / "i18n.py",
 )
 CODE_SOURCE_FILES = (
     ROOT / "app.py",
     ROOT / "decrypt.py",
-    *(source for directory in ("aideceptionguard", "examples", "scripts", "tests")
+    *(source for directory in ("physalia", "examples", "scripts", "tests")
       for source in sorted((ROOT / directory).glob("*.py"))),
 )
 PUBLIC_FORM_FILES = tuple(sorted((ROOT / ".github" / "ISSUE_TEMPLATE").glob("*.yml")))

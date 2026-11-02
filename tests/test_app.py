@@ -17,7 +17,7 @@ from cryptography.exceptions import InvalidTag
 
 import app
 import decrypt
-from aideceptionguard.generators import decrypt_layer, encrypt_layer, generate
+from physalia.generators import decrypt_layer, encrypt_layer, generate
 
 
 class GeneratorTests(unittest.TestCase):

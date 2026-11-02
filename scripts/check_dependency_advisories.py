@@ -19,7 +19,7 @@ from check_dependency_pins import REQUIRED_FILES, pinned_requirements
 ROOT = Path(__file__).resolve().parents[1]
 MAX_RESPONSE_BYTES = 4 * 1024 * 1024
 TIMEOUT_SECONDS = 20
-USER_AGENT = "AiDeceptionGuard-dependency-advisory-check/1.0"
+USER_AGENT = "Physalia-dependency-advisory-check/1.0"
 
 
 def unique_object(pairs):

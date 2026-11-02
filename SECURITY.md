@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-AiDeceptionGuard is an early-stage project. Until a stable release is published, security fixes are intended for the latest default branch; older commits and generated samples are not maintained separately.
+Physalia is an early-stage project. Until a stable release is published, security fixes are intended for the latest default branch; older commits and generated samples are not maintained separately.
 
 ## Reporting a vulnerability
 
@@ -20,7 +20,7 @@ The project scope includes the local GUI and generator, generated sample code, a
 
 ### 対応バージョン
 
-AiDeceptionGuardは開発初期のプロジェクトです。安定版を公開するまでは、最新のデフォルトブランチを修正対象とします。過去のコミットや生成済みサンプルは個別に保守しません。
+Physaliaは開発初期のプロジェクトです。安定版を公開するまでは、最新のデフォルトブランチを修正対象とします。過去のコミットや生成済みサンプルは個別に保守しません。
 
 ### 脆弱性の報告
 

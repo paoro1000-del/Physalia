@@ -1,16 +1,16 @@
-# AiDeceptionGuard
+# Physalia
 
 English | [日本語](README.md)
 
-AiDeceptionGuard is a local tool for generating fictional decoy files and samples for security testing. It does not deploy generated artifacts or provide production authentication, monitoring, or notifications. Evaluate its effectiveness in your own environment.
+Physalia is a local tool for generating fictional decoy files and samples for security testing. It does not deploy generated artifacts or provide production authentication, monitoring, or notifications. Evaluate its effectiveness in your own environment.
 
 ## Setup and launch
 
 Install Python 3.11–3.14, then open a terminal and download the source:
 
 ```sh
-git clone https://github.com/paoro1000-del/AiDeceptionGuard.git
-cd AiDeceptionGuard
+git clone https://github.com/paoro1000-del/Physalia.git
+cd Physalia
 ```
 
 Start the app from the downloaded folder using the instructions for your operating system.

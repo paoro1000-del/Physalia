@@ -62,7 +62,7 @@ def main():
         print("Cannot inspect every multi-URL generation control", file=sys.stderr)
         return 2
     try:
-        validation = (ROOT / "aideceptionguard" / "validation.py").read_text(encoding="utf-8")
+        validation = (ROOT / "physalia" / "validation.py").read_text(encoding="utf-8")
         server = (ROOT / "app.py").read_text(encoding="utf-8")
         maximum_urls = int(re.search(r"^MAX_CANARY_URLS\s*=\s*(\d+)\s*$", validation, re.M).group(1))
         maximum_url_length = int(re.search(r"^MAX_CANARY_URL_LENGTH\s*=\s*(\d+)\s*$", validation, re.M).group(1))

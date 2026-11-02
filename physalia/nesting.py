@@ -9,14 +9,14 @@ from datetime import datetime, timezone
 
 import pyzipper
 
-from aideceptionguard.archive_metadata import write_archive_member
-from aideceptionguard.database import records
-from aideceptionguard.formats import FORMATS, render, render_switchable_env, resolve_context
-from aideceptionguard.i18n import translate
-from aideceptionguard.naming import plausible_filename
-from aideceptionguard.passwords import make_password, validate_policy
-from aideceptionguard.validation import CanaryURLCycle, canary_url_list, filename, integer
-from aideceptionguard.scenarios import place_canary, scenario_for
+from physalia.archive_metadata import write_archive_member
+from physalia.database import records
+from physalia.formats import FORMATS, render, render_switchable_env, resolve_context
+from physalia.i18n import translate
+from physalia.naming import plausible_filename
+from physalia.passwords import make_password, validate_policy
+from physalia.validation import CanaryURLCycle, canary_url_list, filename, integer
+from physalia.scenarios import place_canary, scenario_for
 
 MAX_LAYERS = 8
 MAX_NODES = 40
@@ -267,7 +267,7 @@ def generate_nest(settings, language="ja"):
             write_archive_member(delivery, note_path, hint_text(hint), language=language)
             inventory[0]["hint_file"] = note_path
     manifest = {
-        "format": "AiDeceptionGuard operator inventory v3", "warning": translate("operator_warning", language),
+        "format": "Physalia operator inventory v3", "warning": translate("operator_warning", language),
         "deployment": outer_name, "policy": policy, "layers": layers, "branches": branches,
         "scenario": scenario_name, "schema": scenario["schema"],
         "primary_document_format": fmt, "varied_formats": varied_formats,

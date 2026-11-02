@@ -1,6 +1,6 @@
 # Recording and Manually Reviewing Canary Contacts
 
-This guide explains how an operator can record contacts with canary URLs or decoy content they control, then review those records in an existing web server or logging system. AiDeceptionGuard has no feature for ingesting and automatically classifying an operator's existing logs. It ships no log-analysis screen, ingestion API, parser, or detection rules. The Infinite Stream sample writes its own operational events to standard output.
+This guide explains how an operator can record contacts with canary URLs or decoy content they control, then review those records in an existing web server or logging system. Physalia has no feature for ingesting and automatically classifying an operator's existing logs. It ships no log-analysis screen, ingestion API, parser, or detection rules. The Infinite Stream sample writes its own operational events to standard output.
 
 ## What to record
 

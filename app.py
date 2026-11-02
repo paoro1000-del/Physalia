@@ -21,9 +21,9 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path, PurePosixPath
 
-from aideceptionguard.generators import generate
-from aideceptionguard.i18n import translate
-from aideceptionguard.database import public_templates
+from physalia.generators import generate
+from physalia.i18n import translate
+from physalia.database import public_templates
 
 STATIC = Path(__file__).parent / "web"
 APP_VERSION = (STATIC.parent / "VERSION").read_text(encoding="utf-8").strip()
@@ -212,7 +212,7 @@ class LocalThreadingHTTPServer(ThreadingHTTPServer):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "AiDeceptionGuard"
+    server_version = "Physalia"
     sys_version = ""
 
     def log_message(self, format, *args):

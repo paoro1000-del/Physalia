@@ -12,18 +12,18 @@ from datetime import date, timedelta
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 
-from aideceptionguard.archive_metadata import write_archive_member
-from aideceptionguard.i18n import translate
-from aideceptionguard.validation import (text as _text, canary_url as _canary_url,
+from physalia.archive_metadata import write_archive_member
+from physalia.i18n import translate
+from physalia.validation import (text as _text, canary_url as _canary_url,
                                          filename, reject_unsafe_text_tree,
                                          vault_decoy_domain)
-from aideceptionguard.database import (DATABASE_TEMPLATES, _template_columns_with_labels,
+from physalia.database import (DATABASE_TEMPLATES, _template_columns_with_labels,
                                       database_settings, records as database_records, sqlite_bytes)
-from aideceptionguard.formats import PREVIEW_ROW_LIMIT, STATIC_HTML_SECURITY_META, generate_canary, render
-from aideceptionguard.nesting import MAX_LAYERS, Artifact, generate_nest
-from aideceptionguard.mazes import generate_directory_maze, generate_encoding_maze, generate_stream_sample
-from aideceptionguard.naming import plausible_filename
-from aideceptionguard.inventory import attach_inventory
+from physalia.formats import PREVIEW_ROW_LIMIT, STATIC_HTML_SECURITY_META, generate_canary, render
+from physalia.nesting import MAX_LAYERS, Artifact, generate_nest
+from physalia.mazes import generate_directory_maze, generate_encoding_maze, generate_stream_sample
+from physalia.naming import plausible_filename
+from physalia.inventory import attach_inventory
 
 MAGIC = b"ADG1"
 def _derive_key(password: str, salt: bytes) -> bytes:

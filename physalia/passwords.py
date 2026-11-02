@@ -3,8 +3,8 @@ import secrets
 import string
 import re
 
-from aideceptionguard.i18n import translate
-from aideceptionguard.validation import integer
+from physalia.i18n import translate
+from physalia.validation import integer
 
 WORDS = (
     "Atlas", "Cedar", "Delta", "Maple", "North", "River", "Stone", "Cloud", "Orbit", "Field",
