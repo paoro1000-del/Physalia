@@ -165,7 +165,9 @@ def generate_web(settings: dict, language: str = "ja") -> Artifact:
     for names, days_ago, statuses in recent_records:
         name = localized(names)
         status = localized(statuses)
-        updated = (date.today() - timedelta(days=days_ago)).strftime("%Y年%m月%d日" if language == "ja" else "%b %d, %Y")
+        updated_date = date.today() - timedelta(days=days_ago)
+        updated = (f"{updated_date.year}年{updated_date.month:02d}月{updated_date.day:02d}日"
+                   if language == "ja" else updated_date.strftime("%b %d, %Y"))
         escaped_name = html.escape(name)
         if linked_record is not None and (names, days_ago, statuses) == linked_record:
             file_name = f'<a class="file-link" href="{html.escape(url, quote=True)}" rel="noreferrer">{escaped_name}</a>'
