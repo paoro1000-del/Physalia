@@ -211,6 +211,7 @@ class LocalThreadingHTTPServer(ThreadingHTTPServer):
     """Bound local client threads and slow-request resource use."""
 
     daemon_threads = True
+    allow_reuse_address = False
 
     def __init__(self, server_address, handler):
         self.worker_slots = threading.BoundedSemaphore(MAX_HTTP_WORKERS)
@@ -225,6 +226,11 @@ class LocalThreadingHTTPServer(ThreadingHTTPServer):
         self.canary_location_tokens = {}
         self.next_canary_event = 1
         super().__init__(server_address, handler)
+
+    def server_bind(self):
+        if hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        super().server_bind()
 
     def handle_error(self, request, client_address):
         # The base implementation prints a traceback and peer address. Keep

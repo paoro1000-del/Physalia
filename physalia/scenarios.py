@@ -1,7 +1,7 @@
 """Consistent synthetic business scenarios for archive and directory decoys."""
 import secrets
 
-from physalia.database import DATABASE_TEMPLATES, _template_columns
+from physalia.database import DATABASE_TEMPLATES, _template_columns, ensure_canary_endpoint_column
 from physalia.i18n import translate
 from physalia.validation import vault_decoy_domain
 
@@ -143,6 +143,16 @@ def scenario_for(settings, language="ja"):
                                  if column["name"].casefold() == "login_url"), None)
             if login_column is not None and "values" not in login_column:
                 login_column["vault_decoy_domain"] = domain
+    if not scenario.get("canary_field"):
+        context_fields = {
+            "service": ("service_portal_url", "サービス管理画面" if language == "ja" else "Service portal", ("endpoint", "api_endpoint")),
+            "billing": ("billing_portal_url", "請求ポータル" if language == "ja" else "Billing portal", ("endpoint",)),
+            "support": ("support_portal_url", "サポートポータル" if language == "ja" else "Support portal", ("endpoint",)),
+            "reports": ("report_portal_url", "レポートポータル" if language == "ja" else "Reports portal", ("endpoint",)),
+        }
+        field, label, preferred = context_fields[scenario["context"]]
+        _index, scenario["canary_field"] = ensure_canary_endpoint_column(
+            scenario["columns"], field, label, preferred)
     scenario["title"] = scenario["title_en" if language == "en" else "title_ja"]
     return name, scenario
 

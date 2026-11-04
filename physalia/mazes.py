@@ -116,7 +116,7 @@ def generate_directory_maze(settings, language="ja"):
     url_cycle = CanaryURLCycle(canary_url_list(settings, language))
     scenario_name, scenario = scenario_for(settings, language)
     context = resolve_context({"canary_context": scenario["context"]}, language)
-    name = filename(settings["filename"], language) if settings.get("filename") else plausible_filename("directory_maze")
+    name = plausible_filename("directory_maze")
     title = text(settings.get("title", ""), "title", 80, language) or scenario["title"]
     rng = secrets.SystemRandom()
     introductions = (
@@ -181,7 +181,10 @@ def generate_directory_maze(settings, language="ja"):
             documents.append(path)
             if token_url:
                 canary_record = {"path": path, "url": token_url}
-                if fmt != "env" and scenario.get("canary_field") and canary_cell is not None:
+                if fmt == "env":
+                    canary_record["field"] = scenario["env_key"]
+                    canary_record["location"] = "commented production setting"
+                elif scenario.get("canary_field") and canary_cell is not None:
                     canary_record["field"] = scenario["columns"][canary_cell[1]]["name"]
                     canary_record["record"] = canary_cell[0] + 1
                 canary_files.append(canary_record)
@@ -232,8 +235,13 @@ def generate_directory_maze(settings, language="ja"):
                           "canary_files": canary_files})
     rng.shuffle(files)
     canary_placements = sum(len(item["canary_files"]) for item in inventory)
+    canary_examples = [
+        {"path": entry["path"], "field": entry.get("field"),
+         "record": entry.get("record"), "location": entry.get("location")}
+        for item in inventory for entry in item["canary_files"]
+    ][:3]
     summary = {"kind": "directory_maze", "directories": total, "documents": total * per_directory,
-               "canary_placements": canary_placements}
+               "canary_placements": canary_placements, "canary_location_examples": canary_examples}
     return bundle(name, files, {"warning": translate("maze_operator_warning", language), "entrypoint": "index.html",
                                 "scenario": scenario_name, "schema": scenario["schema"],
                                 "nodes": inventory, "summary": summary}, summary, language, "directory_maze_size_limit")
@@ -259,7 +267,7 @@ def generate_encoding_maze(settings, language="ja"):
     url_cycle = CanaryURLCycle(canary_url_list(settings, language))
     scenario_name, scenario = scenario_for(settings, language)
     context = resolve_context({"canary_context": scenario["context"]}, language)
-    name = filename(settings["filename"], language) if settings.get("filename") else plausible_filename("encoding_maze")
+    name = plausible_filename("encoding_maze")
     rng = secrets.SystemRandom()
     extension = FORMATS[fmt][0]
     if fmt == "env":
@@ -307,7 +315,10 @@ def generate_encoding_maze(settings, language="ja"):
                   "decoded_format": fmt, "sha256": digest, "canary": bool(token_url)}
         if token_url:
             detail["canary_url"] = token_url
-            if fmt != "env" and scenario.get("canary_field") and canary_cell is not None:
+            if fmt == "env":
+                detail["canary_field"] = scenario["env_key"]
+                detail["canary_location"] = "commented production setting"
+            elif scenario.get("canary_field") and canary_cell is not None:
                 detail["canary_field"] = scenario["columns"][canary_cell[1]]["name"]
                 detail["canary_record"] = canary_cell[0] + 1
         inventory.append(detail)
@@ -319,8 +330,14 @@ def generate_encoding_maze(settings, language="ja"):
         raise ValueError(translate("encoding_maze_size_limit", language))
     rng.shuffle(files)
     files.append(("index.json", index_content))
+    canary_examples = [
+        {"path": item["path"], "field": item.get("canary_field"),
+         "record": item.get("canary_record"), "location": item.get("canary_location")}
+        for item in inventory if item["canary"]
+    ][:3]
     summary = {"kind": "encoding_maze", "scenario": scenario_name, "candidates": count, "layers": layers,
-               "canary_placements": sum(bool(item["canary"]) for item in inventory)}
+               "canary_placements": sum(bool(item["canary"]) for item in inventory),
+               "canary_location_examples": canary_examples}
     return bundle(name, files, {"warning": translate("maze_operator_warning", language), "candidates": inventory, "summary": summary}, summary, language, "encoding_maze_size_limit")
 
 
@@ -334,7 +351,7 @@ def generate_stream_sample(settings, language="ja"):
         config = validate_config({"port": port, "path": path, "format": fmt, "rate_kib": rate, "max_streams": maximum})
     except ValueError as exc:
         raise ValueError(translate("stream_config_error", language)) from exc
-    name = filename(settings["filename"], language) if settings.get("filename") else plausible_filename("stream")
+    name = plausible_filename("stream")
     environment = {"ADG_STREAM_TOKEN": secrets.token_urlsafe(32), "ADG_STREAM_ADMIN_TOKEN": secrets.token_urlsafe(32)}
     license_note = ("ライセンス：Apache License 2.0（LICENSEを参照）\n\n" if language == "ja"
                     else "License: Apache License 2.0 (see LICENSE).\n\n")

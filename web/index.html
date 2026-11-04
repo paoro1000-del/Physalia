@@ -37,8 +37,8 @@
         <section class="panel intro-panel intro-concept" aria-labelledby="intro-concept-title">
           <h2 id="intro-concept-title" data-i18n="intro_concept_title">コンセプト（対策の考え方）</h2>
           <p data-i18n-emphasis="intro_prevention">そもそもの侵入を防ぎたい場合や、定期バックアップなどの一般的なランサムウェア対策を重視する場合は、まず<strong>市販のアンチウイルスソフトなどのセキュリティ製品</strong>の導入をおすすめします。</p>
-          <p data-i18n-emphasis="intro_after_intrusion">それでも侵入を許す場合に備え、Physaliaはデコイなどで<strong>攻撃者の探索に手間を加え、検知・対応の機会を作る</strong>対策を紹介します。AIやスクリプトによる自動探索でも、デコイが必ず見分けられるとは限りません。</p>
-          <p data-i18n="intro_concept_scope">手法には、従来の考え方を使うものや、AIが普及した環境に合わせたものがあります。効果は配置や攻撃者の行動によって異なります。</p>
+          <p data-i18n-emphasis="intro_after_intrusion">Physaliaは、アンチウイルスソフトなどの対策を置き換えるのではなく、**デコイによる攻撃回避や遅滞対策による攻撃断念に重きを置いたアプローチ**を紹介します。既知の技術もAI時代の攻撃を想定して見直し、仕組みを学べる解説やサンプルを提供します。</p>
+          <p data-i18n-emphasis="intro_concept_scope">**目指すのは、侵入や情報流出を完全に防ぐことだけに頼るのではなく、侵入や情報流出が起きた後にも効果を発揮する防御策です。**侵入や情報流出に成功すれば攻撃者の勝ち、という状況を変えるため、攻撃が成功した後も攻撃者に負担をかけ、対応する機会を作ることで、攻撃者に偏った状況を少しでも変えることを目指します。</p>
           <p data-i18n-emphasis="intro_inspiration">完全に防げるかだけでなく、<strong>攻撃者の手間を増やし、対応の機会を作れるか</strong>も対策を考える軸です。紹介する手法が、その検討のヒントになればと考えています。</p>
           <p data-i18n-emphasis="intro_boundary">紹介する対策について、<strong>攻撃者の立場から「どうすれば突破できるか」</strong>を考えてみてください。AIと壁打ちして、突破方法が思いつくのか確認してみるのもよいでしょう。突破に手間がかかる、あるいは突破方法が思いつかない対策は、採用を検討する価値があります。</p>
         </section>
@@ -61,10 +61,42 @@
           <p class="intro-help"><a href="/quickstart/ja" id="intro-quick-guide" target="_blank" rel="noopener" data-i18n="quick_guide_link">はじめての作成・配置ガイド</a></p>
           <p class="intro-help"><a href="/log-guide/ja" id="intro-log-guide" target="_blank" rel="noopener" data-i18n="log_guide_link">ログの記録と手動確認ガイド</a></p>
         </section>
+        <section class="panel intro-panel intro-physalia-note" aria-labelledby="intro-physalia-note-title">
+          <h2 id="intro-physalia-note-title" data-i18n="intro_physalia_note_title">&#x4f59;&#x8ac7;&#xff1a;&#x5b9f;&#x5728;&#x3059;&#x308b;&#x50;&#x68;&#x79;&#x73;&#x61;&#x6c;&#x69;&#x61;&#xff08;&#x30ab;&#x30c4;&#x30aa;&#x30ce;&#x30a8;&#x30dc;&#x30b7;&#xff09;</h2>
+          <h3 data-i18n="intro_physalia_biology_title">&#x3069;&#x3093;&#x306a;&#x751f;&#x304d;&#x7269;&#x304b;</h3>
+          <p data-i18n="intro_physalia_biology_1">Physalia physalis（カツオノエボシ）は、クラゲのように見えますが、異なる役割を担う個虫が集まって一体として働くクダクラゲの仲間です。</p>
+          <p data-i18n="intro_physalia_biology_2">気体を含む青紫色などの浮き袋が海面に浮かび、帆のように風を受けます。自力で泳がず、風や潮流に運ばれます。</p>
+          <p data-i18n="intro_physalia_biology_3">海面下に伸びる触手は平均約10m、長いものは約30mに達することがあります。見えている浮き袋だけでは、触手の広がる範囲を判断できません。</p>
+          <h3 data-i18n="intro_physalia_hazard_title">&#x523a;&#x50b7;&#x306e;&#x5371;&#x967a;</h3>
+          <p data-i18n="intro_physalia_hazard_1">触手の刺胞に触れると、強い痛みや灼熱感、赤いみみず腫れ、水疱が生じることがあります。</p>
+          <p data-i18n="intro_physalia_hazard_2">吐き気、嘔吐、けいれん、呼吸困難、ショックなどの全身症状や死亡はまれですが報告されています。水中では痛みや驚きからパニックになり、溺れる危険もあります。</p>
+          <p data-i18n="intro_physalia_hazard_3">人を狙って襲う生物ではありませんが、知らずに触れると手痛い反応を受けることがあります。漂着した個体や切れた触手も、しばらく刺す力を保つことがあります。</p>
+          <h3 data-i18n="intro_physalia_prevention_title">&#x8fd1;&#x3065;&#x304b;&#x306a;&#x3044;&#x305f;&#x3081;&#x306b;</h3>
+          <p data-i18n="intro_physalia_prevention_1">一番の予防は、触らないこと、見つかった場所に近づかないことです。</p>
+          <ul class="intro-limits">
+            <li data-i18n="intro_physalia_prevention_2">水中や波打ち際で見ても、近づかず、拾わず、踏まないでください。漂着個体や触手だけの断片にも触れないでください。</li>
+            <li data-i18n="intro_physalia_prevention_3">目撃情報や遊泳禁止の表示がある場所には入らず、監視員・現地当局の案内に従ってください。刺された後に呼吸困難や失神などの強い症状が出た場合は、直ちに救急要請してください。</li>
+          </ul>
+          <p class="intro-help"><span data-i18n="intro_physalia_sources">&#x51fa;&#x5178;&#xff1a;</span><a href="https://www.env.go.jp/nature/nats/TG/anzen.pdf" target="_blank" rel="noopener noreferrer" data-i18n="intro_physalia_source_jp">&#x74b0;&#x5883;&#x7701;&#x300c;&#x81ea;&#x7136;&#x3068;&#x306e;&#x3075;&#x308c;&#x3042;&#x3044;&#x6d3b;&#x52d5;&#x306b;&#x304a;&#x3051;&#x308b;&#x5b89;&#x5168;&#x5bfe;&#x7b56;&#x300d;</a> &#xb7; <a href="https://oceanservice.noaa.gov/facts/portuguese-man-o-war.html" target="_blank" rel="noopener noreferrer">NOAA: Portuguese man o&#x2019; war</a> &#xb7; <a href="https://gelavista.ipma.pt/en/especies/" target="_blank" rel="noopener noreferrer">IPMA GelAvista</a></p>
+          <h3 data-i18n="intro_physalia_name_title">&#x306a;&#x305c;&#x300c;&#x50;&#x68;&#x79;&#x73;&#x61;&#x6c;&#x69;&#x61;&#x300d;&#x306a;&#x306e;&#x304b;</h3>
+          <p data-i18n="intro_physalia_name_reason">&#x6c34;&#x9762;&#x304b;&#x3089;&#x898b;&#x3048;&#x308b;&#x6d6e;&#x304d;&#x888b;&#x3060;&#x3051;&#x3067;&#x306f;&#x3001;&#x305d;&#x306e;&#x4e0b;&#x306b;&#x4f38;&#x3073;&#x308b;&#x9577;&#x3044;&#x89e6;&#x624b;&#x307e;&#x3067;&#x306f;&#x5206;&#x304b;&#x308a;&#x307e;&#x305b;&#x3093;&#x3002;&#x300c;&#x898b;&#x3048;&#x3066;&#x3044;&#x308b;&#x7bc4;&#x56f2;&#x3060;&#x3051;&#x3067;&#x306f;&#x5168;&#x4f53;&#x3092;&#x5224;&#x65ad;&#x3067;&#x304d;&#x306a;&#x3044;&#x300d;&#x3068;&#x3044;&#x3046;&#x7279;&#x5fb4;&#x3092;&#x3001;&#x30c7;&#x30b3;&#x30a4;&#x306b;&#x3088;&#x3063;&#x3066;&#x653b;&#x6483;&#x8005;&#x306e;&#x63a2;&#x7d22;&#x3084;&#x9078;&#x5225;&#x306b;&#x624b;&#x9593;&#x3092;&#x751f;&#x3080;&#x3001;&#x3053;&#x306e;&#x30c4;&#x30fc;&#x30eb;&#x306e;&#x8003;&#x3048;&#x65b9;&#x306b;&#x306a;&#x305e;&#x3089;&#x3048;&#x3066;&#x540d;&#x524d;&#x3092;&#x501f;&#x308a;&#x307e;&#x3057;&#x305f;&#x3002;&#x751f;&#x7269;&#x304c;&#x4eba;&#x3092;&#x72d9;&#x3046;&#x3068;&#x3044;&#x3046;&#x610f;&#x5473;&#x3067;&#x3082;&#x3001;&#x30c4;&#x30fc;&#x30eb;&#x304c;&#x523a;&#x50b7;&#x306e;&#x5371;&#x967a;&#x3092;&#x518d;&#x73fe;&#x3059;&#x308b;&#x3068;&#x3044;&#x3046;&#x610f;&#x5473;&#x3067;&#x3082;&#x3042;&#x308a;&#x307e;&#x305b;&#x3093;&#x3002;</p>
+        </section>
       </section>
       <section id="page-logs" class="workspace-page" aria-labelledby="logs-page-title" hidden>
         <div class="intro"><div><div class="eyebrow" data-i18n="logs_eyebrow">MANUAL LOG REVIEW</div><h1 id="logs-page-title" tabindex="-1" data-i18n="logs_title">ログ分析解説</h1><p data-i18n="logs_intro">このページは、デコイへの接触を自社の既存ログで確認するための考え方と記録例です。</p></div><span class="version" data-i18n="logs_badge">手動確認</span></div>
         <div class="notice"><strong data-i18n="logs_scope_title">この機能について</strong><span data-i18n="logs_scope">このページでは既存ログの確認方法を説明します。外部ログの取り込みや自動分析は行いません。このPCの接触記録は「カナリア接触ログ」で確認できます。</span></div>
+        <section class="panel intro-panel" aria-labelledby="logs-local-title">
+          <h2 id="logs-local-title" data-i18n="logs_local_title">カナリア接触ログで注目する項目</h2>
+          <p data-i18n="logs_local_intro">「カナリアページ」で見られるこのPCの接触記録を、次の順に確認します。</p>
+          <ul class="intro-limits">
+            <li data-i18n="logs_local_event">時刻・event_id・canary_id・method：いつ、どのカナリア識別子に、どの要求が届いたかを確認します。</li>
+            <li data-i18n="logs_local_headers">送信元IP・HTTPヘッダー：User-Agent、Accept-Language、Sec-Fetchなどを手掛かりとして見ます。値は省略・偽装されることがあります。</li>
+            <li data-i18n="logs_local_browser">ブラウザー情報：JavaScriptから届いた画面・端末情報などを確認します。受信の有無や自動操作フラグだけで、人かAIか、攻撃かどうかを判定できません。</li>
+            <li data-i18n="logs_local_location">位置情報：許可状態を確認し、受信時もブラウザーが報告した値として扱います。送信元の実所在地を証明するものではありません。</li>
+            <li data-i18n="logs_local_limits">単独の要求、HTTP応答、ブラウザー情報の受信は、ファイルを人が読んだ・保存した・情報を流出させた証明ではありません。正規のスキャナーやプレビューも照合します。</li>
+          </ul>
+          <p class="inline-note" data-i18n="logs_local_retention">このPCの記録は最大500件をメモリーに保持し、アプリ終了時に消去されます。別環境の監視ログはここには取り込まれません。</p>
+        </section>
         <section class="panel intro-panel" aria-labelledby="logs-fields-title">
           <h2 id="logs-fields-title" data-i18n="logs_fields_title">必要最小限の記録項目</h2>
           <ul class="intro-limits">
@@ -170,7 +202,7 @@
         <div class="section-head second" id="sample-settings-heading"><div><span class="step">04</span><h2 data-i18n="settings">サンプルを作成する</h2></div><span data-i18n="method_settings">選択した対策の設定</span></div>
         <div id="env-fields" class="fields">
           <div class="panel-title"><h3 data-i18n="canary_file">カナリアファイル</h3><p data-i18n="canary_desc">形式を選んで架空データ入りの文書を作ります。監視URLは任意で追加できます。</p></div>
-        <div class="form-grid"><div><label for="canary-format" data-i18n="format">ファイル形式</label><select id="canary-format"><option value="env" data-i18n="format_env">.env</option><option value="txt" data-i18n="format_txt">テキスト（.txt）</option><option value="json" data-i18n="format_json">JSON</option><option value="csv" data-i18n="format_csv">CSV</option><option value="html" data-i18n="format_html" selected>HTML文書（架空レコード）</option><option value="pdf" data-i18n="format_pdf">PDF</option><option value="xlsx" data-i18n="format_xlsx">Excel（.xlsx）</option><option value="pptx" data-i18n="format_pptx">PowerPoint（.pptx）</option><option value="sqlite" data-i18n="format_sqlite">SQLite（.db）</option></select></div><div><label for="canary-context" data-i18n="context_profile">用途</label><select id="canary-context"><option value="service" data-i18n="context_service">サービス管理</option><option value="billing" data-i18n="context_billing">請求</option><option value="support" data-i18n="context_support">サポート</option><option value="reports" data-i18n="context_reports">レポート</option><option value="auto" data-i18n="context_auto">自動選択</option></select></div>
+        <div class="form-grid"><div><label for="canary-format" data-i18n="format">ファイル形式</label><select id="canary-format"><option value="env" data-i18n="format_env">.env</option><option value="txt" data-i18n="format_txt">テキスト（.txt）</option><option value="json" data-i18n="format_json">JSON</option><option value="csv" data-i18n="format_csv">CSV</option><option value="html" data-i18n="format_html" selected>HTML文書（架空レコード）</option><option value="pdf" data-i18n="format_pdf">PDF</option><option value="xlsx" data-i18n="format_xlsx">Excel（.xlsx）</option><option value="pptx" data-i18n="format_pptx">PowerPoint（.pptx）</option><option value="sqlite" data-i18n="format_sqlite">SQLite（.db）</option></select></div><div id="canary-context-field"><label for="canary-context" data-i18n="context_profile">用途</label><select id="canary-context"><option value="service" data-i18n="context_service">サービス管理</option><option value="billing" data-i18n="context_billing">請求</option><option value="support" data-i18n="context_support">サポート</option><option value="reports" data-i18n="context_reports">レポート</option><option value="auto" data-i18n="context_auto">自動選択</option></select></div>
           <input id="canary-name" type="hidden" value="">
           <input id="canary-title" type="hidden" value="">
           <input id="canary-rows" type="hidden" value="25"></div>
@@ -178,18 +210,6 @@
           <p class="help" data-i18n="local_canary_scope">初期のカナリアページURLは、このPCでPhysaliaを起動している間だけ動作確認に使えます。別PCからは届きません。本番運用では、HTTPSで外部ネットワークからアクセスできる場所にカナリアページを公開し、そのURLをここに指定してください。</p>
           <p class="help" data-i18n="canary_help">動作確認：HTML形式でファイルを生成し、その中のリンクを押すと、左メニューの「カナリア接触ログ」で確認できます。</p>
           <div id="canary-link-style-field"><label for="canary-link-style" data-i18n="canary_redirect_method">カナリアページへの誘導方法</label><select id="canary-link-style"><option value="text" data-i18n="canary_redirect_text">文書内のテキストリンク</option><option value="button" data-i18n="canary_redirect_button">ボタン風リンク</option><option value="image" data-i18n="canary_redirect_image">アイコン画像リンク</option><option value="next" data-i18n="canary_redirect_next">「次へ」ボタン</option><option value="pagination" data-i18n="canary_redirect_pagination">ページ番号</option><option value="fullpage" data-i18n="canary_redirect_fullpage">ページ全体（どこを押しても遷移）</option></select><p class="help" data-i18n="canary_redirect_help">表示方法を選びます。リンクは、利用者がクリックしたときだけアクセスします。HTMLを開いただけで自動アクセスする仕掛けはありません。</p></div>
-          <details id="env-template-details" class="env-template-details"><summary data-i18n="env_advanced_summary">ファイル名・設定項目</summary>
-          <fieldset id="env-template-options"><legend data-i18n="env_layout_title">.envの構成</legend>
-            <label for="env-layout" data-i18n="env_layout_label">設定パターン</label><select id="env-layout"><option value="commented_production" data-i18n="env_layout_switch">環境切替メモ（代替URLはコメント）</option><option value="standard" data-i18n="env_layout_standard">通常のURL設定</option></select>
-            <div id="env-switch-options"><div class="form-grid">
-              <div><label for="env-suffix" data-i18n="env_suffix">ファイルの環境名</label><input id="env-suffix" value="development" maxlength="32" pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,31}" aria-describedby="env-suffix-help"><p id="env-suffix-help" class="help" data-i18n="env_suffix_format_help">英数字で始め、英数字・ハイフン・アンダースコアを1〜32文字で指定します。</p></div>
-              <div><label for="env-variable" data-i18n="env_variable">設定キー</label><input id="env-variable" value="URL" maxlength="48"></div>
-              <div><label for="env-dev-url" data-i18n="env_dev_url">この環境で使う有効なURL（任意）</label><input id="env-dev-url" type="url" maxlength="2048" placeholder="http://dev.example.invalid:8080" autocomplete="off"></div>
-              <div class="full-width"><label class="check-label"><input id="env-dev-url-authorized" type="checkbox" data-operator-attestation><span data-i18n="env_dev_url_authorized">このホストを管理し、本番認証のない隔離検証先だけに向けています。URLをたどる利用者からリクエストを受ける可能性があります。</span></label></div>
-              <div><label for="env-dev-comment" data-i18n="env_dev_comment_label">現在の環境のメモ（任意）</label><input id="env-dev-comment" maxlength="160"></div>
-              <div><label for="env-prod-comment" data-i18n="env_prod_comment_label">代替URLのメモ（任意）</label><input id="env-prod-comment" maxlength="160"></div>
-            </div><p class="help" data-i18n="env_switch_help">ファイル名が空欄なら .env.development になります。環境サフィックスはAPP_ENVと既定URLのホストに反映されます。手入力するURLもその環境に合わせてください。有効なURLの下に本番用に見えるカナリアURLをコメントで配置します。既定URLはexample.invalidです。別のホストを入力する場合は所有を確認し、本番認証のない隔離検証先のみに向けてください。クローラやエージェントが有効URLへアクセスする可能性があります。生成器は名前解決・接続を行いません。内部・本番接続先は入力せず、本番アプリに読み込ません。空欄のコメントは生成ごとに変わり、入力した文面は保持します。カナリアURLはそのURLへ実際にアクセスされた時に通知されます。</p></div>
-          </fieldset></details>
           <input id="canary-field" type="hidden" value=""><input id="canary-label" type="hidden" value="">
         </div>
         <div id="nest-fields" class="fields" hidden>
@@ -197,7 +217,6 @@
           <label for="nest-scenario" data-i18n="scenario_label">デコイの用途</label><select id="nest-scenario"><option value="crm" data-i18n="scenario_crm">顧客管理の登録簿</option><option value="migration" data-i18n="scenario_migration">顧客データ移行</option><option value="archive" data-i18n="scenario_archive">顧客データ保管</option><option value="cards" data-i18n="scenario_cards">支払カード台帳</option><option value="companies" data-i18n="scenario_companies">取引先企業一覧</option><option value="passwords" data-i18n="scenario_passwords">認証情報保管庫</option><option value="api_credentials" data-i18n="scenario_api_credentials">API&#35469;&#35388;&#24773;&#22577;&#21488;&#24115;</option><option value="invoices" data-i18n="scenario_invoices">請求書・入金一覧</option><option value="employees" data-i18n="scenario_employees">従業員・部署一覧</option><option value="vendors" data-i18n="scenario_vendors">仕入先・委託先台帳</option><option value="orders" data-i18n="scenario_orders">受注・販売台帳</option><option value="tickets" data-i18n="scenario_tickets">サポートチケット一覧</option><option value="assets" data-i18n="scenario_assets">IT資産台帳</option><option value="cloud" data-i18n="scenario_cloud">クラウド資産一覧</option></select><p id="nest-scenario-schema" class="help scenario-schema-summary" aria-live="polite" hidden></p>
           <p class="help" data-i18n="scenario_help">用途に合う合成データのスキーマ・ファイル名・タイトル・URL文脈をそろえます。実在する個人情報は使いません。</p>
           <div class="form-grid">
-            <div><label for="nest-name" data-i18n="filename">ファイル名（半角英数字で開始、英数字・-・_のみ、空欄で自動、拡張子不要）</label><input id="nest-name" maxlength="64" data-filename-input placeholder="backup_2026"></div>
             <div><label for="layers" data-i18n="nest_layers">ZIP階層数（最初を含む）</label><input id="layers" type="number" value="3" min="1" max="8" required aria-describedby="nest-estimate"></div>
             <div><label for="branches" data-i18n="nest_branches">各ZIPに含める子ZIP数</label><input id="branches" type="number" value="2" min="1" max="3" required aria-describedby="nest-estimate"></div>
             <div><label for="decoys" data-i18n="decoys">各ZIP内のダミーファイル数</label><input id="decoys" type="number" value="4" min="0" max="10" required aria-describedby="nest-estimate"></div>
@@ -229,7 +248,7 @@
         <div id="database-fields" class="fields" hidden>
           <div class="panel-title"><h3 data-i18n="database_title">デコイ・データベース</h3><p data-i18n="database_desc">項目の構成とデータ種類を指定してSQLiteを生成します。</p></div>
           <div class="template-picker"><label for="database-template" data-i18n="database_template">用途別テンプレート</label><select id="database-template"><option value="custom" data-i18n="template_custom">カスタム（項目を自由に編集）</option><option value="customers" selected data-i18n="template_default_loading">顧客管理（プリセット読込中・既定）</option></select><p id="template-description" class="help" aria-live="polite" data-i18n="template_help">テンプレート選択後に項目を編集できます。実在の個人情報や実接続先は使わないでください。</p></div>
-           <div class="form-grid"><div><label for="db-name" data-i18n="filename">ファイル名（半角英数字で開始、英数字・-・_のみ、空欄で自動、拡張子不要）</label><input id="db-name" value="" placeholder="customer_archive" maxlength="64" data-filename-input></div>
+           <div class="form-grid">
           <div><label for="table-name" data-i18n="table_name">テーブル名</label><input id="table-name" value="customers" maxlength="48"></div>
           <div><label for="rows" data-i18n="rows">レコード件数</label><input id="rows" type="number" value="100" min="1" max="10000" required><p class="help database-rows-help" data-i18n="database_rows_help">初期値は100件です。SQLiteファイルは最大32 MiBです。上限に達した場合は、件数か列数を減らしてください。</p></div>
            <div><label for="db-url"><span data-i18n="canary_url">カナリアURL</span> <span class="optional" data-i18n="optional">任意</span></label><textarea id="db-url" rows="1" inputmode="url" spellcheck="false" autocapitalize="none" maxlength="2048" placeholder="https://..." autocomplete="off"></textarea></div></div>
@@ -251,7 +270,6 @@
         <div id="web-fields" class="fields" hidden>
           <div class="panel-title"><h3 data-i18n="web_title">スタティック・デコイ・ポータル</h3><p data-i18n="web_desc">静的なアーカイブ画面を生成します。</p></div>
           <label for="web-scenario" data-i18n="web_scenario_label">サイトの用途</label><select id="web-scenario"><option value="operations" data-i18n="web_scenario_operations">運用ポータル</option><option value="shared" data-i18n="web_scenario_shared">共有ドキュメント</option><option value="archive" data-i18n="web_scenario_archive">業務アーカイブ</option><option value="records" data-i18n="web_scenario_records">記録管理</option></select>
-          <label for="web-name" data-i18n="filename">ファイル名（半角英数字で開始、英数字・-・_のみ、空欄で自動、拡張子不要）</label><input id="web-name" maxlength="64" data-filename-input placeholder="archive_index">
           <label for="title" data-i18n="page_title">画面タイトル</label><input id="title" type="text" data-i18n-placeholder="default_page_title" maxlength="80">
           <label for="web-url"><span data-i18n="canary_url">カナリアURL</span> <span class="optional" data-i18n="optional">任意</span></label><textarea id="web-url" rows="1" inputmode="url" spellcheck="false" autocapitalize="none" placeholder="https://..." maxlength="2048" autocomplete="off"></textarea>
           <p class="help" data-i18n="web_help">URLを指定するとリンクを配置します。ページを開くだけではURLにアクセスしません。</p>
@@ -260,7 +278,6 @@
         <div id="fake_trap-fields" class="fields" hidden>
           <div class="panel-title"><h3 data-i18n="fake_title">フェイクトラップ</h3><p data-i18n="fake_desc">警告または待機表示の静的HTMLを生成します。</p></div>
           <label for="fake-variant" data-i18n="fake_variant">表示パターン</label><select id="fake-variant"><option value="warning" data-i18n="fake_warning">異常アクセスの警告</option><option value="reported" data-i18n="fake_reported">通報済みの警告</option><option value="waiting" data-i18n="fake_waiting">認証中のスピナー</option></select>
-          <label for="fake-name" data-i18n="filename">ファイル名（半角英数字で開始、英数字・-・_のみ、空欄で自動、拡張子不要）</label><input id="fake-name" maxlength="64" data-filename-input placeholder="security_notice">
           <p class="inline-note" data-i18n="fake_note">ファイル名を空欄にすると認証・セッション処理に使われる名前から自動で選びます。表示だけの静的ページです。検知・通報・認証・情報収集は行わず、外部への通信やプログラム送信もありません。監視・通知は配信側で別途設定してください。通報済みの表示は実際の通報を意味しません。正規利用者の誤接触に配慮してください。</p>
         </div>
         <div id="ransomware_tripwire-fields" class="fields" hidden>
@@ -282,7 +299,7 @@
         <div id="honeyword-fields" class="fields" hidden><p class="inline-note" data-i18n="technology_only">技術紹介のみです。生成や本番環境への変更は行いません。</p></div>
         <div id="stream-fields" class="fields" hidden>
           <div class="panel-title"><h3 data-i18n="stream_title">インフィニット・ストリーム</h3><p data-i18n="stream_desc">認証付きの配信サーバーと設定をZIPで生成します。生成しただけでは起動しません。</p></div>
-           <div class="form-grid"><div><label for="stream-name" data-i18n="filename">ファイル名（半角英数字で開始、英数字・-・_のみ、空欄で自動、拡張子不要）</label><input id="stream-name" maxlength="64" data-filename-input placeholder="stream_sample"></div>
+           <div class="form-grid">
            <div><label for="stream-format" data-i18n="stream_format">配信するテキストの形式</label><select id="stream-format"><option value="sql" data-i18n="format_sql">SQL</option><option value="csv" data-i18n="format_csv">CSV</option><option value="txt" data-i18n="format_txt">テキスト（.txt）</option></select></div></div>
            <details class="stream-config-details"><summary data-i18n="stream_config_summary">配信設定（既定：ループバック、8 KiB/秒、同時2接続）</summary>
            <div class="form-grid"><div><label for="stream-path" data-i18n="stream_path">配信パス</label><input id="stream-path" value="/exports/archive.sql" maxlength="160"></div>
@@ -299,7 +316,7 @@
            <label for="maze-format" data-i18n="maze_format">ダミーファイルの形式</label><select id="maze-format"><option value="env" data-i18n="format_env">.env</option><option value="txt" data-i18n="format_txt">テキスト（.txt）</option><option value="json" data-i18n="format_json" selected>JSON</option><option value="csv" data-i18n="format_csv">CSV</option><option value="html" data-i18n="format_html">HTML文書（架空レコード）</option><option value="pdf" data-i18n="format_pdf">PDF</option><option value="xlsx" data-i18n="format_xlsx">Excel（.xlsx）</option><option value="pptx" data-i18n="format_pptx">PowerPoint（.pptx）</option><option value="sqlite" data-i18n="format_sqlite">SQLite（.db）</option></select>
            <p id="maze-estimate" class="help" data-i18n="maze_estimate" aria-live="polite">ディレクトリ{directories}個・デコイファイル{documents}個（上限400ディレクトリ）</p>
            <details class="maze-advanced"><summary data-i18n="maze_advanced_summary">フォルダー構成とカナリア設定（初期値で作成できます）</summary>
-           <div class="form-grid"><div><label for="directory-name" data-i18n="filename">ファイル名（半角英数字で開始、英数字・-・_のみ、空欄で自動、拡張子不要）</label><input id="directory-name" maxlength="64" data-filename-input></div>
+            <div class="form-grid">
            <div><label for="directory-title" data-i18n="document_title">文書タイトル</label><input id="directory-title" maxlength="80"><p class="help" data-i18n="directory_title_help">空欄にすると、選択したシナリオのタイトルを使います。</p></div>
            <div><label for="maze-depth" data-i18n="maze_depth">ルートからのディレクトリ階層数</label><input id="maze-depth" type="number" value="3" min="1" max="6" required aria-describedby="maze-estimate"></div>
            <div><label for="maze-branches" data-i18n="branches">次階層への分岐数</label><input id="maze-branches" type="number" value="3" min="1" max="5" required aria-describedby="maze-estimate"></div>
@@ -310,7 +327,7 @@
         </div>
         <div id="encoding_maze-fields" class="fields" hidden>
           <div class="panel-title"><h3 data-i18n="encoding_title">エンコーディング・メイズ</h3><p data-i18n="encoding_desc">用途に合った架空データを個別生成し、多段エンコードします。ファイル名・タイトル・スキーマは選択したシナリオに沿います。.env形式では一般的なdotenv名を使い、APP_ENVをファイル名に合わせます。</p></div>
-          <div class="form-grid"><div><label for="encoding-name" data-i18n="filename">ファイル名（半角英数字で開始、英数字・-・_のみ、空欄で自動、拡張子不要）</label><input id="encoding-name" maxlength="64" data-filename-input></div>
+           <div class="form-grid">
           <div><label for="encoding-format" data-i18n="decoded_format">復元後のファイル形式</label><select id="encoding-format"><option value="json" data-i18n="format_json">JSON</option><option value="env" data-i18n="format_env">.env</option><option value="txt" data-i18n="format_txt">テキスト（.txt）</option><option value="csv" data-i18n="format_csv">CSV</option><option value="html" data-i18n="format_html">HTML文書（架空レコード）</option><option value="pdf" data-i18n="format_pdf">PDF</option><option value="xlsx" data-i18n="format_xlsx">Excel（.xlsx）</option><option value="pptx" data-i18n="format_pptx">PowerPoint（.pptx）</option><option value="sqlite" data-i18n="format_sqlite">SQLite（.db）</option></select></div>
           <div><label for="encoding-scenario" data-i18n="scenario_label">デコイの用途</label><select id="encoding-scenario"><option value="crm" data-i18n="scenario_crm">顧客管理の登録簿</option><option value="migration" data-i18n="scenario_migration">顧客データ移行</option><option value="archive" data-i18n="scenario_archive">顧客データ保管</option><option value="cards" data-i18n="scenario_cards">支払カード台帳</option><option value="companies" data-i18n="scenario_companies">取引先企業一覧</option><option value="passwords" data-i18n="scenario_passwords">認証情報保管庫</option><option value="api_credentials" data-i18n="scenario_api_credentials">API&#35469;&#35388;&#24773;&#22577;&#21488;&#24115;</option><option value="invoices" data-i18n="scenario_invoices">請求書・入金一覧</option><option value="employees" data-i18n="scenario_employees">従業員・部署一覧</option><option value="vendors" data-i18n="scenario_vendors">仕入先・委託先台帳</option><option value="orders" data-i18n="scenario_orders">受注・販売台帳</option><option value="tickets" data-i18n="scenario_tickets">サポートチケット一覧</option><option value="assets" data-i18n="scenario_assets">IT資産台帳</option><option value="cloud" data-i18n="scenario_cloud">クラウド資産一覧</option></select><p id="encoding-scenario-schema" class="help scenario-schema-summary" aria-live="polite" hidden></p></div>
           <div><label for="encoding-layers" data-i18n="encoding_layers">変換の階層数</label><input id="encoding-layers" type="number" value="4" min="1" max="8" required aria-describedby="encoding-estimate"></div>

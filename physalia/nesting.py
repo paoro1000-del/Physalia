@@ -85,7 +85,7 @@ def generate_nest(settings, language="ja"):
     scenario_name, scenario = scenario_for(settings, language)
     context = resolve_context({"canary_context": scenario["context"]}, language)
     period = datetime.now(timezone.utc).strftime("%Y%m")
-    basename = filename(settings["filename"], language) if settings.get("filename") else plausible_filename("nest")
+    basename = plausible_filename("nest")
     rng = secrets.SystemRandom()
     inventory, documents, consumed, archived = [], [], 0, 0
     format_counts = {name: 0 for name in FORMATS}
@@ -193,7 +193,10 @@ def generate_nest(settings, language="ja"):
             detail = {"path": location + "!/" + member, "format": document_fmt, "canary": bool(token_url)}
             if token_url:
                 detail["canary_url"] = token_url
-                if document_fmt != "env" and scenario.get("canary_field") and canary_cell is not None:
+                if document_fmt == "env":
+                    detail["canary_field"] = scenario["env_key"]
+                    detail["canary_location"] = "commented production setting"
+                elif scenario.get("canary_field") and canary_cell is not None:
                     detail["canary_field"] = scenario["columns"][canary_cell[1]]["name"]
                     detail["canary_record"] = canary_cell[0] + 1
             entry["files"].append(detail)
@@ -227,7 +230,7 @@ def generate_nest(settings, language="ja"):
             archive.setpassword(password.encode("utf-8"))
             archive.setencryption(pyzipper.WZ_AES, nbits=256)
             for member, content in contents:
-                write_archive_member(archive, member, content, info_type=pyzipper.ZipInfo, language=language)
+                write_archive_member(archive, member, content, info_type=archive.zipinfo_cls, language=language)
         encrypted_archive = output.getvalue()
         archive_budget(encrypted_archive)
         return encrypted_archive, hint
@@ -266,6 +269,11 @@ def generate_nest(settings, language="ja"):
             note_path = hint_path(outer_name)
             write_archive_member(delivery, note_path, hint_text(hint), language=language)
             inventory[0]["hint_file"] = note_path
+    canary_examples = [
+        {"path": item["path"], "field": item.get("canary_field"),
+         "record": item.get("canary_record"), "location": item.get("canary_location")}
+        for item in documents if item.get("canary")
+    ][:3]
     manifest = {
         "format": "Physalia operator inventory v3", "warning": translate("operator_warning", language),
         "deployment": outer_name, "policy": policy, "layers": layers, "branches": branches,
@@ -275,7 +283,8 @@ def generate_nest(settings, language="ja"):
         "archives": inventory, "documents": documents,
         "summary": {"archives": count, "documents": len(documents), "canaries": sum(d["canary"] for d in documents),
                     "primary_document_format": fmt, "varied_formats": varied_formats,
-                    "format_counts": {name: amount for name, amount in format_counts.items() if amount}},
+                    "format_counts": {name: amount for name, amount in format_counts.items() if amount},
+                    "canary_location_examples": canary_examples},
     }
     companion = Artifact(f"{basename}.operator.json", "application/json",
                          json.dumps(manifest, ensure_ascii=False, indent=2, allow_nan=False).encode("utf-8"))

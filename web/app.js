@@ -11,6 +11,7 @@ let activeWorkspacePage = "intro";
 let activeKind = document.querySelector('input[name="kind"]:checked')?.value || "env";
 let downloadUrls = [];
 let generatedAsset = null;
+let settingsRevision = 0;
 let fieldErrorSequence = 0;
 document.addEventListener("click", event => {
   const control = event.target.closest?.("[data-page-target]");
@@ -46,10 +47,6 @@ function clearInvalid(input) {
     error.remove();
   }
   if (hadError) result.textContent = "";
-}
-function isValidFilename(value) {
-  return /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(value)
-    && !/^(?:CON|PRN|AUX|NUL|COM[0-9]|LPT[0-9])$/i.test(value);
 }
 let databaseTemplates = [];
 let databaseTemplatesLanguage = "";
@@ -128,7 +125,7 @@ const translations = {
     web_help: "The results include an HTML preview and a deployment ZIP. The ZIP contains index.html and six fictional files. Without a monitoring URL, all six open from the page. With one, a list entry links to the monitor instead of opening its matching document; the other five open locally. Opening the page alone does not request the monitoring URL; its link must be clicked.",
     web_note: "This is static HTML. Login, configuration changes, access monitoring, and infinite streaming require a separate server.",
     generate: "Generate file",
-    generating: "Generating. Larger files may take a little while. Keep this page open until generation finishes.", generated: "Generated {name}.", failed: "Generation failed.", number_input_invalid: "Enter a whole number within the range shown for the selected method.",
+    generating: "Generating. Larger files may take a little while. Keep this page open until generation finishes.", generated: "Generated {name}.", failed: "Generation failed.", generation_settings_changed: "Settings changed during generation, so the result was discarded. Generate again with the current settings.", number_input_invalid: "Enter a whole number within the range shown for the selected method.",
     estimate: "{archives} encrypted ZIPs / {documents} decoy files (limit: 40 ZIPs, 32 MiB of source content, and 64 MiB cumulative encrypted archives)", over_limit: "Reduce depth or branching. The limit is 40 encrypted ZIPs.",
     download_again: "Save generated file", operator_download: "Save operator information (do not deploy)", inventory_download: "Save operations inventory separately from generated files", summary: "Generated: {archives} ZIPs / {documents} decoy files / {canaries} with canary URLs", format_breakdown: "Formats",
     schema_limit: "Use 1–30 columns.", invalid_options: "Enter the numeric range as min,max (for example 0,100000), with minimum no greater than maximum. Integer fields do not accept decimals.",
@@ -284,6 +281,49 @@ Object.assign(methodFlows.en, {
  honeyword:{context:"Example: configure a privileged account with decoy passwords separate from its real password.",steps:[["1. Register decoy candidates","Configure decoy passwords for the account in the authentication system. Placing them in an external file is not required."],["2. Attacker attempts login","Consider password guessing or use of decoy credentials leaked through a Data Dilution design."],["3. Branch on a match","Only a registered decoy-password match routes to an isolated session; production authentication remains unsuccessful."],["4. Alert and observe","Alert on the decoy session and record its subsequent actions."]],ifCase:"If an attempt matches a registered decoy password and the attacker explores the fake environment, detection and delay may result.",elseCase:"No decoy session is issued without a match. Match probability depends on the attempt budget and decoy selection; legitimate mistakes and MFA differences also matter.",response:"Preserve real authentication, MFA and rate limits; isolate decoy permissions, data and logs. Evaluate attempt budgets and false positives.",note:"Concept overview only; authentication integration is not implemented. Ordinary incorrect passwords do not all trigger a decoy, and detecting or stopping every guessing attack is not guaranteed."}
 });
 // State the compromise stage explicitly; no scenario guarantees containment.
+// Keep decision-critical operating limits in the visible Key points section,
+// even when the fuller explanation also appears in a note or method overview.
+const methodKeyPointAdditions = {
+  ja: {
+    env:["このURL型カナリアは、ファイルを読む・開く・実行するだけでは発火せず、URLへの実際の要求が必要です。外部接続できても要求がなければ通知されません。送信元だけで攻撃者本人と断定できず、即時通知も保証されません。"],
+    database:["DBファイルの作成・取得・閲覧だけでは通知されず、本番DBへのアクセス監視や流出防止もしません。配置先のアクセスログやDB監査は別途設定してください。"],
+    web:["静的ページのため、ログイン・認証・状態保存・通知は行いません。ページを開いただけでは、埋め込んだカナリアURLにもアクセスしません。"],
+    nest:["ZIPを開くだけでは通知されず、最後まで本物と区別できない保証もありません。持ち出し後の並列・オフライン解析では現場の遅滞が小さくなります。"],
+    stream:["生成しただけでは配信サーバーは起動しません。無通信が5秒続くと接続が終了し、部分取得や並列接続でも待ち時間を迂回される場合があります。"],
+    directory_maze:["ディレクトリとファイル数は有限です。並列巡回や一括取得後のオフライン解析で遅延は小さくなり、実データの見落としや即時通知を保証しません。"],
+    encoding_maze:["エンコードは暗号化ではありません。取得後の一括デコードやオフライン閲覧は自動検知されないため、取得ログを別途監視してください。"],
+    fake_trap:["表示だけの静的ページで、実際の通報・認証・情報収集は行いません。スピナーも接続を維持せず、表示を無視する自動処理には作用しません。"],
+    ransomware_tripwire:["ファイル変更を記録する仕組みで、暗号化を止めたりデータを復元したりはしません。読み取りや持ち出しだけでは発火せず、監視停止や変更の復元で見逃す場合があります。"],
+    data_dilution:["合成データを混ぜても本物のレコードは流出し得ます。ランダム抽出時の合成比率は、被害軽減率を示すものではありません。全件公開や外部情報との照合も防げません。"],
+    honeyword:["登録済みの偽パスワードとの一致時だけ分岐します。このサンプルは認証連携・通知を実装せず、誤入力やMFAの違いによる誤検知にも注意が必要です。"],
+    path_maze:["配置するフォルダーとファイルは有限です。対象を絞る攻撃や並列処理では実ファイルが先に処理される場合があり、遅滞や見落とし防止は保証されません。"],
+    sparse_decoy:["部分暗号化やサイズによる除外では追加負荷が小さくなります。バックアップ・同期・コピーは論理サイズ分の容量を使う場合があるため、小規模に試して空き容量を監視してください."]
+  },
+  en: {
+    env:["This URL canary triggers only when the URL is actually requested; reading, opening or running the file alone is not enough. External connectivity without a request produces no alert. A source address does not identify the attacker, and immediate delivery is not guaranteed."],
+    database:["Creating, retrieving or viewing the database alone sends no alert. This does not monitor or prevent access to a production database or its leakage; configure hosting logs or database auditing separately."],
+    web:["The page is static: it does not log in, authenticate, retain state or send alerts. Opening the page alone does not request its canary URL."],
+    nest:["Opening a ZIP does not alert, and indistinguishability through the final branch is not guaranteed. Parallel or offline analysis after collection reduces on-site delay."],
+    stream:["Generating the sample does not start its server. Five seconds without activity closes a connection, and partial retrieval or parallel connections may bypass the wait."],
+    directory_maze:["The directory tree and file count are finite. Parallel crawling or offline analysis after bulk collection can reduce delay; the method does not guarantee missed real data or an immediate alert."],
+    encoding_maze:["Encoding is not encryption. Bulk decoding and offline inspection after collection are not detected automatically; configure retrieval monitoring separately."],
+    fake_trap:["This is a static display; it does not actually report, authenticate or collect information. The spinner does not keep a connection open, and automated processing that ignores the page is unaffected."],
+    ransomware_tripwire:["This records file changes; it does not stop encryption or restore data. Reads and exfiltration alone do not trigger it, and stopping the monitor or restoring a file between checks may evade detection."],
+    data_dilution:["Genuine records can still leak. The synthetic share in a random sample is not a measure of harm prevented; this does not stop publication of all records or matching against external information."],
+    honeyword:["Diversion occurs only when a registered decoy password matches. This sample does not implement authentication integration or alerts, and legitimate mistakes or MFA differences can cause false positives."],
+    path_maze:["The deployed folders and files are finite. Selective targeting or parallel processing can reach real files first; delay and prevention of missed data are not guaranteed."],
+    sparse_decoy:["Partial encryption or size-based exclusions reduce the extra work. Backups, synchronization and copies may consume the full logical size, so start small and monitor free space."]
+  }
+};
+function applyMethodKeyPointAdditions() {
+  for (const [lang, methods] of Object.entries(methodKeyPointAdditions)) {
+    for (const [method, points] of Object.entries(methods)) {
+      const current = methodFlows[lang][method].response;
+      methodFlows[lang][method].response = [...(Array.isArray(current) ? current : [current]), ...points];
+    }
+  }
+}
+
 const flowScenarios = {
  ja: {
   env:"想定：攻撃者が侵入後に偽ファイルを取得し、持ち出したURLを試す。侵害や流出の後でも接触を検知する狙いです。",
@@ -324,12 +364,12 @@ methodFlows.ja.env.ifCase = ["内部ネットワークから監視URLへアク�
 methodFlows.ja.env.elseCase = ["カナリアページが正規利用者もアクセスしやすい場所にあると、誤接触による通知が攻撃の兆候に紛れる可能性があります。", "踏み台・VPN・サンドボックス経由の接続元情報は攻撃者本人を示すとは限りません。ファイルが拡散すると、第三者やスキャナーのアクセスも混ざります。", "URLが試されない場合や通信が遮断された場合、通知されません。"];
 methodFlows.ja.env.steps[2][0] = "3. URLにアクセス";
 methodFlows.ja.env.response = ["正規利用者が通常アクセスしないURLにカナリアページを配置します。", "URLをファイル内の自然な文脈に埋め込み、カナリアだと気づかれにくくします。", "URLが露見したら無効化し、新しいURLのページに置き換えます。"];
-methodFlows.ja.env.note = "このURL型カナリアは、ファイルを読む・開く・実行するだけでは発火せず、URLへの実際の要求が必要です。外部接続できても要求がなければ通知されません。送信元だけで攻撃者本人と断定できず、即時通知も保証されません。";
+methodFlows.ja.env.note = "";
 methodFlows.en.env.ifCase = ["An access to the monitoring URL from inside the network can signal suspicious activity and create an opportunity for early response. The URL must be reachable internally and alerting must be configured.", "A later request to the URL in a stolen file can also trigger detection if it reaches the monitoring endpoint. Recorded timestamps and connection details depend on the service and its configuration."];
 methodFlows.en.env.elseCase = ["If the canary page is easy for legitimate users to reach, accidental visits can blend with alerts for suspicious activity.", "A relay, VPN or sandbox may make connection details point to that intermediary rather than the attacker. If the file spreads, third parties or scanners may also visit the URL.", "No alert occurs if the URL is not requested or traffic is blocked."];
 methodFlows.en.env.steps[2][0] = "3. Visit the URL";
 methodFlows.en.env.response = ["Place the canary page at a URL legitimate users would not normally visit.", "Embed the URL naturally in the file so it is less obvious as a canary.", "If the URL is exposed, disable it and replace it with a page at a new URL."];
-methodFlows.en.env.note = "For this URL canary, reading, opening or running the file alone does not trigger an alert; an actual request is required. External connectivity alone is insufficient. A source address does not identify the attacker, and prompt delivery is not guaranteed.";
+methodFlows.en.env.note = "";
 methodFlows.ja.database.steps[3] = ["4. 真偽を確認・利用", "別の情報と照合しても正解が確定せず、時間や費用をかけても判断がつかない場合があります。偽DBを転売する可能性もあります。"];
 methodFlows.en.database.steps[3] = ["4. Verify and use", "Comparison with other information may remain inconclusive despite time and expense. The decoy may also be resold as genuine."];
 methodFlows.ja.database.ifCase = "DB間でユーザーが一致しない場合も、収録範囲や更新時点の違いなどがあり、それだけでは偽物と断定できません。確実な答え合わせができなければ確認が徒労に終わり、選別の負担が残ります。偽DBの転売後に買い手が偽物と判断して共有すれば、売り手の信用に影響する可能性もあります。";
@@ -438,6 +478,149 @@ methodFlows.ja.path_maze = {context:"例：架空の業務フォルダーを配�
 methodFlows.en.path_maze = {context:"Example: place a tree of fictional business files in an authorized location.", steps:[["1. Create a tree","Generate a finite ZIP of ordinary folders and synthetic files."],["2. Place it","Extract the ZIP and keep the operator inventory."],["3. Attacker traverses","The encryptor discovers and processes decoys."],["4. Work increases","Processing extra files requires additional work."]], ifCase:"Work increases when the attack selects and processes decoys.", elseCase:"Parallel processing or selective targeting can reach real files first.", response:"Use the operator inventory to manage placement and removal.", note:"Ordinary searches and backups may also process these files."};
 methodFlows.ja.sparse_decoy = {context:"例：見かけ上1 GiBの架空ファイルを対応ファイルシステムに置きます。", steps:[["1. スクリプトを生成","サイズと個数を指定してZIPを保存します。"],["2. 配置先で作成","説明書を読み、スクリプトを手動で実行します。"],["3. 攻撃側が読み取り","対象に選ばれたデコイが処理されます。"],["4. 仕事が増える","全体を読んで暗号化すれば処理量が増えます。"]], ifCase:"ファイル全体を処理する攻撃に追加の読み取り・暗号化を行わせます。", elseCase:"部分暗号化やサイズによる除外では、追加の仕事が小さくなります。", response:"配置ファイル名の運用者用一覧を保管し、バックアップと同期への影響を確認します。", note:"コピーや暗号化結果は見かけのサイズ分の領域を消費することがあります。"};
 methodFlows.en.sparse_decoy = {context:"Example: place a 1 GiB logical-size synthetic file on a filesystem that supports sparse files.", steps:[["1. Generate script","Choose the size and count and save the ZIP."],["2. Create at destination","Read the instructions and run the script manually."],["3. Attacker reads","The encryptor selects and processes a decoy."],["4. Work increases","Reading and encrypting the whole file adds work."]], ifCase:"Full-file encryption must read and process the larger logical file.", elseCase:"Partial encryption or size exclusions can reduce the additional work.", response:"Keep the operator filename inventory and review effects on backup and synchronization.", note:"Copies or encrypted output may consume the full logical size."};
+
+// Keep the three decision fields comparable across every method and language.
+// Arrays are rendered as bullets by renderFlowPoints.
+const methodGuidance = {
+  ja: {
+    env: {
+      ifCase:["侵入後に設定ファイルや業務文書を探す攻撃者が、内部からカナリアURLへアクセスすれば、外部持ち出し前の兆候を検知する手掛かりになります。","盗み出したファイルのURLを後から試す攻撃者にも、要求が監視先へ届けば接触を記録できます。"],
+      elseCase:["URLを試さずファイルだけ読む攻撃、URLへの通信を遮断する環境、監視サービスへ届かない経路では通知されません。","ページが正規利用者にも見つけやすい場所にある、またはファイルを広く共有すると、誤接触や第三者のアクセスが混ざります。"],
+      response:["正規利用者が通常アクセスしない場所にページを置き、URLは文書内の自然な文脈に埋め込みます。","内部・外部からの到達性、通知先、Web／OSのファイル取得ログを確認し、URLが露見したら無効化して新しいものに交換します。"]
+    },
+    database: {
+      ifCase:["盗んだDB候補から顧客・注文情報を選別しようとする攻撃者が偽物を本物と誤認すれば、確認や利用に手間がかかり、偽情報を持ち出す可能性があります。"],
+      elseCase:["攻撃者が偽DBを無視する、本物を別経路で得る、候補をまとめて持ち出して後で解析する場合、現場での遅延は小さくなります。","実データとの比較材料が明白だと、偽物を早く見分けられます。"],
+      response:["侵入後にDBやバックアップを探索される環境で、実在するスキーマや業務名に合わせた合成データを使います。","本番DBと分離し、配置場所・アクセスログを管理します。閲覧だけで通知する仕組みではありません。"]
+    },
+    web: {
+      ifCase:["管理画面やバックアップを探す攻撃者が、偽ポータルのページやリンクを調査すれば、候補の確認に時間を使う可能性があります。","ページ要求やカナリアリンクへのアクセスを監視していれば、探索の兆候を把握できます。"],
+      elseCase:["攻撃者がページを無視する、別経路を使う、リンク先へアクセスしない場合、調査の遅延やカナリア通知は期待できません。","ページの内容やURLが不自然で、デコイだとすぐ分かる場合も効果が弱まります。"],
+      response:["管理ポータルやアーカイブを探される環境で、実際の業務に沿うページ内容と配置先を選びます。","ページ要求ログとカナリアサービスの通知を別々に監視し、本番認証情報や本番機能を接続しません。"]
+    },
+    nest: {
+      ifCase:["盗んだアーカイブから目的の情報を探す攻撃者が、各階層の候補を安全に選別できないと考えれば、追加の解凍・確認を続けるか、価値不明の候補を捨てるか判断に手間がかかります。","途中で偽物を見つけても未確認の枝に本物がある可能性が残る構成なら、確認作業が続くことがあります。"],
+      elseCase:["攻撃者が構造の不自然さや既知の情報との矛盾から罠を見抜く、全体を持ち出して並列・オフライン解析する、本物を別経路で得る場合は現場での遅れが小さくなります。"],
+      response:["アーカイブやバックアップを持ち出される可能性がある環境で、自然な階層と一貫した合成文書を設計します。","運用者用のパスワード・構成台帳は公開物から分離し、実データや本物の秘密を混ぜません。"]
+    },
+    stream: {
+      ifCase:["取得完了まで待つ必要があるバックアップを狙う攻撃者が、配信を最後まで待てば、対応者が調査・封じ込めを始める時間を得られる可能性があります。","配信開始イベントをすぐ把握できる構成なら、対応判断を早める手掛かりになります。"],
+      elseCase:["攻撃者が部分取得で目的を満たす、切断して別作業を進める、並列接続する場合、待ち時間は小さくなります。無通信タイムアウトでも接続は終了します。","監視や担当者への通知が遅い、帯域制限が厳しい場合は、配信が時間を稼ぐ前に終わることがあります。"],
+      response:["隔離したデコイ配信経路を運用でき、帯域・同時接続・費用を監視できる環境向けです。","認証、開始ログ、通知、停止手順と容量上限を準備し、本番データや認証系統から切り離します。"]
+    },
+    directory_maze: {
+      ifCase:["ディレクトリを順に巡って目的のファイルを探す攻撃者が、偽ファイルも個別に取得・確認すれば、要求や選別の手間が増える可能性があります。"],
+      elseCase:["攻撃者が対象を絞る、並列クローラーで探索する、全体を一括取得してオフライン解析する場合、現場での遅延は小さくなります。","正規利用者の検索・バックアップもファイルを処理するため、デコイを除外できない運用では影響が出ます。"],
+      response:["攻撃者が参照できるファイル共有や静的配信領域で、正規利用者の作業を妨げずに配置できる環境向けです。","自然なフォルダー名と業務に合う合成文書を使い、運用者用の配置一覧とアクセスログを保管します。"]
+    },
+    encoding_maze: {
+      ifCase:["複数の候補ファイルから目的の情報を探す攻撃者が、復元した内容を個別に見比べる場合、候補選別の手間が増える可能性があります。"],
+      elseCase:["使われている変換形式が既知なら、攻撃者はスクリプトで一括復元・並列処理できます。明確な形式名や同じ構造の反復も選別を容易にします。"],
+      response:["ファイルを自動収集・解析される可能性がある環境で、形式やファイル名に変化を持たせ、すべて合成データにします。","配信・取得ログを別途監視し、オフライン解析では取得自体を検知できない点を踏まえて対応を設計します。"]
+    },
+    fake_trap: {
+      ifCase:["画面の警告や処理中表示を信じて内容を調べ直す攻撃者には、判断や次の操作に時間がかかる可能性があります。"],
+      elseCase:["画面を表示せず処理するスクリプト、警告を無視する攻撃者、別の経路を並行探索する攻撃者には表示だけでは作用しません。","通常利用者が誤って画面に到達する配置では、誤警報や業務上の混乱が起きます。"],
+      response:["人がブラウザーで探索する可能性があるデコイ経路向けです。攻撃者の自動化にも効くとは限らない前提で使います。","デコイ側でログと通知を設け、正規利用者が接触した場合の案内・復旧手順も決めます。"]
+    },
+    ransomware_tripwire: {
+      ifCase:["ファイルを探索して暗号化・削除する攻撃が監視対象のデコイを変更すれば、その変化を記録し、対応開始の手掛かりにできます。","変更後も攻撃が追加ファイルを繰り返し探索・処理する場合、追加の作業が生じる可能性があります。"],
+      elseCase:["読み取りや持ち出しだけの攻撃では反応しません。監視を停止する攻撃、短時間で変更と復元を行う処理、一覧を一度だけ取得する処理では検知や遅延が弱まります。","補充処理が無制限だと、攻撃より先にディスクを圧迫して業務や復旧を妨げる恐れがあります。"],
+      response:["ファイル変更を監視できる端末や共有領域向けです。通常業務が触れない場所にデコイを置き、補充数・容量の上限を設定します。","ログは監視対象の外に保管し、既存のEDR・バックアップ・端末隔離手順と連携します。"]
+    },
+    data_dilution: {
+      ifCase:["盗んだデータを販売・利用する攻撃者が本物を確実に選べない場合、データ全体の信頼性や取引価値を下げ、照合・選別の負担を増やす可能性があります。"],
+      elseCase:["真偽を選ばず全件を公開・試行する攻撃、外部情報で本物を照合する攻撃、判別台帳や照会権限も奪う攻撃では効果が弱まります。","漏えい元や第三者が真偽を明らかにすると、その範囲の不確実性は減ります。"],
+      response:["本番DBへ合成レコードを混在させる構想です。データ形式・業務処理・監査を管理できる組織で、影響を隔離して評価します。","判別台帳と照会権限を本番DBから分離・監査し、誤送信、通知、法令・契約上の扱いを事前に検討します。このツールは本番DBへの混在を実装しません。"]
+    },
+    honeyword: {
+      ifCase:["特権アカウントを狙う攻撃者が、登録済みの偽パスワードを試し、一致後に偽環境を本物と思って探索すれば、試行の検知や偽情報の確認に時間を使わせる可能性があります。"],
+      elseCase:["攻撃者が偽候補を試さない、偽パスワードが一致しない、または別経路で本番へ入る場合は誘導されません。","偽環境と本番の差、MFAの挙動、既知の画面情報から仕組みを見抜かれることがあります。正規利用者の誤入力も誤発火要因です。"],
+      response:["認証基盤を運用する組織向けの構想で、認証フローに統合できる仕組みと専門的な運用が必要です。このサンプル自体は認証へ接続しません。","本番認証・MFA・試行制限を維持し、偽セッションの権限、データ、ネットワーク、ログを本番から隔離します。"]
+    },
+    path_maze: {
+      ifCase:["広いフォルダー範囲を巡回して暗号化する攻撃が、配置したデコイも対象に含めれば、追加ファイルの発見・処理分だけ作業が増える可能性があります。"],
+      elseCase:["攻撃者が対象を絞る、並列処理する、一覧を先に取得して実ファイルから処理する場合、実データが先に処理されることがあります。","通常の検索・バックアップも対象にすると、攻撃前に業務処理が増える場合があります。"],
+      response:["広範囲のファイル探索を想定する端末・共有領域向けです。正規業務が使わない場所を選び、有限の規模から導入します。","運用者用一覧で設置・撤去を管理し、バックアップや検索への影響を確認します。"]
+    },
+    sparse_decoy: {
+      ifCase:["ファイル全体を読み取って暗号化する攻撃が大きな論理サイズのデコイを処理すれば、読み取り・暗号化の作業が増える可能性があります。"],
+      elseCase:["部分暗号化、サイズによる除外、ファイル先頭だけの処理では追加作業が小さくなります。","バックアップ、同期、コピーや暗号化後の保存先が見かけ上の全サイズを扱うと、運用側の容量・時間も消費します。"],
+      response:["疎ファイルに対応するファイルシステムで、容量とバックアップ挙動を管理できる端末向けです。","小規模で検証してからサイズ・個数を制限し、空き容量を監視します。運用者用ファイル名一覧は配置先と分けて保管します。"]
+    }
+  },
+  en: {
+    env: {
+      ifCase:["If an intruder searching for configuration files or business documents accesses the canary URL from inside the network, the request can provide a lead before data leaves the network.","If an intruder later tests a URL from a stolen file, the contact can be recorded when the request reaches the monitor."],
+      elseCase:["Reading a file without requesting its URL, blocked outbound traffic, or a route that cannot reach the monitor produces no alert.","A page that legitimate users can easily find, or a widely shared file, can attract accidental visits, scanners or third parties."],
+      response:["Place the page somewhere legitimate users do not normally visit and embed its URL naturally in a document.","Check internal and external reachability, alert routing and file access logs. Disable and replace a URL if it is exposed."]
+    },
+    database: {
+      ifCase:["If an intruder selecting customer or order data from stolen database candidates mistakes a decoy for genuine data, verification or use may take extra work and the intruder may carry away false information."],
+      elseCase:["Ignoring the decoy, obtaining the real database elsewhere, or collecting everything for later offline analysis reduces on-site delay.","Clear comparison clues can make a decoy easy to identify."],
+      response:["Use synthetic data matching the real schema and business context where intruders may search databases or backups.","Keep it separate from production and monitor placement and access. Reading alone does not generate an alert."]
+    },
+    web: {
+      ifCase:["If an intruder searching for an admin portal or backup examines a decoy page and its links, checking the candidate may take extra time.","Monitoring page requests and canary-link requests can provide evidence of exploration."],
+      elseCase:["Ignoring the page, using another route, or never requesting the link means little delay and no canary alert.","Unnatural content or URLs can make the decoy easy to recognize."],
+      response:["Use this where intruders may search for portals or archives, with content and placement that fit the business context.","Monitor page requests separately from canary-service alerts. Do not connect production authentication or functions."]
+    },
+    nest: {
+      ifCase:["If an intruder searching a stolen archive cannot confidently distinguish candidates, they may spend effort decrypting and checking more branches or risk discarding files of uncertain value.","A convincing layout that leaves unchecked branches as plausible candidates may extend inspection even after one decoy is found."],
+      elseCase:["Unnatural structure or contradictions with known information may expose the trap. Bulk collection followed by parallel offline analysis reduces on-site delay, and a separate route to real data reduces the effect."],
+      response:["Use where archives or backups may be stolen; build natural directory structures and internally consistent synthetic documents.","Keep operator-only passwords and structure inventories separate from deployable files. Never mix in real secrets."]
+    },
+    stream: {
+      ifCase:["If an intruder targeting a backup must wait for the complete download, responders may gain time to investigate and contain the activity.","Prompt awareness of stream-start events can help responders make a timely decision."],
+      elseCase:["Partial retrieval, disconnecting, or parallel connections can reduce waiting. An inactivity timeout also ends a connection.","If monitoring or response is slow, or bandwidth caps are too restrictive, delivery may end before useful response time is gained."],
+      response:["Suitable for an isolated decoy delivery path where bandwidth, concurrency and cost can be monitored.","Prepare authentication, start-event logging, alerts, limits and a stop procedure. Keep it separate from production data and authentication."]
+    },
+    directory_maze: {
+      ifCase:["If an intruder traversing directories to find target files also retrieves and inspects decoys individually, additional requests and selection work may result."],
+      elseCase:["Target filtering, parallel crawlers, or bulk collection followed by offline analysis can reduce on-site delay.","Normal searches and backups also process files, so placement may affect routine operations."],
+      response:["Suitable for authorized file shares or static delivery areas that intruders could browse without disrupting legitimate work.","Use plausible folder names and synthetic documents; maintain an operator placement inventory and access logs."]
+    },
+    encoding_maze: {
+      ifCase:["If an intruder must compare recovered content from multiple file candidates to find a target, individual review may add selection work."],
+      elseCase:["Known encodings can be decoded in bulk with scripts and parallelized. Obvious format labels or repeated structures make selection easier."],
+      response:["Use where files may be collected and analyzed automatically; vary formats and names while keeping all data synthetic.","Monitor retrieval at the hosting layer. Offline analysis cannot be detected from the file alone."]
+    },
+    fake_trap: {
+      ifCase:["An intruder who trusts a warning or processing display and investigates or waits may spend extra time deciding what to do."],
+      elseCase:["Scripts that do not render the page, intruders who ignore warnings, or parallel exploration through another route bypass the display.","Placement that exposes legitimate users can cause false alerts or operational confusion."],
+      response:["Use on decoy routes likely to be explored in a browser, while assuming automated tools may ignore the display.","Set up hosting logs and alerts, and prepare guidance for legitimate users who encounter the page."]
+    },
+    ransomware_tripwire: {
+      ifCase:["If an encrypting or deleting process changes a monitored decoy file, the change can be recorded as a lead for response.","If the attack repeatedly discovers and processes replenished files, the added files may increase its work."],
+      elseCase:["Reads or exfiltration alone do not trigger it. Stopping the monitor, briefly changing and restoring files, or processing a cached file list can reduce detection or delay.","Unlimited replenishment can fill storage before the attack does, disrupting work or recovery."],
+      response:["Suitable for monitored endpoints or shares. Place decoys where normal applications do not write and set replacement count and byte limits.","Store logs outside the watched area and coordinate with existing EDR, backup and device-isolation procedures."]
+    },
+    data_dilution: {
+      ifCase:["If an intruder selling or using stolen data cannot confidently select genuine records, the dataset may lose reliability or market value and require more validation work."],
+      elseCase:["Publishing or testing all records without selection, matching against external information, or compromising the classification inventory weakens the effect.","Disclosure of which records are genuine reduces uncertainty for those records."],
+      response:["This concept mixes synthetic records into a production database; it requires an organization able to control data formats, business processes and auditing, with impact assessed in isolation.","Separate and audit the classification inventory and lookup privileges. Review mistaken communications, monitoring, and legal or contractual handling. This tool does not implement production mixing."]
+    },
+    honeyword: {
+      ifCase:["If an intruder targeting a privileged account tries a registered decoy password, matches it, and explores the fake environment as if it were genuine, the attempt may be detected and the false data may consume time."],
+      elseCase:["No diversion occurs if the intruder does not try a decoy, the value does not match, or a separate route reaches production.","Differences in the decoy environment, MFA behavior or known screen details may reveal the setup. Legitimate mistakes can also cause false triggers."],
+      response:["This concept is for organizations operating an authentication system and requires integration and specialist operations; this sample does not connect to authentication.","Preserve production authentication, MFA and rate limits. Isolate decoy permissions, data, network and logs from production."]
+    },
+    path_maze: {
+      ifCase:["If broad file-enumerating encryption includes decoys in its target set, discovering and processing the extra files may add work."],
+      elseCase:["Target filtering, parallel processing or collecting a file list before encryption may let real files be processed first.","Routine searches and backups may also include the files."],
+      response:["Suitable for endpoints or shares where broad file traversal is expected. Start small in locations unused by legitimate workflows.","Use the operator inventory for placement and removal, and check effects on search and backup operations."]
+    },
+    sparse_decoy: {
+      ifCase:["If an attack reads and encrypts whole files, processing a decoy with a large logical size may add read and encryption work."],
+      elseCase:["Partial encryption, size exclusions or processing only file headers reduce the extra work.","Backups, sync, copies and encrypted output may consume the full apparent size and storage."],
+      response:["Suitable for endpoints with sparse-file support and managed storage and backup behavior.","Start with a small deployment, cap file size and count, monitor free space, and keep the operator filename list separately."]
+    }
+  }
+};
+for (const lang of Object.keys(methodGuidance)) {
+  for (const [method, fields] of Object.entries(methodGuidance[lang])) Object.assign(methodFlows[lang][method], fields);
+}
+applyMethodKeyPointAdditions();
 flowScenarios.ja.path_maze = "想定：フォルダーを探索して暗号化する攻撃に、追加の架空ファイルを処理させます。";
 flowScenarios.en.path_maze = "Scenario: a directory-traversing encryptor processes additional synthetic files.";
 flowScenarios.ja.sparse_decoy = "想定：大きなファイルを全体暗号化する攻撃に、見かけ上大きな架空ファイルを処理させます。";
@@ -460,7 +643,7 @@ Object.assign(translations.ja, {
   workspace_page_intro:"初めに", workspace_page_generator:"対策紹介とサンプル生成", workspace_page_license:"ライセンス・著作権",
   intro_eyebrow:"初めに", intro_title:"Physaliaについて", intro_lead:"Physaliaは、**攻撃者の侵入後に備える対策**を紹介し、架空のファイルやサンプルを生成するローカルツールです。",
   intro_purpose:"予算や人手が限られる環境でも、対策の仕組みや注意点を学び、自分の環境に合う方法を探せます。一部の手法は説明のみを提供します。",
-  intro_concept_title:"コンセプト（対策の考え方）", intro_prevention:"AI技術の発展とともに、攻撃の手口は多様化しています。侵入を防ぐ対策だけでは防ぎきれない攻撃もあり、従来の対策に加えて、別の角度から備えることが必要だと考えています。", intro_after_intrusion:"Physaliaは、アンチウイルスソフトなどの対策を置き換えるのではなく、**デコイや遅滞に重きを置いた別のアプローチ**を紹介します。既知の技術もAI時代の攻撃を想定して見直し、仕組みを学べる解説やサンプルを提供します。", intro_concept_scope:"目指すのは、あらゆる攻撃を100%防ぐことではありません。防御の選択肢を増やし、攻撃者の負担を高めることで、攻撃者に偏った状況を少しでも変えることです。", intro_inspiration:"攻撃の手口が多様化するなら、防御の手段も多様であるべきです。ひとつひとつの対策が小さくても、重ねることで攻撃者が活動しにくい環境につながると考えています。", intro_boundary:"各手法の仕組みと限界を確認し、自分の環境に役立つものを検討してください。",
+  intro_concept_title:"コンセプト（対策の考え方）", intro_prevention:"AI技術の発展とともに、攻撃の手口は多様化しています。侵入を防ぐ対策だけでは防ぎきれない攻撃もあり、従来の対策に加えて、別の角度から備えることが必要だと考えています。", intro_after_intrusion:"Physaliaは、アンチウイルスソフトなどの対策を置き換えるのではなく、**デコイによる攻撃回避や遅滞対策による攻撃断念に重きを置いたアプローチ**を紹介します。既知の技術もAI時代の攻撃を想定して見直し、仕組みを学べる解説やサンプルを提供します。", intro_concept_scope:"**目指すのは、侵入や情報流出を完全に防ぐことだけに頼るのではなく、侵入や情報流出が起きた後にも効果を発揮する防御策です。**侵入や情報流出に成功すれば攻撃者の勝ち、という状況を変えるため、攻撃が成功した後も攻撃者に負担をかけ、対応する機会を作ることで、攻撃者に偏った状況を少しでも変えることを目指します。", intro_inspiration:"攻撃の手口が多様化するなら、**防御の手段も多様であるべきです。**ひとつひとつの対策が小さくても、重ねることで攻撃者が活動しにくい環境につながると考えています。", intro_boundary:"各手法の仕組みと限界を確認し、自分の環境に役立つものを検討してください。",
   intro_how_title:"使い方", intro_step_1:"「対策紹介とサンプル生成」を開き、**心配なことから対策を探します**。", intro_step_2:"**対策の仕組みや注意点**を読み、必要に応じてサンプルを生成します。", intro_step_3:"生成した内容を確認し、**自分が管理する環境に手動で配置**します。監視が必要な手法では、通知先などを別途用意します。", intro_start:"対策を探す",
   intro_limits_title:"補足情報", intro_limit_synthetic:"**生成データは架空です。**実在の個人情報、実際に使える認証情報、決済カード番号は生成しません。", intro_limit_canary:"カナリアURLは任意です。空欄なら実際の監視通知はありません。生成器はURLへ接続せず、**ファイルを読むだけでも通常はHTTP通知されません。**", intro_limit_effect:"**対策の効果は、配置先や攻撃者の行動によって変わります。**自分の環境に合わせて、仕組みと注意点を確認してください。",
   license_eyebrow:"プロジェクト情報", license_title:"ライセンス・著作権", license_intro:"このリポジトリのソフトウェアと寄稿の利用条件です。", license_software_title:"プロジェクトのライセンス", license_software_body:"PhysaliaはApache License 2.0で公開されています。利用・改変・再配布にはライセンス本文の条件が適用され、特許ライセンス条項を含みます。ソフトウェアは保証なしで提供されます。", license_read_full:"Apache License 2.0の全文を表示", license_copyright_title:"著作権と第三者ライブラリ", license_copyright_body:"Copyright 2026 Physalia contributors. 各寄稿の著作権表示とライセンス条件は、再配布時も保持してください。", license_dependencies_body:"Pythonなどの依存ライブラリは、それぞれ個別のライセンスに従います。このページの説明は依存ライブラリの条件を置き換えません。"
@@ -470,7 +653,7 @@ Object.assign(translations.en, {
   workspace_page_intro:"Getting started", workspace_page_generator:"Methods & sample generation", workspace_page_license:"License & copyright",
   intro_eyebrow:"Getting started", intro_title:"About Physalia", intro_lead:"Physalia is a local tool for exploring **defenses against attackers who have gained access** and generating fictional files and samples.",
   intro_purpose:"Learn how each method works and find options suited to your environment, even with limited budget and staff. Some methods are presented as explanations only.",
-  intro_concept_title:"Our approach", intro_prevention:"As AI advances, cyberattacks are taking more varied forms. Preventing intrusion alone cannot stop every attack, so we believe organizations need additional ways to prepare.", intro_after_intrusion:"Physalia does not replace antivirus or other protections. It explores **a different approach centered on decoys and delay**. We adapt established techniques for the AI era and provide explanations and samples to help people understand them.", intro_concept_scope:"The goal is not to prevent every attack with 100% certainty. It is to broaden defensive options and increase the effort required of attackers, helping to ease a situation that often favors them.", intro_inspiration:"As attacks diversify, defenses should diversify too. We believe that even small measures, combined, can make it harder for attackers to operate.", intro_boundary:"Review how each method works and where it falls short, then consider whether it could help in your environment.",
+  intro_concept_title:"Our approach", intro_prevention:"As AI advances, cyberattacks are taking more varied forms. Preventing intrusion alone cannot stop every attack, so we believe organizations need additional ways to prepare.", intro_after_intrusion:"Physalia does not replace antivirus or other protections. It introduces **an approach focused on using decoys to evade attacks and delay tactics to discourage attackers from continuing**. It also revisits established techniques for AI era threats and provides explanations and samples to help people understand how they work.", intro_concept_scope:"**The goal is not to rely solely on preventing every intrusion or data leak. It is to build defenses that remain effective even after one occurs.** We aim to challenge the idea that an intrusion or data leak means the attacker has won by adding work for attackers and creating opportunities to respond, even after an attack succeeds.", intro_inspiration:"As attacks diversify, **defenses should diversify too.** We believe that even small measures, combined, can make it harder for attackers to operate.", intro_boundary:"Review how each method works and where it falls short, then consider whether it could help in your environment.",
   intro_how_title:"How to use it", intro_step_1:"Open Methods & sample generation and **find methods by choosing a concern**.", intro_step_2:"Read **how a method works and its limitations**, then generate a sample if needed.", intro_step_3:"Review the output and **place it manually in an environment you control**. Configure alert delivery separately for methods that need monitoring.", intro_start:"Explore countermeasures",
   intro_limits_title:"Additional information", intro_limit_synthetic:"**Generated data is fictional.** The tool does not create real personal information, usable credentials or payment-card numbers.", intro_limit_canary:"A canary URL is optional. Leaving it blank means no live monitoring alert. The generator never requests the URL, and **merely reading a file normally does not send an HTTP alert.**", intro_limit_effect:"**A method's effect depends on where it is placed and how an attacker behaves.** Review how it works and its limitations in the context of your environment.",
   license_eyebrow:"PROJECT INFORMATION", license_title:"License & copyright", license_intro:"Terms for using this repository's software and contributions.", license_software_title:"Project license", license_software_body:"Physalia is distributed under the Apache License 2.0. Use, modification and redistribution are subject to the license text, which includes a patent license grant. The software is provided without warranty.", license_read_full:"Read the full Apache License 2.0", license_copyright_title:"Copyright and third-party libraries", license_copyright_body:"Copyright 2026 Physalia contributors. Retain copyright notices and license terms for each contribution when redistributing.", license_dependencies_body:"Python and other dependencies have their own licenses. This summary does not replace their terms."
@@ -527,8 +710,8 @@ translations.ja.quick_canary_unsupported = "選択した手法ではカナリア
 translations.en.quick_canary_unsupported = "The selected method does not use canary URLs. Choose a method that supports one or clear the URL field above.";
 translations.ja.quick_start_confirm = "このサンプルを作成します。上のカナリアURLを入力した場合は既存URLを置き換えます。URLは生成物に含まれます。続けますか？";
 translations.en.quick_start_confirm = "Create this sample? A canary URL entered above replaces the existing URL and is included in the output.";
-translations.ja.generated = "{name}を作成しました。";
-translations.en.generated = "Created {name}.";
+translations.ja.generation_settings_changed = "設定が変更されたため、生成結果を破棄しました。現在の設定で再生成してください。";
+translations.en.generation_settings_changed = "Settings changed, so the generated result was discarded. Generate again with the current settings.";
 translations.ja.quick_existing_url_confirm = "現在の設定にあるカナリアURLを生成物に含めます。続けますか？";
 translations.en.quick_existing_url_confirm = "The canary URL in the current settings will be included in the output. Continue?";
 translations.ja.default_page_title = "運用ポータル";
@@ -639,7 +822,7 @@ translations.ja.quick_file_context_label = "サンプルの用途";
 translations.en.quick_file_context_label = "Sample context";
 translations.ja.quick_file_context_help = "\u7528\u9014\u3092\u9078\u3076\u3068\u3001\u30d5\u30a1\u30a4\u30eb\u306e\u898b\u51fa\u3057\u3084\u30b5\u30f3\u30d7\u30eb\u306e\u9805\u76ee\u30fb\u30c7\u30fc\u30bf\u304c\u7528\u9014\u306b\u5408\u308f\u305b\u3066\u5909\u308f\u308a\u307e\u3059\u3002";
 translations.en.quick_file_context_help = "Choose a purpose to use matching headings, sample fields and data.";
-translations.en.context_help = "The selected purpose changes the generated record columns and values, title, and default canary field or link label. Blank document filenames and titles follow the selected purpose. Standard .env files use it for the title and URL key; the development/production note layout uses its environment settings instead. CSV places the URL in the first record; Excel puts a link on the data sheet. The URL is not modified or fetched. Its domain and hyperlink target can still be inspected.";
+translations.en.context_help = "The selected purpose changes the generated record columns and values, title, and default canary field. When a file contains records, the URL is placed in that field in one record; the result shows the exact field and record. .env files use a matching setting key. The URL is not modified or fetched, and its domain and hyperlink target can still be inspected.";
 Object.assign(translations.en, {
   format_env: ".env file",
   format_txt: "Text (.txt)",
@@ -693,6 +876,28 @@ translations.ja.quick_start_help += " 上のカナリアURL欄が空なら、そ
 translations.en.quick_start_help += " An empty canary field above adds no URL. A URL already entered in detailed settings is still used: Quick Create asks first, while the regular Generate button uses it directly. The default example.invalid URLs are reserved and cannot serve as real monitoring endpoints.";
 translations.ja.quick_start_help += " クイック作成欄で形式・用途・件数を変更すると詳細設定にも反映され、設定JSONに保存できます。";
 translations.en.quick_start_help += " Changing the format, context or count in quick-create updates detailed settings, where you can save it in the settings JSON.";
+translations.ja.quick_filename_note = "ダウンロード名は対策に合わせたPhysalia_*形式です。必要なら保存後に名前を変更してください。配置用ZIP内のファイル名は、形式に必要な名前を保ちます。";
+translations.en.quick_filename_note = "Download names use a method-specific Physalia_* pattern. Rename files after saving if needed. Files inside deployment ZIPs retain names required by their formats.";
+translations.ja.quick_db_filename_note = translations.ja.quick_filename_note;
+translations.en.quick_db_filename_note = translations.en.quick_filename_note;
+translations.ja.quick_start_help = "最初はサンプルを一つ作成してみてください。生成ファイルは架空データで、ダウンロード名はPhysalia_*形式です。必要なら保存後に名前を変更してください。カナリア通知には、運用者が発行した監視URLへ実際にアクセスされる必要があります。生成器はURLに接続しません。" + translations.ja.quick_start_help.slice(translations.ja.quick_start_help.indexOf(" 上のカナリアURL欄"));
+translations.en.quick_start_help = "Start with one sample. Files contain fictional data and use Physalia_* download names; rename them after saving if needed. A canary alert requires your monitoring URL to be accessed. The generator never contacts that URL." + translations.en.quick_start_help.slice(translations.en.quick_start_help.indexOf(" An empty canary field"));
+translations.ja.quick_env_reset_confirm = "このサンプルのため.envの設定パターンを初期値に戻します。カナリアURLは保持します。続けますか？";
+translations.en.quick_env_reset_confirm = "Reset the .env configuration pattern for this sample. Your canary URL will be kept. Continue?";
+translations.ja.fake_note = "出力ファイル名はPhysalia_*形式です。表示だけの静的ページで、検知・通報・認証・情報収集は行わず、外部への通信やプログラム送信もありません。監視・通知は配信側で別途設定してください。通報済みの表示は実際の通報を意味しません。正規利用者の誤接触に配慮してください。";
+translations.en.fake_note = "The downloaded file uses a Physalia_* name. This static page only displays a message. It does not detect, report, authenticate, collect information, communicate externally or send software. Configure monitoring and alerts separately. The reported message does not mean a report was sent. Avoid exposing legitimate users to the page.";
+translations.ja.env_switch_help = "空欄のまま作成すると、配置用ZIPには.env.developmentを含めます。開発URLは有効で、カナリアURLはコメント行に入ります。既定URLはexample.invalidです。独自ホストを使う場合は所有を確認し、本番認証のない隔離テスト先だけへ向けてください。このURLはクローラーやエージェントから要求される場合があります。生成器は名前解決・接続を行いません。内部・本番エンドポイントを指定せず、本番設定へ読み込ませないでください。ダウンロードZIP名はPhysalia_*形式です。";
+translations.en.env_switch_help = "The deployment ZIP contains .env.development by default. The development URL is active and the canary URL is a commented production alternative. The default uses example.invalid. For a custom host, confirm ownership and route it only to an isolated test endpoint without production authentication. A crawler or agent may request this active URL. The generator does not resolve or contact it. Do not enter internal or production endpoints or load the file in production configuration. The downloaded ZIP uses a Physalia_* name.";
+translations.ja.quick_env_help = "配置用ZIPには、アプリ名・ログレベル・ポート・DB/Redis接続先・タイムアウト・再試行回数などを含む.env.developmentが入ります。接続先は予約済みexample.invalidの架空ホストで、認証情報は含みません。カナリアURLはコメント行に入り、ファイルを開くだけでは通知されません。これはデコイ専用の見本です。実アプリや本番設定には読み込ませず、隔離した検証環境だけで使ってください。";
+translations.en.quick_env_help = "The deployment ZIP contains .env.development with common settings such as an app name, log level, port, database and Redis endpoints, timeout and retry count. Endpoints use fictional hosts under reserved example.invalid, and the file contains no credentials. The canary URL is in a comment, so opening the file alone does not trigger an alert. This is a decoy sample; do not load it into a real application or production configuration. Use it only in an isolated test environment.";
+translations.ja.env_direct_download = "Physalia_*形式で.envサンプルを保存";
+translations.en.env_direct_download = "Save .env sample with Physalia_* name";
+translations.ja.env_zip_download = "配置用ZIPを保存（ZIP内は.env形式の名前）";
+translations.en.env_zip_download = "Save deployment ZIP (contains the required .env filename)";
+translations.ja.env_zip_note = "配置用ZIPの中では.env形式の名前を保ちます。ダウンロード後、ZIPを展開して使ってください。";
+translations.en.env_zip_note = "The deployment ZIP preserves the required .env filename. Extract the ZIP before use.";
+translations.ja.env_switch_help = "切替メモ形式を選ぶと、配置用ZIPには.env.developmentを含めます。開発URLは有効で、カナリアURLはコメント行に入ります。既定URLはexample.invalidです。独自ホストを使う場合は所有を確認し、本番認証のない隔離テスト先だけへ向けてください。このURLはクローラーやエージェントから要求される場合があります。生成器は名前解決・接続を行いません。内部・本番エンドポイントを指定せず、本番設定へ読み込ませないでください。ダウンロード名はPhysalia_*形式です。";
+translations.en.env_switch_help = "The switch-note format places .env.development inside the deployment ZIP. The development URL is active and the canary URL is a commented production alternative. The default uses example.invalid. For a custom host, confirm ownership and route it only to an isolated test endpoint without production authentication. A crawler or agent may request this active URL. The generator does not resolve or contact it. Do not enter internal or production endpoints or load the file in production configuration. The download name uses a Physalia_* pattern.";
 translations.ja.notice = "\u624b\u6cd5\u3092\u9078\u3073\u3001\u4ed5\u7d44\u307f\u3084\u5bfe\u8c61\u3068\u306a\u308b\u653b\u6483\u3092\u78ba\u8a8d\u3057\u3066\u304b\u3089\u751f\u6210\u3057\u307e\u3059\u3002\u751f\u6210\u7269\u306f\u67b6\u7a7a\u30c7\u30fc\u30bf\u3067\u3001\u81ea\u52d5\u914d\u7f6e\u3055\u308c\u307e\u305b\u3093\u3002\u76e3\u8996URL\u3092\u5165\u308c\u306a\u3044\u5834\u5408\u3001\u30ab\u30ca\u30ea\u30a2\u901a\u77e5\u306f\u767a\u751f\u3057\u307e\u305b\u3093\u3002";
 translations.en.notice = "Select a method and review its mechanism and target attacks before generating. Artifacts contain fictional data and are not deployed automatically. No canary alert occurs without a monitoring URL.";
 translations.en.intro_step_1 = "Open Methods & sample generation and **find methods by choosing a concern**.";
@@ -746,8 +951,10 @@ Object.assign(translations.ja, {legal_disclaimer:"以下は日本法に関する
 Object.assign(translations.en, {legal_us_disclaimer:"This is a general view of US law, not a determination for a particular case. Consult a legal professional familiar with the applicable jurisdiction before deployment."});
 Object.assign(translations.ja, {settings_privacy_summary:"設定JSONに保存される内容", settings_privacy_help:"専用URL欄と所有確認チェックは保存しません。ドメイン欄の値や通常の入力値はJSONに残る場合があります。自由入力欄のURLや秘密情報は自動で除かれないため、実データや秘密を入力せず、JSONを安全に保管してください。"});
 Object.assign(translations.en, {settings_privacy_summary:"What the settings JSON contains", settings_privacy_help:"Dedicated URL fields and ownership confirmations are not saved. Domain values and ordinary settings may remain in the JSON. URLs or secrets in free-text fields are not automatically removed, so do not enter real data or secrets, and store the JSON securely."});
-Object.assign(translations.ja, {context_help:"選択した用途に合う見出しや架空データを自動で設定します。"});
-Object.assign(translations.en, {context_help:"Automatically chooses matching headings and fictional sample data for this purpose."});
+Object.assign(translations.ja, {context_help:"用途に合う見出し・項目・架空データを設定します。レコード形式では、1件の自然なURL項目にカナリアURLを置き、生成結果に項目名とレコード番号を表示します。.envでは用途に合う設定キーを使います。"});
+Object.assign(translations.en, {context_help:"Chooses matching headings, fields and fictional data. Record formats place the canary URL in a natural URL field in one record; the result shows its field and record number. .env files use a matching setting key."});
+Object.assign(translations.ja, {canary_location_title:"カナリアURLの配置", canary_location_record:"{path} — {field}列、レコード {record}", canary_location_env:"{path} — .env の {field}（本番用設定のコメント行）", canary_location_label:"{path} — {label}", canary_location_hidden:"この結果欄には配置先だけを表示しています。URL自体はダウンロードしたファイルで確認してください。", canary_location_unknown:"生成ファイル内に配置されています。詳細は運用者用インベントリを確認してください。"});
+Object.assign(translations.en, {canary_location_title:"Canary URL placement", canary_location_record:"{path} — {field} column, record {record}", canary_location_env:"{path} — .env {field} (commented production setting)", canary_location_label:"{path} — {label}", canary_location_hidden:"This result shows the placement only. Open the downloaded file to inspect the URL.", canary_location_unknown:"The URL is in the generated file. See the operator inventory for its location."});
 Object.assign(translations.ja, {canary_help:"動作確認：HTML形式でファイルを生成し、その中のリンクを押すと、左メニューの「カナリア接触ログ」で確認できます。", canary_note:"ファイルを読むだけでは通知されません。URLへのアクセスはスキャナーやリンクプレビューでも発生し、攻撃者や閲覧者の特定には使えません。初期URLは起動中のサンプルで共通のため、接触したファイルを区別できません。再起動後は新しいURLになります。生成器はURLへ接続しません。", canary_advanced_help:"外部の監視サービスを使う場合は、自分のアカウント用に発行されたHTTPS URLを指定します。URLに空白やフラグメント（#以降）は使えません。.env形式では$を含むURLは使えず、通常形式ではシングルクォートも使えません。"});
 Object.assign(translations.en, {canary_help:"To try it: generate an HTML file, click its link, then open Canary contacts from the left menu.", canary_note:"Reading the file alone does not send an alert. Scanners and link previews may also access the URL; a request does not identify an attacker or a reader. The initial URL is shared by samples from this session, so the log cannot identify the file; a new URL is created on restart. The generator does not contact the URL.", canary_advanced_help:"For an external monitoring service, use an HTTPS URL issued for your own account. URLs cannot contain spaces or fragments (the part after #). The .env format does not accept URLs containing $, and its standard layout also rejects single quotes."});
 Object.assign(translations.ja, {local_canary_browser:"ブラウザー（推定）", local_canary_os:"OS（推定）", local_canary_agent:"ブラウザー情報（User-Agent）", local_canary_language:"言語（Accept-Language）"});
@@ -830,6 +1037,7 @@ translations.ja.canary_redirect_method = "カナリアページへの誘導方�
 translations.ja.canary_redirect_text = "文書内のテキストリンク";
 translations.ja.canary_redirect_button = "ボタン風リンク";
 translations.ja.canary_redirect_image = "アイコン画像リンク";
+translations.ja.canary_redirect_email = "メールアドレス表示（クリックでカナリアページへ）";
 translations.ja.canary_redirect_next = "「次へ」ボタン";
 translations.ja.canary_redirect_pagination = "ページ番号";
 translations.ja.canary_redirect_fullpage = "ページ全体（どこを押しても遷移）";
@@ -838,12 +1046,101 @@ translations.en.canary_redirect_method = "How to link to the canary page";
 translations.en.canary_redirect_text = "Text link in the document";
 translations.en.canary_redirect_button = "Button-style link";
 translations.en.canary_redirect_image = "Icon image link";
+translations.en.canary_redirect_email = "Email address (opens canary page)";
 translations.en.canary_redirect_next = "Next button";
 translations.en.canary_redirect_pagination = "Page numbers";
 translations.en.canary_redirect_fullpage = "Entire page (click anywhere to open)";
 translations.en.canary_redirect_help = "Choose how the link appears. It opens only when clicked; opening the HTML does not trigger an automatic request. With Entire page selected, clicking anywhere in the page opens the canary.";
+const canaryEmailOption = document.createElement("option");
+canaryEmailOption.value = "email";
+canaryEmailOption.dataset.i18n = "canary_redirect_email";
+$("#canary-link-style").insertBefore(canaryEmailOption, $("#canary-link-style [value='next']"));
 translations.ja.quick_canary_label = "監視先URL（カナリアページURL・任意）";
 translations.en.quick_canary_label = "Monitoring URL (canary page URL, optional)";
+Object.assign(translations.ja, {
+  logs_intro:"このPCの「カナリアページ」接触ログを読み、何が分かり、何は断定できないかを確認します。外部ログの分析例も後半に分けて説明します。",
+  logs_scope:"「カナリアページ」には、このPCで受けた接触の詳細が表示されます。外部のWebサーバーや監視サービスのログは取り込まず、自動判定もしません。",
+  logs_local_title:"カナリア接触ログで注目する項目", logs_local_intro:"記録を開き、まず概要の時刻・要求方法・IDを見てから詳細を確認します。",
+  logs_local_event:"時刻・event_id・canary_id・method：いつ、どのカナリア識別子に、どの要求が届いたかを確認します。同じIDへの繰り返しや短時間の連続要求にも注目します。",
+  logs_local_headers:"送信元IP・HTTPヘッダー：User-Agent、Accept-Language、Sec-Fetchなどはアクセス元の手掛かりです。値は省略・偽装されることがあり、IPだけで人物を特定できません。",
+  logs_local_browser:"ブラウザー情報：JavaScriptから届いた画面・端末情報などを確認します。情報がない場合も、JavaScript無効・未対応・遮断などが考えられます。受信の有無や自動操作フラグだけで人かAIか、攻撃かどうかを判定できません。",
+  logs_local_location:"位置情報：許可状態を確認し、受信時もブラウザーが報告した値として扱います。値は近似・偽装されることがあり、送信元の実所在地を証明しません。",
+  logs_local_limits:"URL要求やHTTP応答、ブラウザー情報の受信は、ファイルを人が読んだ・保存した・情報を流出させた証明ではありません。メールスキャナーやリンクプレビューなど正規の自動アクセスも照合します。",
+  logs_local_retention:"このPCの記録は最大500件をメモリーに保持し、アプリ終了時に消去されます。別環境の監視ログはここには取り込まれません。",
+  logs_fields_title:"別環境のWebサーバーログを分析する場合", logs_example_title:"外部サーバーログのJSON Lines例",
+  logs_example_note:"以下は自前のWebサーバーで記録する架空例です。「カナリアページ」の画面表示項目とは異なります。送信元IPは必要な場合だけ記録します。",
+  logs_review_title:"カナリア接触ログを確認する流れ",
+  logs_review_1:"接触時刻の前後に、メール保護スキャナー、リンクプレビュー、社内監視など正規の自動アクセスがないか確認します。",
+  logs_review_2:"canary_idごとに時刻順で並べ、event_id、要求方法、繰り返し回数、詳細情報の有無や位置情報の状態を確認します。",
+  logs_review_3:"canary_idとファイル・配置先の対応は、管理者だけが見られる別台帳で確認します。必要な場合は、自組織が管理するWebサーバーのログを時刻などで照合します。",
+  logs_review_4:"URL要求・サーバー応答・JavaScript情報の受信と、人による閲覧・保存・侵害を区別します。分かった事実、推測、未確認事項を分けて記録します。",
+  logs_review_5:"必要な記録をアクセス制限された場所に保全し、正規アクセスや誤検知を確認してから既存のインシデント対応手順に従います。"
+});
+Object.assign(translations.en, {
+  logs_intro:"Review this PC's Canary page contact log to understand what it shows and what it cannot establish. Guidance for external logs is separated below.",
+  logs_scope:"Canary page shows contacts received on this PC, including request details. It does not ingest logs from external web servers or monitoring services, and it does not classify events automatically.",
+  logs_local_title:"What to examine in Canary contacts", logs_local_intro:"Open an event and start with its time, request method and IDs, then review the details.",
+  logs_local_event:"Time, event_id, canary_id and method: identify when a request arrived and which canary ID it reached. Look for repeats or bursts against the same ID.",
+  logs_local_headers:"Source IP and HTTP headers: User-Agent, Accept-Language and Sec-Fetch fields offer clues about the request. Values may be omitted or spoofed; an IP alone does not identify a person.",
+  logs_local_browser:"Browser information: review screen and device details reported by JavaScript. Missing data may mean JavaScript was disabled, unsupported or blocked. Receipt or an automation flag alone cannot establish whether a person, AI or attacker was involved.",
+  logs_local_location:"Location: check the permission status and treat received coordinates as browser-reported values. They may be approximate or falsified and do not prove the sender's actual location.",
+  logs_local_limits:"A URL request, HTTP response or browser report does not prove that a person read or saved a file, or that data was exfiltrated. Check legitimate automated access such as mail scanners and link previews.",
+  logs_local_retention:"This PC keeps up to 500 events in memory and clears them when the app stops. Logs from other environments are not imported here.",
+  logs_fields_title:"For logs from a separately hosted web server", logs_example_title:"External server log example (JSON Lines)",
+  logs_example_note:"Fictional example for a separately operated web server; these fields differ from the Canary page display. Record a source IP only when needed.",
+  logs_review_title:"Reviewing Canary page contacts",
+  logs_review_1:"Check whether legitimate automated access occurred around the contact time, such as mail security scanners, link previews or internal monitoring.",
+  logs_review_2:"Sort by canary_id and time. Review event_id, request method, repeats, whether browser details arrived and the location status.",
+  logs_review_3:"Use the operator-only mapping between canary_id and the file or placement. If needed, correlate by time with web-server logs your organization controls.",
+  logs_review_4:"Distinguish a URL request, server response or JavaScript report from a person reading or saving a file, or data being exfiltrated. Record facts, inferences and unknowns separately.",
+  logs_review_5:"Preserve necessary records in an access-controlled location, check for legitimate requests and false positives, then follow your existing incident-response process."
+});
+Object.assign(translations.ja, {
+  intro_physalia_note_title:"余談：実在するPhysalia（カツオノエボシ）",
+  intro_physalia_note_biology:"Physalia physalis（カツオノエボシ）は、クラゲのように見えますが、浮力・捕食・消化・繁殖など異なる役割を担う個虫（ズーイド）が一体として働くクダクラゲの仲間です。青紫色などの気体を含む浮き袋が海面に浮かび、帆のように風を受けます。自力で泳がず、風と潮流に運ばれます。海面下に伸びる触手は平均約10m、長いものは約30mに達することがあり、見えている浮き袋の大きさだけでは危険範囲を判断できません。",
+  intro_physalia_note_hazard:"触手には獲物を捕らえる刺胞があり、触れると強い痛みや灼熱感、赤いみみず腫れや水疱が生じることがあります。吐き気、嘔吐、けいれん、呼吸困難、ショックなどの全身症状や死亡はまれですが報告されています。水中で強い痛みや驚きからパニックになれば、溺れる危険もあります。人を狙って襲う生物ではありませんが、知らずに触れると手痛い反応を受けることがあります。漂着した個体や切れた触手も、しばらく刺す力を保つことがあります。",
+  intro_physalia_note_avoid:"一番の予防は触らないことです。海中や波打ち際で見つけても近づかず、拾わず、踏まないでください。漂着個体や触手だけの断片にも触れないでください。目撃情報や遊泳禁止の表示がある場所には入らず、監視員・現地当局の案内に従ってください。刺された後に呼吸困難、失神などの強い症状が出た場合は、直ちに救急要請してください。",
+  intro_physalia_sources:"出典：", intro_physalia_source_jp:"環境省「自然とのふれあい活動における安全対策」"
+});
+Object.assign(translations.en, {
+  intro_physalia_note_title:"Aside: the real Physalia (Portuguese man o’ war)",
+  intro_physalia_note_biology:"Physalia physalis, called katsuono-eboshi in Japan and the Portuguese man o’ war in English, looks like a jellyfish but is a siphonophore: a colony of specialized zooids that work together, with different roles in buoyancy, prey capture, digestion and reproduction. A gas-filled float, often blue, violet or pink, rides at the surface like a sail. The colony cannot swim and drifts with wind and currents. Its tentacles hang below the surface, averaging about 10 m and sometimes reaching about 30 m, so the visible float does not show the full danger area.",
+  intro_physalia_note_hazard:"The tentacles carry stinging cells used to capture prey. Contact can cause intense pain or burning, red whip-like welts and blisters. Nausea, vomiting, cramps, breathing problems, shock and death are rare but reported systemic outcomes. In the water, severe pain or panic can also lead to drowning. The animal does not hunt people, but an unaware person can suffer a painful sting on contact. Washed-up animals and detached tentacles may remain capable of stinging, even for weeks.",
+  intro_physalia_note_avoid:"The best prevention is to avoid contact. Do not approach, pick up or step on one in the water or at the waterline; do not touch stranded animals or loose tentacles. Stay out of waters where one has been reported or swimming is prohibited, and follow lifeguard and local-authority advice. If a sting is followed by severe symptoms such as trouble breathing or fainting, call emergency services immediately.",
+  intro_physalia_sources:"Sources:", intro_physalia_source_jp:"Japan Ministry of the Environment: Safety measures for nature activities"
+});
+Object.assign(translations.ja, {
+  intro_physalia_biology_title:"どんな生き物か",
+  intro_physalia_biology_1:"Physalia physalis（カツオノエボシ）は、クラゲのように見えますが、異なる役割を担う個虫が集まって一体として働くクダクラゲの仲間です。",
+  intro_physalia_biology_2:"気体を含む青紫色などの浮き袋が海面に浮かび、帆のように風を受けます。自力で泳がず、風や潮流に運ばれます。",
+  intro_physalia_biology_3:"海面下に伸びる触手は平均約10m、長いものは約30mに達することがあります。見えている浮き袋だけでは、触手の広がる範囲を判断できません。",
+  intro_physalia_name_title:"なぜツール名が「Physalia」なのか",
+  intro_physalia_name_reason:"「Physalia」という名には、海面に浮かぶ姿をデコイに、知らずに触れれば痛手を受け、存在を知れば避ける性質を防御の発想に重ねています。攻撃者が自ら探索する中でデコイに遭遇すれば負担を負い、その存在を知れば近寄らなくなることを期待しています。",
+  intro_physalia_hazard_title:"刺傷の危険",
+  intro_physalia_hazard_1:"触手の刺胞に触れると、強い痛みや灼熱感、赤いみみず腫れ、水疱が生じることがあります。",
+  intro_physalia_hazard_2:"吐き気、嘔吐、けいれん、呼吸困難、ショックなどの全身症状や死亡はまれですが報告されています。水中では痛みや驚きからパニックになり、溺れる危険もあります。",
+  intro_physalia_hazard_3:"人を狙って襲う生物ではありませんが、知らずに触れると手痛い反応を受けることがあります。漂着した個体や切れた触手も、しばらく刺す力を保つことがあります。",
+  intro_physalia_prevention_title:"被害を受けないために",
+  intro_physalia_prevention_1:"一番の予防は、触らないこと、見つかった場所に近づかないことです。",
+  intro_physalia_prevention_2:"水中や波打ち際で見ても、近づかず、拾わず、踏まないでください。漂着個体や触手だけの断片にも触れないでください。",
+  intro_physalia_prevention_3:"目撃情報や遊泳禁止の表示がある場所には入らず、監視員・現地当局の案内に従ってください。刺された後に呼吸困難や失神などの強い症状が出た場合は、直ちに救急要請してください。"
+});
+Object.assign(translations.en, {
+  intro_physalia_biology_title:"What it is",
+  intro_physalia_biology_1:"Physalia physalis, called katsuono-eboshi in Japan, looks like a jellyfish but is a siphonophore: specialized zooids with different roles work together as one colony.",
+  intro_physalia_biology_2:"A gas-filled, often blue or violet float rests at the surface and acts like a sail. The colony cannot swim and drifts with wind and currents.",
+  intro_physalia_biology_3:"Its tentacles hang below the surface, averaging about 10 m and sometimes reaching about 30 m. The visible float does not show how far the tentacles extend.",
+  intro_physalia_name_title:"Why is the tool named “Physalia”?",
+  intro_physalia_name_reason:"The name connects the animal’s floating form with a decoy, and its painful sting for the unwary with the defensive idea behind the tool. An intruder may encounter a decoy while exploring on their own and incur extra effort; we hope awareness of the decoys will keep them away.",
+  intro_physalia_hazard_title:"Sting hazards",
+  intro_physalia_hazard_1:"Contact with the stinging cells in its tentacles can cause intense pain or burning, red whip-like welts and blisters.",
+  intro_physalia_hazard_2:"Nausea, vomiting, cramps, breathing problems, shock and death are rare but reported systemic outcomes. In the water, pain or panic can also lead to drowning.",
+  intro_physalia_hazard_3:"It does not hunt people, but an unaware person can suffer a painful sting on contact. Washed-up animals and detached tentacles may remain capable of stinging for some time.",
+  intro_physalia_prevention_title:"How to avoid being stung",
+  intro_physalia_prevention_1:"The best prevention is to avoid contact and stay away from places where one has been seen.",
+  intro_physalia_prevention_2:"If you see one in the water or at the waterline, do not approach, pick it up or step on it. Do not touch stranded animals or loose tentacles.",
+  intro_physalia_prevention_3:"Stay out of waters where one has been reported or swimming is prohibited, and follow lifeguard and local-authority advice. If a sting is followed by severe symptoms such as trouble breathing or fainting, call emergency services immediately."
+});
 let localCanaryRenderSignature = "";
 async function refreshLocalCanaryEvents() {
   if (document.hidden || activeWorkspacePage !== "canary") return;
@@ -1022,7 +1319,7 @@ function applyLanguage() {
   updateMazeEstimate();
   updateCanaryUrlWarning();
   updateCsvSafetyNote();
-  result.textContent = generatedAsset ? t("generated", {name: generatedStatusName(generatedAsset)}) : "";
+  result.textContent = "";
   if (generatedAsset) renderDownloads(generatedAsset);
 }
 function updateWebTitlePlaceholder() {
@@ -1208,7 +1505,7 @@ $("#nest-scenario").addEventListener("change", () => {
   activeNestDirectoryScenario = $("#nest-scenario").value;
 });
 const previewUrlFields = {
-  env: ["#env-url", "#env-dev-url"], nest: ["#nest-url"], database: ["#db-url"], web: ["#web-url"],
+  env: ["#env-url"], nest: ["#nest-url"], database: ["#db-url"], web: ["#web-url"],
   directory_maze: ["#maze-url"], encoding_maze: ["#encoding-url"],
 };
 const previewUrlRedactions = new WeakMap();
@@ -1268,39 +1565,18 @@ document.querySelectorAll('#generator input[type="number"]').forEach(input => in
 }));
 function updateEnvTemplate() {
   const isCanary = $('input[name="kind"]:checked').value === "env";
-  const enabled = isCanary && $("#canary-format").value === "env";
-  const linkStyleEnabled = isCanary && $("#canary-format").value === "html";
+  const selectedFormat = $("#canary-format").value;
+  const linkStyleEnabled = isCanary && selectedFormat === "html";
   $("#canary-link-style-field").hidden = !linkStyleEnabled;
   $("#canary-link-style").disabled = !linkStyleEnabled;
-  $("#env-template-details").hidden = !enabled;
-  const options = $("#env-template-options"), switchOptions = $("#env-switch-options");
-  options.hidden = !enabled;
-  $("#env-layout").disabled = !enabled;
-  const switchEnabled = enabled && $("#env-layout").value === "commented_production";
-  switchOptions.hidden = !switchEnabled;
-  switchOptions.querySelectorAll("input").forEach(input => { input.disabled = !switchEnabled; });
-  $("#canary-context").disabled = !isCanary || switchEnabled;
+  const contextUnused = isCanary && selectedFormat === "env";
+  $("#canary-context-field").hidden = contextUnused;
+  $("#canary-context").disabled = !isCanary || contextUnused;
 }
 $("#canary-format").addEventListener("change", () => {
   updateEnvTemplate();
   updateCsvSafetyNote();
 });
-$("#env-layout").addEventListener("change", updateEnvTemplate);
-$("#env-suffix").addEventListener("input", () => {
-  const input = $("#env-suffix");
-  if (input.checkValidity()) clearInvalid(input);
-});
-$("#env-dev-url").addEventListener("input", () => { $("#env-dev-url-authorized").checked = false; });
-function envDevUrlNeedsAuthorization(value) {
-  if (!value.trim()) return false;
-  try {
-    const endpoint = new URL(value);
-    const host = endpoint.hostname.toLowerCase().replace(/\.$/, "");
-    return ["http:", "https:"].includes(endpoint.protocol) && Boolean(host) && !host.endsWith(".invalid");
-  } catch (_) {
-    return false;
-  }
-}
 async function loadDatabaseTemplates() {
   const requestedLanguage = language;
   try {
@@ -1431,6 +1707,7 @@ const methodExplanationImages = {
   env:"01-0001_canary_file", nest:"01-0002_encrypted_deep_nest", database:"01-0003_decoy_database",
   web:"01-0004_static_decoy_portal", fake_trap:"01-0005_fake_trap", ransomware_tripwire:"01-0006_ransomware_decoy_flood",
   path_maze:"01-0007_path_maze", sparse_decoy:"01-0008_sparse_decoy", data_dilution:"01-0009_data_dilution",
+  honeyword:"01-0010_privilege_honeyword_session",
   stream:"01-0011_infinite_stream", directory_maze:"01-0012_directory_maze", encoding_maze:"01-0013_encoding_maze",
 };
 function renderMethodExplanationImage(kind) {
@@ -1512,7 +1789,9 @@ function updateExplanation() {
     step.append(number, heading, text);
     steps.append(step);
   });
-  $("#method-flow-note").textContent = readableText(flow?.note || item.limit);
+  const flowNote = $("#method-flow-note");
+  flowNote.hidden = !flow?.note;
+  flowNote.textContent = flow?.note ? readableText(flow.note) : "";
   const renderFlowPoints = (element, value, fallback) => {
     element.replaceChildren();
     if (Array.isArray(value)) {
@@ -1652,8 +1931,10 @@ function renderDownloads(data) {
   $("#downloads").hidden = false;
   const hasDeploymentPackage = (data.companions || []).some(item => item.role === "deployment");
   const isWebPackage = data.summary?.kind === "web" && hasDeploymentPackage;
+  const isEnvPackage = typeof data.name === "string" && data.name.endsWith(".env") && hasDeploymentPackage;
   const primary = downloadLink(data, t(data.summary?.kind === "ransomware_tripwire" ? "tripwire_deployment_download"
-    : isWebPackage ? "web_html_download" : hasDeploymentPackage ? "env_direct_download" : "download_again"));
+    : isWebPackage ? "web_html_download" : hasDeploymentPackage ? "env_direct_download" : "download_again"),
+    isEnvPackage ? document.createDocumentFragment() : $("#downloads"));
   let automatic = primary;
   const isHtmlPreview = typeof data.mime === "string" && data.mime.startsWith("text/html");
   const isPdfPreview = data.mime === "application/pdf";
@@ -1710,10 +1991,9 @@ function renderDownloads(data) {
   for (const companion of companions.filter(item => item.role === "deployment")) {
     automatic = downloadLink(companion, t(isWebPackage ? "web_package_download" : "env_zip_download"));
   }
-  const operatorFiles = companions.filter(item => item.role !== "deployment");
+  const operatorFiles = companions.filter(item => item.role !== "deployment" && !item.name.endsWith(".inventory.json"));
   for (const companion of operatorFiles) {
-    const label = companion.name.endsWith(".inventory.json") ? t("inventory_download")
-      : companion.name === "ransomware_tripwire_monitor.py" ? t("tripwire_monitor_download") : t("operator_download");
+    const label = companion.name === "ransomware_tripwire_monitor.py" ? t("tripwire_monitor_download") : t("operator_download");
     downloadLink(companion, label);
   }
   if (hasDeploymentPackage) {
@@ -1732,6 +2012,37 @@ function renderDownloads(data) {
       warning.textContent = t("monitoring_placeholder");
       $("#downloads").append(warning);
       $("#canary-url-warning").hidden = true;
+    }
+  }
+  if (data.summary) {
+    const examples = Array.isArray(data.summary.canary_location_examples)
+      ? data.summary.canary_location_examples
+      : Array.isArray(data.summary.canary_locations) ? data.summary.canary_locations
+        : [];
+    if (examples.length) {
+      const section = document.createElement("section");
+      section.className = "canary-placement-summary";
+      const heading = document.createElement("h3");
+      heading.textContent = t("canary_location_title");
+      section.append(heading);
+      for (const item of examples.slice(0, 3)) {
+        const line = document.createElement("p");
+        const path = item.path || item.artifact || "";
+        if (item.location === "commented production setting") {
+          line.textContent = t("canary_location_env", {path, field: item.field || "URL"});
+        } else if (item.field && item.record) {
+          line.textContent = t("canary_location_record", {path, field: item.field, record: item.record});
+        } else if (item.label) {
+          line.textContent = t("canary_location_label", {path, label: item.label});
+        } else {
+          line.textContent = t("canary_location_unknown");
+        }
+        section.append(line);
+      }
+      const note = document.createElement("p");
+      note.textContent = t("canary_location_hidden");
+      section.append(note);
+      $("#downloads").append(section);
     }
   }
   if (["database", "canary_file_preview"].includes(data.summary?.kind)) {
@@ -1873,11 +2184,14 @@ form.querySelectorAll('input[type="number"]').forEach(input => {
     if (input.checkValidity()) clearInvalid(input);
   });
 });
-form.querySelectorAll("[data-filename-input]").forEach(input => {
-  input.addEventListener("input", () => {
-    if (input.value === "" || isValidFilename(input.value)) clearInvalid(input);
-  });
-});
+function invalidateGeneratedOnEdit(event) {
+  if (!event.isTrusted) return;
+  settingsRevision += 1;
+  clearDownloads();
+  result.textContent = generationInProgress ? t("generation_settings_changed") : "";
+}
+form.addEventListener("input", invalidateGeneratedOnEdit);
+form.addEventListener("change", invalidateGeneratedOnEdit);
 form.addEventListener("submit", async event => {
   event.preventDefault();
   form.querySelectorAll('[aria-invalid="true"]').forEach(clearInvalid);
@@ -1895,14 +2209,6 @@ form.addEventListener("submit", async event => {
     result.textContent = t("number_input_invalid");
     markInvalid(invalidNumber);
     invalidNumber.focus();
-    return;
-  }
-  const invalidFilename = [...$("#" + kind + "-fields").querySelectorAll("[data-filename-input]")]
-    .find(input => input.value !== "" && !isValidFilename(input.value));
-  if (invalidFilename) {
-    result.textContent = t("filename_error");
-    markInvalid(invalidFilename);
-    invalidFilename.focus();
     return;
   }
   const invalidPattern = [...$("#" + kind + "-fields").querySelectorAll("input[pattern]")]
@@ -1930,22 +2236,22 @@ form.addEventListener("submit", async event => {
   let settings, requestBody;
   try {
     settings = {
-      env: () => ({format: $("#canary-format").value, canary_url: $("#env-url").value, canary_link_style: $("#canary-link-style").value, canary_context: $("#canary-context").value, canary_field:"", canary_label:"", env_layout: $("#env-layout").value, env_suffix: $("#env-suffix").value, env_variable: $("#env-variable").value, env_dev_url: $("#env-dev-url").value, env_dev_url_authorized: $("#env-dev-url-authorized").checked, env_dev_comment: $("#env-dev-comment").value, env_prod_comment: $("#env-prod-comment").value, rows: CANARY_DEFAULT_ROWS}),
+      env: () => ({format: $("#canary-format").value, canary_url: $("#env-url").value, canary_link_style: $("#canary-link-style").value, canary_context: $("#canary-context").value, canary_field:"", canary_label:"", env_layout: "commented_production", env_suffix: "development", env_variable: "URL", rows: CANARY_DEFAULT_ROWS}),
       nest: () => ({scenario: $("#nest-scenario").value, ...($("#nest-scenario").value === "passwords" && ($("#nest-format").value !== "env" || $("#nest-varied-formats").checked) ? vaultDomainSettings() : {}), layers: Number($("#layers").value), branches: Number($("#branches").value), decoys: Number($("#decoys").value), directory_depth: Number($("#directory-depth").value), rows: Number($("#nest-rows").value),
         format: $("#nest-format").value, varied_formats: $("#nest-varied-formats").checked, directories: $("#directories").value.split(",").map(v => v.trim()),
-        canary_urls: $("#nest-url").value.split(/\r?\n/).filter(value => value.trim()), canary_percent: Number($("#canary-percent").value), ...($("#nest-name").value ? {filename: $("#nest-name").value} : {}),
+        canary_urls: $("#nest-url").value.split(/\r?\n/).filter(value => value.trim()), canary_percent: Number($("#canary-percent").value),
         password_policy: {mode: $("#password-mode").value, min_length: Number($("#min-length").value), max_length: Number($("#max-length").value),
           lowercase: $("#lowercase").checked, uppercase: $("#uppercase").checked, digits: $("#digits").checked, symbols: $("#symbols").checked, progressive: $("#progressive").checked, hints: $("#hints").value,
           hint_characters: Number($("#hint-characters").value), ...($("#password-words").value.trim() ? {words: $("#password-words").value.split(",").map(v => v.trim())} : {})}}),
-      database: () => ({template: $("#database-template").value || "customers", email_domain: $("#db-email-domain").value.trim(), email_domain_authorized: $("#db-email-domain-authorized").checked, ...( $("#database-template").value === "passwords" ? vaultDomainSettings() : {}), rows: Number($("#rows").value), table: $("#table-name").value, columns: columns(), canary_url: $("#db-url").value, ...($("#db-name").value ? {filename: $("#db-name").value} : {})}),
-      web: () => ({scenario: $("#web-scenario").value, title: $("#title").value, canary_url: $("#web-url").value, ...($("#web-name").value ? {filename: $("#web-name").value} : {})}),
-      fake_trap: () => ({variant: $("#fake-variant").value, ...($("#fake-name").value ? {filename: $("#fake-name").value} : {})}),
+      database: () => ({template: $("#database-template").value || "customers", email_domain: $("#db-email-domain").value.trim(), email_domain_authorized: $("#db-email-domain-authorized").checked, ...( $("#database-template").value === "passwords" ? vaultDomainSettings() : {}), rows: Number($("#rows").value), table: $("#table-name").value, columns: columns(), canary_url: $("#db-url").value}),
+      web: () => ({scenario: $("#web-scenario").value, title: $("#title").value, canary_url: $("#web-url").value}),
+      fake_trap: () => ({variant: $("#fake-variant").value}),
       ransomware_tripwire: () => ({files: Number($("#tripwire-files").value)}),
       path_maze: () => ({depth: Number($("#path-depth").value), branches: Number($("#path-branches").value), files: Number($("#path-files").value)}),
       sparse_decoy: () => ({size_gib: Number($("#sparse-size").value), files: Number($("#sparse-files").value)}),
-      stream: () => ({path: $("#stream-path").value, format: $("#stream-format").value, port: Number($("#stream-port").value), rate_kib: Number($("#stream-rate").value), max_streams: Number($("#stream-concurrency").value), ...($("#stream-name").value ? {filename: $("#stream-name").value} : {})}),
-      directory_maze: () => ({scenario: $("#maze-scenario").value, ...($("#maze-scenario").value === "passwords" && $("#maze-format").value !== "env" ? vaultDomainSettings() : {}), title: $("#directory-title").value, depth: Number($("#maze-depth").value), branches: Number($("#maze-branches").value), files_per_directory: Number($("#maze-files").value), cross_links: $("#maze-cross-links").checked, canary_urls: $("#maze-url").value.split(/\r?\n/).filter(value => value.trim()), format: $("#maze-format").value, ...($("#directory-name").value ? {filename: $("#directory-name").value} : {})}),
-      encoding_maze: () => ({scenario: $("#encoding-scenario").value, ...($("#encoding-scenario").value === "passwords" && $("#encoding-format").value !== "env" ? vaultDomainSettings() : {}), format: $("#encoding-format").value, layers: Number($("#encoding-layers").value), candidates: Number($("#encoding-candidates").value), canary_urls: $("#encoding-url").value.split(/\r?\n/).filter(value => value.trim()), codecs: [...document.querySelectorAll("#encoding-codecs input:checked")].map(input => input.value), ...($("#encoding-name").value ? {filename: $("#encoding-name").value} : {})}),
+      stream: () => ({path: $("#stream-path").value, format: $("#stream-format").value, port: Number($("#stream-port").value), rate_kib: Number($("#stream-rate").value), max_streams: Number($("#stream-concurrency").value)}),
+      directory_maze: () => ({scenario: $("#maze-scenario").value, ...($("#maze-scenario").value === "passwords" && $("#maze-format").value !== "env" ? vaultDomainSettings() : {}), title: $("#directory-title").value, depth: Number($("#maze-depth").value), branches: Number($("#maze-branches").value), files_per_directory: Number($("#maze-files").value), cross_links: $("#maze-cross-links").checked, canary_urls: $("#maze-url").value.split(/\r?\n/).filter(value => value.trim()), format: $("#maze-format").value}),
+      encoding_maze: () => ({scenario: $("#encoding-scenario").value, ...($("#encoding-scenario").value === "passwords" && $("#encoding-format").value !== "env" ? vaultDomainSettings() : {}), format: $("#encoding-format").value, layers: Number($("#encoding-layers").value), candidates: Number($("#encoding-candidates").value), canary_urls: $("#encoding-url").value.split(/\r?\n/).filter(value => value.trim()), codecs: [...document.querySelectorAll("#encoding-codecs input:checked")].map(input => input.value)}),
     }[kind]();
     requestBody = JSON.stringify({kind, settings});
     if (new Blob([requestBody]).size > MAX_GENERATION_REQUEST_BYTES) {
@@ -1966,6 +2272,7 @@ form.addEventListener("submit", async event => {
     .flatMap(selector => $(selector).value.split(/\r?\n/))
     .map(value => value.trim()).filter(Boolean);
   generationInProgress = true;
+  const generationRevision = settingsRevision;
   button.disabled = true;
   languageSelect.disabled = true;
   document.querySelectorAll('input[name="kind"]').forEach(input => { input.disabled = true; });
@@ -1973,19 +2280,29 @@ form.addEventListener("submit", async event => {
   result.setAttribute("aria-busy", "true");
   result.textContent = t("generating");
   try {
-    const response = await fetch("/api/generate", {
-      method: "POST", headers: {"Content-Type": "application/json", "X-ADG-Token": $('meta[name="adg-token"]').content, "X-ADG-Language": language},
-      body: requestBody,
-    });
+    let response;
+    try {
+      response = await fetch("/api/generate", {
+        method: "POST", headers: {"Content-Type": "application/json", "X-ADG-Token": $('meta[name="adg-token"]').content, "X-ADG-Language": language},
+        body: requestBody,
+      });
+    } catch (error) {
+      if (error instanceof TypeError) throw new Error(t("connection_failed"));
+      throw error;
+    }
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || t("failed"));
+    if (generationRevision !== settingsRevision) {
+      clearDownloads();
+      result.textContent = t("generation_settings_changed");
+      return;
+    }
     data.formKind = kind;
     previewUrlRedactions.set(data, requestPreviewUrls);
     const primary = renderDownloads(data);
-    result.textContent = t("generated", {name: generatedStatusName(data)});
     primary.focus();
   } catch (error) {
-    result.textContent = error instanceof TypeError ? t("connection_failed") : (error.message || t("failed"));
+    result.textContent = error.message || t("failed");
     if (error.message === t("database_size_limit")) {
       const rowsInput = kind === "database" ? $("#rows") : $("#canary-format");
       rowsInput.scrollIntoView({block: "center"});
@@ -2154,7 +2471,6 @@ $("#settings-file").addEventListener("change", async event => {
         if (candidates.length > 50 || candidates.some(value => !value || value.length > 120)) throw new Error();
       }
     }
-    if (["adg-ui-v1", "adg-ui-v2"].includes(config.schema)) $("#env-layout").value = "standard";
     if (!["adg-ui-v4", "adg-ui-v5", "adg-ui-v6", "adg-ui-v8", "adg-ui-v9", "adg-ui-v10", "adg-ui-v11", "adg-ui-v12", "adg-ui-v13"].includes(config.schema)) { $("#nest-scenario").value = "crm"; $("#maze-scenario").value = "crm"; }
     if (!["adg-ui-v11", "adg-ui-v12", "adg-ui-v13"].includes(config.schema)) $("#encoding-scenario").value = "crm";
     controls.forEach((el, i) => { if (el.type === "checkbox") el.checked = values[i]; else el.value = values[i]; });
@@ -2169,7 +2485,6 @@ $("#settings-file").addEventListener("change", async event => {
     // Ownership attestation must be given by the current operator, not carried in an imported config.
     $("#vault-domain-authorized").checked = false;
     $("#db-email-domain-authorized").checked = false;
-    $("#env-dev-url-authorized").checked = false;
     $("#database-template").dataset.selected = $("#database-template").value;
     const selectedTemplate = databaseTemplates.find(item => item.id === $("#database-template").value);
     $("#template-description").textContent = selectedTemplate?.description || t("template_help");

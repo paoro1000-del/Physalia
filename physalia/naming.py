@@ -125,7 +125,7 @@ WORKFLOW_SUFFIXES = (
 
 
 def plausible_filename(purpose, extension=None, profile=None, context=None):
-    """Return a familiar stem with varied, business-like naming conventions."""
+    """Return a Physalia-prefixed, context-matched stem for a generated download."""
     pool = DATABASE_PROFILE_NAMES.get(profile, ()) if profile else ()
     if not pool:
         pool = CONTEXT_FILENAME_NAMES.get(context, ()) if context else ()
@@ -154,4 +154,4 @@ def plausible_filename(purpose, extension=None, profile=None, context=None):
         date_tokens = set(date_suffix.strip("_").split("_"))
         if not tokens.intersection(date_tokens):
             stem += date_suffix
-    return stem
+    return "Physalia_" + stem

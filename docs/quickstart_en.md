@@ -24,7 +24,7 @@ Each recorded header and string is limited to 512 characters. Authorization head
 
 ### Sample types
 
-- **Canary files:** choose a format such as HTML, PDF, TXT, JSON, CSV, Excel, PowerPoint, SQLite or `.env` and select a context. The filename and document title are chosen automatically, and documents contain 25 fictional records. `.env` does not use a count.
+- **Canary files:** choose a format such as HTML, PDF, TXT, JSON, CSV, Excel, PowerPoint, SQLite or `.env` and select a context. Download names use a method-specific `Physalia_*` pattern; document titles are also chosen automatically. Documents contain 25 fictional records. `.env` does not use a count. The result shows the placement: field and record number for record formats, or the setting key for `.env`. For composite artifacts, review the placement examples and operator inventory.
 - **Ransomware Decoy Flood:** creates 4–8 synthetic files and a separate operator-only script that replenishes changed or deleted decoys. The host needs Python 3.11 or later. Replenishment is unlimited by default. It does not stop encryption or restore data.
 - **Path Maze:** creates a finite ZIP of ordinary folders with synthetic files. Processing decoys adds work; parallel encryption may reach real files first.
 - **Sparse Decoy:** generates a script that creates synthetic files with a large logical size at the destination. Copies, backups and synchronization may consume the full logical size and substantial time.
@@ -57,13 +57,15 @@ A full disk can disrupt applications, logging and recovery. Existing files may s
 
 The monitor does not detect reads or exfiltration, stop processes, isolate a device or restore data. It can miss changes made and reverted between checks. At startup it compares the original files to their generated contents; it does not reconstruct events that occurred while stopped. Choose a location ordinary applications do not update to reduce false alarms. Data with no recoverable copy or history cannot be restored after destruction.
 
-The default `.env.development` uses reserved `example.invalid` placeholders in both active and commented URLs. Review any URLs or notes in Detailed settings before generation. Do not load the sample into a real application; use it only in an isolated environment.
+`.env.development` includes common operational settings such as an app name, log level, port, database and Redis endpoints, timeout and retry count. Endpoints use fictional hosts under the reserved `example.invalid` domain, and the file contains no credentials. The canary URL is in a comment and is not requested just by opening the file. Do not load the sample into a real application; use it only in an isolated environment.
 
 ## 2. Review the downloaded file
 
-The tool chooses a plausible filename for the selected sample. Where detailed settings provide a filename field, you can change it; leaving it blank is fine.
+Download names use a method-specific `Physalia_*` pattern. Rename files after saving if needed. Files inside deployment ZIPs retain names required by their formats, such as `.env`.
 
 Files are saved to your browser's download location. If the browser does not save the file automatically, click its filename link in the results area. Select **Preview HTML in a new tab** or **Preview PDF in a new tab** to view the output. The standalone HTML is for appearance preview. For HTML canary files, choose a text link, button-style link, icon image, Next button, page numbers or the entire page. All require a click; with the entire-page option, clicking anywhere in the page opens the canary. For the portal, extract the deployment ZIP; it contains a linked `index.html` and a `documents` folder. Deploy both in the same website directory. Without a monitoring URL, all six sample documents open from the page. With one, one list entry points to the monitor and the other five documents open locally. Opening the standalone HTML preview does not contact the canary URL; clicking a canary link may be recorded or reported by the monitoring service. The app does not deploy files to a website. Generated database, Excel and PowerPoint previews show at most the first 10 records. To inspect every database row, open the downloaded SQLite file with a SQLite viewer you already trust. To use the `.env` ZIP, right-click it and select **Extract All** on Windows, or double-click it on macOS. Review the extracted `.env.development` file.
+
+With the email address style, each email address cell in the table links to the configured canary URL while retaining its displayed address. Clicking it opens the URL in a browser; it does not send email.
 
 If you temporarily keep outputs inside the project, put them in the repository's top-level `generated/` folder; Git ignores that folder. Do not rely on ignore rules alone: review `git status --short` before publishing.
 

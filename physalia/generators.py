@@ -15,7 +15,7 @@ from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 from physalia.archive_metadata import write_archive_member
 from physalia.i18n import translate
 from physalia.validation import (text as _text, canary_url as _canary_url,
-                                         filename, reject_unsafe_text_tree,
+                                         reject_unsafe_text_tree,
                                          vault_decoy_domain)
 from physalia.database import (DATABASE_TEMPLATES, _template_columns_with_labels,
                                       database_settings, records as database_records, sqlite_bytes)
@@ -62,8 +62,7 @@ def generate_database(settings: dict, language: str = "ja") -> Artifact:
     template_labels = ({column["name"]: column["label"]
                         for column in _template_columns_with_labels(template_id, language)}
                        if template_id in DATABASE_TEMPLATES else {})
-    basename = (filename(settings["filename"], language) if settings.get("filename")
-                else plausible_filename("database", extension="sqlite", profile=template_id))
+    basename = plausible_filename("database", extension="sqlite", profile=template_id)
     url = _canary_url(settings.get("canary_url", ""), language)
     summary = {"kind": "database", "table": table, "tables": 1, "rows": row_count,
                "columns": len(columns), "template": template_id,
@@ -229,8 +228,7 @@ footer{{padding:1.25rem .1rem;color:var(--muted);font-size:.82rem}}
 </head><body><header><div class="bar"><span class="brand">{html.escape(title)}</span></div></header><main><h1>{html.escape(heading)}</h1><p class="intro">{section}</p><div class="summary"><div class="card"><small>{count_label}</small><strong>{count_value}</strong></div><div class="card"><small>{updated_label}</small><strong>{date.today().strftime("%Y/%m/%d" if language == "ja" else "%b %d")}</strong></div></div><section class="panel"><div class="panel-head"><h2>{recent_label}</h2></div><p id="scroll-hint" class="table-scroll-hint">{html.escape(scroll_hint)}</p><div class="table-scroll" role="region" tabindex="0" aria-label="{recent_label}" aria-describedby="table-summary scroll-hint"><table><caption>{recent_label}</caption><thead><tr><th scope="col">{file_label}</th><th scope="col">{updated_label}</th><th scope="col">{status_label}</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div><p id="table-summary" class="table-meta">{showing_label}</p></section><footer>{html.escape(title)} · {section}</footer></main></body></html>
 """
     markup = make_page(preview_rows)
-    basename = (filename(settings["filename"], language) if settings.get("filename")
-                else plausible_filename("html", extension="html", context=scenario))
+    basename = plausible_filename("html", extension="html", context=scenario)
     artifact_name = basename + ".html"
     package_name = basename + "_site.zip"
     portal_templates = {"operations": "cloud", "shared": "customers",
@@ -287,8 +285,7 @@ main{{max-width:580px;margin:auto;padding:2rem;background:white;border:1px solid
 .spinner{{width:36px;height:36px;border:4px solid #d9e3ee;border-top-color:#295d91;border-radius:50%;animation:spin 1s linear infinite}}
 @keyframes spin{{to{{transform:rotate(360deg)}}}}@media(prefers-reduced-motion:reduce){{.spinner{{animation:none}}}}</style>
 </head><body><main>{spinner}<h1>{html.escape(title)}</h1><p>{html.escape(message)}</p></main></body></html>'''
-    basename = (filename(settings["filename"], language) if settings.get("filename")
-                else plausible_filename("fake_trap"))
+    basename = plausible_filename("fake_trap")
     return basename + ".html", "text/html; charset=utf-8", markup.encode("utf-8")
 
 
@@ -303,22 +300,22 @@ GENERATORS.update(path_maze=generate_path_maze, sparse_decoy=generate_sparse_dec
 SETTING_KEYS = {
     "env": {"format", "canary_url", "canary_link_style", "canary_context", "canary_field", "canary_label",
             "env_layout", "env_suffix", "env_variable", "env_dev_url",
-            "env_dev_url_authorized", "env_dev_comment", "env_prod_comment", "title", "rows", "filename"},
+            "env_dev_url_authorized", "env_dev_comment", "env_prod_comment", "title", "rows"},
     "database": {"template", "email_domain", "email_domain_authorized", "vault_domain",
-                 "vault_domain_authorized", "rows", "table", "columns", "canary_url", "filename"},
-    "web": {"scenario", "title", "canary_url", "filename"},
-    "fake_trap": {"variant", "filename"},
+                 "vault_domain_authorized", "rows", "table", "columns", "canary_url"},
+    "web": {"scenario", "title", "canary_url"},
+    "fake_trap": {"variant"},
     "ransomware_tripwire": {"files"},
     "path_maze": {"depth", "branches", "files"},
     "sparse_decoy": {"size_gib", "files"},
     "nest": {"scenario", "vault_domain", "vault_domain_authorized", "layers", "branches", "decoys",
              "directory_depth", "rows", "format", "varied_formats", "directories", "canary_urls",
-             "canary_url", "canary_percent", "filename", "password_policy"},
+             "canary_url", "canary_percent", "password_policy"},
     "directory_maze": {"scenario", "vault_domain", "vault_domain_authorized", "title", "depth", "branches",
-                        "files_per_directory", "cross_links", "canary_urls", "canary_url", "format", "filename"},
+                        "files_per_directory", "cross_links", "canary_urls", "canary_url", "format"},
     "encoding_maze": {"scenario", "vault_domain", "vault_domain_authorized", "format", "layers",
-                       "candidates", "canary_urls", "canary_url", "codecs", "filename"},
-    "stream": {"path", "format", "port", "rate_kib", "max_streams", "filename"},
+                       "candidates", "canary_urls", "canary_url", "codecs"},
+    "stream": {"path", "format", "port", "rate_kib", "max_streams"},
 }
 
 

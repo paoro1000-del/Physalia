@@ -157,8 +157,8 @@ def _template_columns(template_id, language):
 DATABASE_COLUMN_LABELS_JA = {
     "credential_ref":"\u8a8d\u8a3c\u60c5\u5831\u53c2\u7167ID", "key_preview":"\u8a8d\u8a3c\u306b\u4f7f\u3048\u306a\u3044\u5408\u6210\u30ad\u30fc\u898b\u672c", "access_scope":"\u6a29\u9650\u7bc4\u56f2", "last_used":"\u6700\u7d42\u4f7f\u7528\u65e5\u6642", "credential_status":"\u8a8d\u8a3c\u60c5\u5831\u306e\u72b6\u614b", "api_endpoint":"API\u63a5\u7d9a\u5148URL\uff08example.invalid\uff09", "account_status":"アカウント状態", "annual_cost":"年間費用", "asset_name":"資産名",
     "asset_ref":"資産参照番号", "asset_status":"資産状態", "assigned_team":"担当チーム",
-    "assigned_to":"利用者", "billing_email":"請求先メールアドレス", "billing_postal":"請求先郵便番号（テスト値）",
-    "card_brand":"カードブランド", "card_reference":"カード参照番号（カード番号ではありません）", "category":"分類",
+    "assigned_to":"利用者", "billing_email":"請求先メールアドレス", "billing_postal":"請求先郵便番号",
+    "card_brand":"カードブランド", "card_reference":"決済方法参照ID", "category":"分類",
     "checked_at":"確認日", "company":"会社", "company_name":"企業名", "contact_email":"担当者メールアドレス",
     "contact_name":"担当者名", "created_at":"作成日時", "currency":"通貨", "customer_email":"顧客メールアドレス",
     "customer_name":"顧客名", "department":"部署", "display_name":"表示名", "documentation_ip":"文書用IPアドレス",
@@ -184,8 +184,8 @@ DATABASE_COLUMN_LABELS_JA = {
 DATABASE_COLUMN_LABELS_EN = {
     "id":"ID", "credential_ref":"Credential reference", "key_preview":"Nonfunctional credential preview", "access_scope":"Access scope", "last_rotated":"Last rotated", "last_used":"Last used", "credential_status":"Credential status", "api_endpoint":"API endpoint URL (example.invalid)", "phone":"Phone (non-working North American fictional range)",
     "mfa_status":"MFA status", "documentation_ip":"Documentation IP address",
-    "login_url":"Login URL", "card_reference":"Card reference (not a card number)",
-    "billing_postal":"Billing postal code (synthetic)", "employee_ref":"Employee reference",
+    "login_url":"Login URL", "card_reference":"Payment method reference",
+    "billing_postal":"Billing postal code", "employee_ref":"Employee reference",
     "resource_ref":"Resource reference", "user_ref":"User reference", "asset_ref":"Asset reference",
     "order_ref":"Order reference", "sale_ref":"Sale reference", "ticket_ref":"Ticket reference",
     "invoice_ref":"Invoice reference",
@@ -275,6 +275,19 @@ def _template_columns_with_labels(template_id, language):
         column["label"] = DATABASE_COLUMN_LABEL_OVERRIDES[language].get(template_id, {}).get(
             column_name, base_label)
     return columns
+
+
+def ensure_canary_endpoint_column(columns, field, label, preferred=()):
+    """Return a natural URL field, reusing a matching endpoint where available."""
+    for candidate in (*preferred, field):
+        index = next((i for i, column in enumerate(columns)
+                      if column["name"].casefold() == candidate.casefold()
+                      and column["kind"] == "domain"), None)
+        if index is not None:
+            columns[index]["label"] = label
+            return index, columns[index]["name"]
+    columns.append({"name": field, "kind": "domain", "label": label})
+    return len(columns) - 1, field
 
 
 def public_templates(language="ja"):
@@ -849,7 +862,38 @@ def records(columns, rows, language="en"):
             # https://nanpa.com/numbering/555-line-numbers
             elif kind == "phone": value = f"+1-202-555-01{rng.randrange(100):02d}"
             elif kind == "domain":
-                if associated_company:
+                endpoint_fields = {
+                    "endpoint": ("/api/v1", "service"),
+                    "service_portal_url": ("/portal", "service"),
+                    "billing_portal_url": ("/billing/invoices", "billing"),
+                    "support_portal_url": ("/support/cases", "support"),
+                    "report_portal_url": ("/reports", "reports"),
+                }
+                endpoint = endpoint_fields.get(column["name"].casefold())
+                if endpoint:
+                    path, fallback_slug = endpoint
+                    service_index = next((index for index, previous in enumerate(columns[:len(row)])
+                                          if previous["name"].casefold() == "service_name"), None)
+                    environment_index = next((index for index, previous in enumerate(columns[:len(row)])
+                                              if previous["name"].casefold() == "environment"), None)
+                    service = str(row[service_index]) if service_index is not None else fallback_slug
+                    environment = str(row[environment_index]).casefold() if environment_index is not None else "development"
+                    service_aliases = {
+                        "archive api": "archive", "保管api": "archive",
+                        "reporting worker": "reports", "レポート処理基盤": "reports",
+                        "object store": "objects", "オブジェクト保管庫": "objects",
+                        "billing queue": "billing", "請求キュー": "billing",
+                        "identity gateway": "identity", "認証ゲートウェイ": "identity",
+                    }
+                    stem = service_aliases.get(service.casefold()) or API_SERVICE_SLUGS_JA.get(service)
+                    if not stem:
+                        stem = re.sub(r"[^a-z0-9]+", "-", service.casefold()).strip("-")
+                    if not stem:
+                        stem = fallback_slug + "-" + hashlib.sha256(service.encode("utf-8")).hexdigest()[:8]
+                    environment_aliases = {"本番": "production", "検証": "staging", "災害復旧": "recovery", "旧環境": "legacy"}
+                    environment_slug = environment_aliases.get(environment, re.sub(r"[^a-z0-9-]+", "-", environment).strip("-") or "development")
+                    value = f"https://{stem}-{environment_slug}.example.invalid{path}"
+                elif associated_company:
                     value = synthetic_company_domain(associated_company)
                 else:
                     value = f"{rng.choice(('archive','billing','portal','service','vault'))}-{i}.example.invalid"
@@ -877,11 +921,10 @@ def records(columns, rows, language="en"):
                         service = str(row[service_index]) if service_index is not None else "Vault"
                         stem = _vault_service_slug(service)
                         value = f"https://{stem}.example.invalid{VAULT_LOGIN_PATHS.get(stem, '/login')}"
-            # Keep references visibly nonfunctional, while making collisions
-            # negligible even for the 10,000-row maximum database template.
-            elif kind == "card_reference": value = "TEST-NOT-A-PAN-" + secrets.token_hex(6).upper()
+            # Use a reference identifier, never a payment-card number.
+            elif kind == "card_reference": value = "PM-" + secrets.token_hex(6).upper()
             elif kind == "card_expiry": value = f"{rng.randint(1,12):02d}/{(today.year + rng.randint(1,5)) % 100:02d}"
-            elif kind == "test_postal": value = f"TEST-{rng.randrange(10000,99999)}"
+            elif kind == "test_postal": value = str(rng.randrange(10000, 100000))
             elif kind == "credential_preview":
                 alphabet = string.ascii_lowercase + string.ascii_uppercase + string.digits + "!@#$%+-_"
                 value_chars = [secrets.choice(string.ascii_lowercase), secrets.choice(string.ascii_uppercase),

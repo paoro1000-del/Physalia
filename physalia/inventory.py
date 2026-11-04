@@ -8,7 +8,33 @@ from physalia.i18n import translate
 from physalia.validation import is_reserved_example_url
 
 
+def _physalia_download_name(name):
+    if name.startswith("Physalia_"):
+        return name
+    if name == ".env":
+        return "Physalia_environment.env"
+    if name.startswith(".env."):
+        suffix = name[len(".env."):].replace(".", "_")
+        return f"Physalia_environment_{suffix}.env"
+    return "Physalia_" + name
+
+
 def attach_inventory(asset, kind, settings, language):
+    # Make generated downloads easy to find while retaining plausible names
+    # inside the decoy content and deployment archives.
+    renamed = {asset.name: _physalia_download_name(asset.name)}
+    asset.name = renamed[asset.name]
+    for companion in asset.companions:
+        renamed[companion.name] = _physalia_download_name(companion.name)
+        companion.name = renamed[companion.name]
+    for location in asset.summary.get("canary_locations", []):
+        artifact_name = location.get("artifact")
+        for old_name, new_name in renamed.items():
+            if artifact_name == old_name or (isinstance(artifact_name, str)
+                                              and artifact_name.startswith(old_name + "!/")):
+                location["artifact"] = new_name + artifact_name[len(old_name):]
+                break
+
     raw_urls = settings.get("canary_urls")
     if kind in ("nest", "directory_maze", "encoding_maze") and raw_urls is not None:
         active_urls = [url for url in raw_urls if isinstance(url, str) and url.strip()] if isinstance(raw_urls, list) else []
@@ -30,6 +56,7 @@ def attach_inventory(asset, kind, settings, language):
     distinct_used = min(len(active_urls), placements)
     unused_urls = max(0, len(active_urls) - distinct_used)
     now = datetime.now(timezone.utc)
+    inventory_name = asset.name + ".inventory.json"
     generation_details = {}
     if kind == "nest":
         generation_details = {
@@ -43,7 +70,7 @@ def attach_inventory(asset, kind, settings, language):
         "review_after": (now + timedelta(days=30)).isoformat(),
         # The inventory cannot contain its own digest without a self-reference.
         # Name it explicitly so operators know to retain this file as well.
-        "inventory_file": asset.name + ".inventory.json",
+        "inventory_file": inventory_name,
         "artifact": {"name": asset.name, "bytes": len(asset.content), "sha256": hashlib.sha256(asset.content).hexdigest()},
         **generation_details,
         **({"resolved_canary_context": asset.summary["resolved_canary_context"]}
@@ -63,7 +90,7 @@ def attach_inventory(asset, kind, settings, language):
         "notification_tested_at": "", "retired_at": "",
         "warning": translate("operator_warning", language),
     }
-    asset.companions.append(Artifact(asset.name + ".inventory.json", "application/json",
+    asset.companions.append(Artifact(inventory_name, "application/json",
                            json.dumps(inventory, ensure_ascii=False, indent=2, allow_nan=False).encode("utf-8")))
     asset.summary["canary_url_configured"] = configured
     asset.summary["canary_placements"] = placements
