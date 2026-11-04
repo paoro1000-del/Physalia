@@ -111,7 +111,8 @@ class MazeTests(unittest.TestCase):
             with tempfile.TemporaryDirectory() as temp:
                 script = Path(temp) / "serve.py"
                 script.write_bytes(archive.read("serve.py"))
-                result = subprocess.run([sys.executable, str(script), "--help"], capture_output=True, check=True)
+                result = subprocess.run([sys.executable, str(script), "--help"], capture_output=True, timeout=10)
+                self.assertEqual(result.returncode, 0, result.stderr.decode("utf-8", errors="replace"))
                 self.assertIn(b"--operator", result.stdout)
         self.assertNotEqual(*operator["environment"].values())
         for path in ("/stop", "/health", "//bad", "/a/../b", "https://elsewhere.invalid/"):

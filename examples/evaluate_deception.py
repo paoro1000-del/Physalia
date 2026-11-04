@@ -28,6 +28,8 @@ def read_input(path):
     before = path.stat(follow_symlinks=False)
     if path.is_symlink() or not stat.S_ISREG(before.st_mode):
         raise OSError("input must be a regular file")
+    if before.st_size > MAX_BYTES:
+        raise ValueError("input exceeds 2 MiB")
     flags = (os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NONBLOCK", 0)
              | getattr(os, "O_NOFOLLOW", 0))
     descriptor = os.open(path, flags)
