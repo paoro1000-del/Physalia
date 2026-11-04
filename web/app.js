@@ -110,9 +110,9 @@ const translations = {
     password_policy: "Automatically generated password policy", password_mode: "Generation mode", memorable: "Words + digits / symbols", random: "Fully random",
     hints: "Include recovery-note decoys", hints_early: "First two layers", hints_all: "Every layer", hints_none: "No notes",
     min_length: "Minimum length", max_length: "Maximum length", lowercase: "Lowercase", uppercase: "Uppercase", digits: "Digits", symbols: "Symbols",
-    hint_characters: "Trailing characters the recovery note claims are stored elsewhere", password_words: "Word candidates (ASCII, comma-separated; blank for defaults)",
+    password_words: "Word candidates (ASCII, comma-separated; blank for defaults)",
     progressive: "Start shorter and increase length in deeper layers",
-    password_help: "Maintenance notes are designed to make an attacker look for a separate key register. They contain no password characters; the stated withheld-character count is part of the decoy, not a usable hint. A separate ZIP password list is provided for authorized sample verification; keep it private and never deploy it. Progressive length starts at 9 characters in the default 9–13 range and increases in deeper layers. Archives can be attacked offline and in parallel after download, so a successful guess and delay are not guaranteed. A memorable candidate may fall back to a random value if it repeats. Even a 9–13 character password may be impractical to crack; solve time depends on the archive format and attacker resources.",
+    password_help: "The default uses word-based 8–24 character passwords with digits and symbols, increasing with depth. Recovery notes point generally to a separate password register and do not claim that a certain number of characters is stored elsewhere. Use the separate password list only to verify your sample, and keep it private. Archives can be attacked offline and in parallel after download, so cracking time and delay are not guaranteed.",
     canary_percent: "Canary probability per decoy (%)", canary_probability: "Sampled independently per file. 0% means none; 100% means all decoys. Up to 400 URLs are accepted. Selected files receive different URLs before one is reused. URLs beyond the number of selected files remain unused; the selected count varies with the per-file probability. Reused URLs cannot identify the exact file from an alert. A blank URL list inserts no monitoring URL.",
     nest_note: "Use an AES-compatible ZIP tool. To extract the sample and see how the nested archives work, use the ZIP password list. It contains passwords, so keep it for sample verification only and never deploy or publish it with the decoys. Source content is limited to 32 MiB and cumulative encrypted archives to 64 MiB.",
     database_desc: "Choose a preset to create a SQLite file with fictional data in a main table. You can customize its columns if needed. A supplied canary URL may add a separate connection table; the file does not connect to an existing database.", rows: "Number of records", database_rows_help: "Default: 100 rows. SQLite files are limited to 32 MiB. If generation reaches the limit, reduce the row count or number of columns.", table_name: "Table name", schema: "Column definitions", add_column: "+ Add column",
@@ -161,10 +161,9 @@ Object.assign(translations.en, {
   web_scenario_records: "Records management",
 });
 translations.en.workspace_create = "WORKSPACE / CREATE";
-translations.ja.hint_characters = "復元メモが「別管理」と装う末尾文字数（実際のパスワード文字は含まない）";
 translations.ja.hints = "復元メモのデコイを配置";
 translations.ja.hints_none = "配置しない";
-translations.ja.password_help = "保守メモは、別の鍵台帳を探させるためのデコイです。実際のパスワード文字は含まず、伏せ字の文字数も利用可能な手掛かりではありません。パスワード本体は管理者専用ファイルにのみ保存されます。既定の9〜13文字では、段階設定により序盤を短くし、深い階層ほど長くします。ZIP取得後はオフラインで並列試行できるため、解読成功や遅延は保証されません。単語形式の候補が重複した場合はランダム値に切り替わります。9〜13文字でも解読困難な場合があり、所要時間はZIP形式や攻撃設備に左右されます。";
+translations.ja.password_help = "既定では単語に数字と記号を混ぜた8〜24文字のパスワードを使い、深い階層ほど長くします。復元メモは別のパスワード台帳を示しますが、別管理の文字数は記しません。検証用パスワード一覧はサンプル確認に限って使い、配置・公開しないでください。ZIP取得後はオフラインで並列試行できるため、解読時間や遅延は保証されません。";
 translations.en.assets_eyebrow = "DECEPTION ASSETS";
 translations.ja.maze_estimate = "ディレクトリ{directories}個・デコイファイル{documents}個（上限400ディレクトリ）";
 translations.en.maze_estimate = "{directories} directories · {documents} files (limit: 400 directories)";
@@ -1300,7 +1299,7 @@ function localize(root) {
 }
 function estimate() {
   const layers = Number($("#layers").value), branches = Number($("#branches").value), decoys = Number($("#decoys").value);
-  const valid = Number.isInteger(layers) && layers >= 1 && layers <= 8 && Number.isInteger(branches) && branches >= 1 && branches <= 3;
+  const valid = Number.isInteger(layers) && layers >= 1 && layers <= 8 && Number.isInteger(branches) && branches >= 1 && branches <= 4;
   const archives = valid ? Array.from({length: layers}, (_, n) => branches ** n).reduce((a, b) => a + b, 0) : 0;
   $("#nest-estimate").textContent = valid ? t("estimate", {archives, documents: archives * decoys}) + (archives > 40 ? " " + t("over_limit") : "") : t("over_limit");
 }
@@ -1513,31 +1512,35 @@ const nestDirectoryPresets = {
   cloud: ["subscription_014", "subscription_027", "tenant_west", "platform_shared"]
 };
 const nestProfiles = {
-  crm: {shapes:[[3,2],[4,2],[3,3]], decoys:[3,7], depth:[3,5], rows:[25,70]},
-  migration: {shapes:[[3,2],[4,2],[3,3]], decoys:[4,7], depth:[3,5], rows:[30,80]},
-  archive: {shapes:[[2,2],[3,2],[4,2]], decoys:[3,6], depth:[2,5], rows:[20,60]},
-  cards: {shapes:[[2,2],[3,2],[3,3]], decoys:[3,5], depth:[2,4], rows:[15,50]},
-  companies: {shapes:[[2,2],[3,2],[3,3]], decoys:[3,6], depth:[2,5], rows:[20,65]},
-  passwords: {shapes:[[2,2],[3,2]], decoys:[3,5], depth:[2,4], rows:[12,35]},
-  api_credentials: {shapes:[[2,2],[3,2]], decoys:[3,5], depth:[2,4], rows:[12,35]},
-  invoices: {shapes:[[2,2],[3,2],[3,3]], decoys:[3,6], depth:[2,5], rows:[20,65]},
-  employees: {shapes:[[2,2],[3,2],[3,3]], decoys:[3,6], depth:[2,5], rows:[20,60]},
-  vendors: {shapes:[[2,2],[3,2],[3,3]], decoys:[3,6], depth:[2,5], rows:[20,60]},
-  orders: {shapes:[[2,2],[3,2],[3,3]], decoys:[3,6], depth:[2,5], rows:[20,65]},
-  tickets: {shapes:[[2,2],[3,2],[3,3]], decoys:[3,6], depth:[2,5], rows:[20,60]},
-  assets: {shapes:[[2,2],[3,2],[3,3]], decoys:[3,6], depth:[2,5], rows:[20,60]},
-  cloud: {shapes:[[2,2],[3,2],[3,3]], decoys:[3,6], depth:[2,5], rows:[20,60]}
+  crm: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,10], depth:[6,8], rows:[120,240]},
+  migration: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,10], depth:[6,8], rows:[150,280]},
+  archive: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,9], depth:[6,8], rows:[120,220]},
+  cards: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,9], depth:[6,8], rows:[100,180]},
+  companies: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,9], depth:[6,8], rows:[100,200]},
+  passwords: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,9], depth:[6,8], rows:[60,120]},
+  api_credentials: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,9], depth:[6,8], rows:[60,120]},
+  invoices: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,9], depth:[6,8], rows:[120,240]},
+  employees: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,9], depth:[6,8], rows:[100,200]},
+  vendors: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,9], depth:[6,8], rows:[100,200]},
+  orders: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,9], depth:[6,8], rows:[120,240]},
+  tickets: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,9], depth:[6,8], rows:[100,200]},
+  assets: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,9], depth:[6,8], rows:[100,200]},
+  cloud: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,9], depth:[6,8], rows:[100,200]}
 };
 function randomNestInteger(range) { return range[0] + Math.floor(Math.random() * (range[1] - range[0] + 1)); }
 function randomizeNestSettings() {
   const scenario = $("#nest-scenario").value;
   const profile = nestProfiles[scenario] || nestProfiles.crm;
   const [layers, branches] = profile.shapes[Math.floor(Math.random() * profile.shapes.length)];
+  const decoys = randomNestInteger(profile.decoys);
+  const archives = Array.from({length: layers}, (_, level) => branches ** level).reduce((sum, count) => sum + count, 0);
+  const totalRecordBudget = 30000;
+  const rowMaximum = Math.min(profile.rows[1], Math.floor(totalRecordBudget / (archives * decoys)));
   $("#layers").value = layers;
   $("#branches").value = branches;
-  $("#decoys").value = randomNestInteger(profile.decoys);
+  $("#decoys").value = decoys;
   $("#directory-depth").value = randomNestInteger(profile.depth);
-  $("#nest-rows").value = randomNestInteger(profile.rows);
+  $("#nest-rows").value = randomNestInteger([Math.min(profile.rows[0], rowMaximum), rowMaximum]);
   $("#directories").value = (nestDirectoryPresets[scenario] || nestDirectoryPresets.crm).join(",");
   estimate();
 }
@@ -2361,7 +2364,7 @@ form.addEventListener("submit", async event => {
         directories: $("#directories").value.split(",").map(v => v.trim()),
         password_policy: {mode: $("#password-mode").value, min_length: Number($("#min-length").value), max_length: Number($("#max-length").value),
           lowercase: $("#lowercase").checked, uppercase: $("#uppercase").checked, digits: $("#digits").checked, symbols: $("#symbols").checked, progressive: $("#progressive").checked, hints: $("#hints").value,
-          hint_characters: Number($("#hint-characters").value), ...($("#password-words").value.trim() ? {words: $("#password-words").value.split(",").map(v => v.trim())} : {})}}),
+          ...($("#password-words").value.trim() ? {words: $("#password-words").value.split(",").map(v => v.trim())} : {})}}),
       database: () => ({template: $("#database-template").value || "customers", email_domain: $("#db-email-domain").value.trim(), email_domain_authorized: $("#db-email-domain-authorized").checked, ...( $("#database-template").value === "passwords" ? vaultDomainSettings() : {}), rows: Number($("#rows").value), table: $("#table-name").value, columns: columns(), canary_url: $("#db-url").value}),
       web: () => ({scenario: $("#web-scenario").value, title: $("#title").value, canary_url: $("#web-url").value}),
       fake_trap: () => ({variant: $("#fake-variant").value}),

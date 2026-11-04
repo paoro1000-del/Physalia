@@ -218,10 +218,10 @@
           <p class="help" data-i18n="scenario_help">用途に合う合成データのスキーマ・ファイル名・タイトル・URL文脈をそろえます。実在する個人情報は使いません。</p>
           <div class="form-grid">
             <div><label for="layers" data-i18n="nest_layers">ZIP階層数（最初を含む）</label><input id="layers" type="number" value="3" min="1" max="8" required readonly aria-describedby="nest-estimate"></div>
-            <div><label for="branches" data-i18n="nest_branches">各ZIPに含める子ZIP数</label><input id="branches" type="number" value="2" min="1" max="3" required readonly aria-describedby="nest-estimate"></div>
+            <div><label for="branches" data-i18n="nest_branches">各ZIPに含める子ZIP数</label><input id="branches" type="number" value="3" min="1" max="4" required readonly aria-describedby="nest-estimate"></div>
             <div><label for="decoys" data-i18n="decoys">各ZIP内のダミーファイル数</label><input id="decoys" type="number" value="4" min="0" max="10" required readonly aria-describedby="nest-estimate"></div>
-            <div><label for="directory-depth" data-i18n="directory_depth">各ZIP内のフォルダー深度（最大）</label><input id="directory-depth" type="number" value="4" min="1" max="5" required readonly></div>
-            <div><label for="nest-rows" data-i18n="nest_rows">ダミー文書・DBのレコード件数</label><input id="nest-rows" type="number" value="20" min="1" max="100" required readonly></div>
+            <div><label for="directory-depth" data-i18n="directory_depth">各ZIP内のフォルダー深度（最大）</label><input id="directory-depth" type="number" value="6" min="1" max="8" required readonly></div>
+            <div><label for="nest-rows" data-i18n="nest_rows">ダミー文書・DBのレコード件数</label><input id="nest-rows" type="number" value="150" min="1" max="300" required readonly></div>
           </div>
           <label for="directories" data-i18n="directories">対象階層の候補名（用途に応じて自動設定）</label><input id="directories" value="customer_1048,customer_2176,customer_3891,account_west,account_enterprise" maxlength="1300" readonly>
           <p class="help" data-i18n="nest_auto_settings">上記の設定値と候補名は、用途に応じて生成時に自動でランダム設定します。</p>
@@ -230,15 +230,15 @@
           <p class="help" data-i18n="nest_formats_random">ファイル形式は生成ごとにランダムに選び、複数の形式を混ぜます。</p>
            <details class="nest-password-details"><summary data-i18n="nest_password_details">パスワード生成の詳細（初期値で作成できます）</summary>
            <fieldset aria-describedby="password-help"><legend data-i18n="password_policy">自動生成するパスワードの方針</legend>
-            <div class="form-grid"><div><label for="password-mode" data-i18n="password_mode">生成方式</label><select id="password-mode"><option value="memorable" data-i18n="memorable">単語＋数字・記号</option><option value="random" data-i18n="random">完全ランダム</option></select></div>
+            <div class="form-grid"><div><label for="password-mode" data-i18n="password_mode">生成方式</label><select id="password-mode"><option value="memorable" selected data-i18n="memorable">単語＋数字・記号</option><option value="random" data-i18n="random">完全ランダム</option></select></div>
             <div><label for="hints" data-i18n="hints">復元メモのデコイを配置</label><select id="hints"><option value="early" data-i18n="hints_early">序盤の2階層</option><option value="all" data-i18n="hints_all">全階層</option><option value="none" data-i18n="hints_none">配置しない</option></select></div>
-            <div><label for="min-length" data-i18n="min_length">最小文字数</label><input id="min-length" type="number" value="9" min="4" max="64" required></div>
-            <div><label for="max-length" data-i18n="max_length">最大文字数</label><input id="max-length" type="number" value="13" min="4" max="64" required></div>
-            <div><label for="hint-characters" data-i18n="hint_characters">復元メモが「別管理」と装う末尾文字数（実際のパスワード文字は含まない）</label><input id="hint-characters" type="number" value="2" min="2" max="6" required></div>
+            <div><label for="min-length" data-i18n="min_length">最小文字数</label><input id="min-length" type="number" value="8" min="4" max="64" required></div>
+            <div><label for="max-length" data-i18n="max_length">最大文字数</label><input id="max-length" type="number" value="24" min="4" max="64" required></div>
+            <input type="hidden" id="legacy-unused-hint-slot" value="">
             <div><label for="password-words" data-i18n="password_words">単語候補（英字・カンマ区切り・空欄で既定）</label><input id="password-words" maxlength="1050" placeholder="Atlas,Cedar,Delta"></div></div>
             <div class="checks"><label><input id="lowercase" type="checkbox" checked><span data-i18n="lowercase">英小文字</span></label><label><input id="uppercase" type="checkbox" checked><span data-i18n="uppercase">英大文字</span></label><label><input id="digits" type="checkbox" checked><span data-i18n="digits">数字</span></label><label><input id="symbols" type="checkbox" checked><span data-i18n="symbols">記号</span></label></div>
             <label class="check-label"><input id="progressive" type="checkbox" checked><span data-i18n="progressive">序盤は短く、深い階層ほど長くする</span></label>
-            <p id="password-help" class="help" data-i18n="password_help">保守メモは、別の鍵台帳を探させるためのデコイです。実際のパスワード文字は含まず、伏せ字の文字数も利用可能な手掛かりではありません。パスワード本体は管理者専用ファイルにのみ保存されます。既定の9〜13文字では、段階設定により序盤を短くし、深い階層ほど長くします。ZIP取得後はオフラインで並列試行できるため、解読成功や遅延は保証されません。単語形式の候補が重複した場合はランダム値に切り替わります。9〜13文字でも解読困難な場合があり、所要時間はZIP形式や攻撃設備に左右されます。</p>
+            <p id="password-help" class="help" data-i18n="password_help">既定では単語に数字と記号を混ぜた8〜24文字のパスワードを使い、深い階層ほど長くします。復元メモは別のパスワード台帳を示しますが、別管理の文字数は記しません。検証用パスワード一覧はサンプル確認に限って使い、配置・公開しないでください。ZIP取得後はオフラインで並列試行できるため、解読時間や遅延は保証されません。</p>
            </fieldset></details>
           <div id="nest-estimate" class="inline-note" aria-live="polite"></div>
           <div class="inline-note" data-i18n="nest_note">AES対応のZIPツールで開けます。サンプルを解凍して動作を確かめる場合は、ZIPパスワード一覧を使います。パスワードを含むため、検証専用に保管し、デコイと一緒に配置・公開しないでください。生成本文は32MiB、暗号化ZIPの累積サイズは64MiBまでです。</div>

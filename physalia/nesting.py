@@ -67,16 +67,16 @@ DIRECTORY_DIMENSIONS = {
 }
 HINT_NOTE_PRESETS = {
     "ja": (
-        "データ移行 引継ぎメモ\n展開キー控えは月次の鍵管理票を参照。\n末尾{hint}文字は別管理。\n",
-        "保管データ復元メモ\n復号キーは更新済みの保管ノートを確認。\n末尾{hint}文字はこの資料に記載なし。\n",
-        "アーカイブ整理記録\n鍵の先頭部分は引継ぎ資料に記録。\n末尾{hint}文字は別管理。\n",
-        "共有フォルダー移行\nZIPキーは月次パスワード台帳を参照。\n末尾{hint}文字はこの資料に記載なし。\n",
+        "データ移行 引継ぎメモ\n展開キー控えは月次の鍵管理票を参照。\n",
+        "保管データ復元メモ\n復号キーは更新済みの保管ノートを確認。\n",
+        "アーカイブ整理記録\n鍵管理票は引継ぎ資料と合わせて保管。\n",
+        "共有フォルダー移行\nZIPキーは月次パスワード台帳を参照。\n",
     ),
     "en": (
-        "Export handover\nSee the monthly key register for the archive key.\nThe final {hint} characters are stored separately.\n",
-        "Restore notes\nThe updated storage note has the decryption key.\nThe final {hint} characters are not listed here.\n",
-        "Archive closeout\nThe handover record has the key prefix.\nThe final {hint} characters are stored separately.\n",
-        "Shared folder migration\nSee the monthly password register for the ZIP key.\nThe final {hint} characters are not listed here.\n",
+        "Export handover\nSee the monthly key register for the archive key.\n",
+        "Restore notes\nSee the updated storage note for the decryption key.\n",
+        "Archive closeout\nThe key register is stored with the handover records.\n",
+        "Shared folder migration\nSee the monthly password register for the ZIP key.\n",
     ),
 }
 
@@ -97,10 +97,10 @@ class Artifact:
 
 def generate_nest(settings, language="ja"):
     layers = integer(settings.get("layers", 3), "layers", 1, MAX_LAYERS, language)
-    branches = integer(settings.get("branches", 2), "branches", 1, 3, language)
+    branches = integer(settings.get("branches", 3), "branches", 1, 4, language)
     decoys = integer(settings.get("decoys", 4), "decoys", 0, 10, language)
-    directory_depth = integer(settings.get("directory_depth", 2), "directory_depth", 1, 5, language)
-    rows = integer(settings.get("rows", 20), "rows", 1, 100, language)
+    directory_depth = integer(settings.get("directory_depth", 6), "directory_depth", 1, 8, language)
+    rows = integer(settings.get("rows", 150), "rows", 1, 300, language)
     count = sum(branches ** n for n in range(layers))
     if count > MAX_NODES:
         raise ValueError(translate("node_limit", language, count=count, maximum=MAX_NODES))
@@ -123,7 +123,10 @@ def generate_nest(settings, language="ja"):
          "september", "october", "november", "december"), 1)]
     directory_levels = (year_names, month_names,
                         list(dict.fromkeys((*directory_dimensions[0], *directories))),
-                        list(directory_dimensions[1]), list(directory_dimensions[2]))
+                        list(directory_dimensions[1]), list(directory_dimensions[2]),
+                        ["active", "pending", "review", "closed", "retained", "restricted"],
+                        ["current", "previous", "approved", "archived", "reconciled"],
+                        ["region_east", "region_west", "region_central", "region_north"])
     period = datetime.now(timezone.utc).strftime("%Y%m")
     basename = plausible_filename("nest")
     inventory, documents, consumed, archived = [], [], 0, 0
@@ -239,7 +242,7 @@ def generate_nest(settings, language="ja"):
                 contents.append((member, child))
                 if child_hint:
                     note_path = hint_path(member, used_members)
-                    contents.append((note_path, hint_text(child_hint)))
+                    contents.append((note_path, hint_text()))
                     child_location = location + "!/" + member
                     child_entry = next(item for item in inventory if item["path"] == child_location)
                     child_entry["hint_file"] = location + "!/" + note_path
@@ -258,9 +261,8 @@ def generate_nest(settings, language="ja"):
         archive_budget(encrypted_archive)
         return encrypted_archive, hint
 
-    def hint_text(hint):
-        template = secrets.choice(HINT_NOTE_PRESETS.get(language, HINT_NOTE_PRESETS["ja"]))
-        return template.format(hint=hint).encode("utf-8")
+    def hint_text():
+        return secrets.choice(HINT_NOTE_PRESETS.get(language, HINT_NOTE_PRESETS["ja"])).encode("utf-8")
 
     def hint_path(archive_path, used_members=None):
         parent, leaf = posixpath.split(archive_path)
@@ -290,7 +292,7 @@ def generate_nest(settings, language="ja"):
         write_archive_member(delivery, outer_name, outer, language=language)
         if hint:
             note_path = hint_path(outer_name)
-            write_archive_member(delivery, note_path, hint_text(hint), language=language)
+            write_archive_member(delivery, note_path, hint_text(), language=language)
             inventory[0]["hint_file"] = note_path
     summary = {"archives": count, "documents": len(documents), "canaries": 0,
                "format_counts": {name: amount for name, amount in format_counts.items() if amount}}

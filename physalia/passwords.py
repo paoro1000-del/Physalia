@@ -21,17 +21,16 @@ def validate_policy(raw, language="ja"):
         raise ValueError(translate("policy_error", language))
     allowed = {
         "mode", "min_length", "max_length", "lowercase", "uppercase", "digits",
-        "symbols", "progressive", "hints", "hint_characters", "words",
+        "symbols", "progressive", "hints", "words",
     }
     if set(raw) - allowed:
         raise ValueError(translate("policy_error", language))
     mode = raw.get("mode", "memorable")
-    minimum = integer(raw.get("min_length", 9), "min_length", 4, 64, language)
-    maximum = integer(raw.get("max_length", 13), "max_length", 4, 64, language)
+    minimum = integer(raw.get("min_length", 8), "min_length", 4, 64, language)
+    maximum = integer(raw.get("max_length", 24), "max_length", 4, 64, language)
     groups = {key: raw.get(key, True) for key in ("lowercase", "uppercase", "digits", "symbols")}
     progressive = raw.get("progressive", True)
     hints = raw.get("hints", "early")
-    hint_characters = integer(raw.get("hint_characters", 2), "hint_characters", 2, 6, language)
     words = raw.get("words", list(WORDS))
     if (not isinstance(words, list) or not 1 <= len(words) <= 50
             or any(not isinstance(word, str) or not re.fullmatch(r"[A-Za-z]{3,20}", word) for word in words)
@@ -43,7 +42,7 @@ def validate_policy(raw, language="ja"):
             or (mode == "memorable" and not (groups["lowercase"] or groups["uppercase"]))):
         raise ValueError(translate("policy_error", language))
     return dict(mode=mode, min_length=minimum, max_length=maximum, progressive=progressive, hints=hints,
-                hint_characters=hint_characters, words=words, **groups)
+                words=words, **groups)
 
 
 def make_password(policy, depth, layers):
@@ -77,8 +76,5 @@ def make_password(policy, depth, layers):
             stem.insert(rng.randrange(len(stem) + 1), character)
         password = "".join(stem)
     hinted = policy["hints"] == "all" or (policy["hints"] == "early" and depth <= 2)
-    # Keep actual password characters in the operator manifest only. The
-    # deployable note may claim characters are held elsewhere, but reveals none.
-    masked = min(policy["hint_characters"], len(password) - 1)
-    hint = masked if hinted else None
-    return password, hint
+    # Notes can suggest a separate key register but never disclose password text.
+    return password, hinted
