@@ -529,6 +529,13 @@ class StreamHandler(BaseHTTPRequestHandler):
 
 
 def main():
+    # argparse help and errors include Japanese text by default. GitHub's
+    # Windows runners may redirect stdout/stderr through a legacy cp1252 codec.
+    # UTF-8 keeps the standalone bundle usable in redirected Windows sessions.
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure:
+            reconfigure(encoding="utf-8", errors="backslashreplace")
     bootstrap_parser = argparse.ArgumentParser(add_help=False)
     bootstrap_parser.add_argument("--lang", choices=("ja", "en"), default="ja")
     language = bootstrap_parser.parse_known_args()[0].lang
