@@ -58,7 +58,7 @@ for (const root of [document, $("#column-template").content]) {
 const translations = {
   ja: {...japanese, intro: "手法を選び、仕組みや対象となる攻撃を確認してから生成します。", notice: "\u521d\u671f\u8a2d\u5b9a\u306e\u307e\u307e\u30b5\u30f3\u30d7\u30eb\u3092\u4f5c\u6210\u3067\u304d\u307e\u3059\u3002\u751f\u6210\u30c7\u30fc\u30bf\u306f\u67b6\u7a7a\u3067\u3001\u4f7f\u3048\u308b\u8a8d\u8a3c\u60c5\u5831\u306f\u542b\u307f\u307e\u305b\u3093\u3002\u30d5\u30a1\u30a4\u30eb\u306f\u81ea\u52d5\u914d\u7f6e\u3055\u308c\u307e\u305b\u3093\u3002\u4e0a\u90e8\u3068\u8a73\u7d30\u8a2d\u5b9a\u306eURL\u6b04\u304c\u3069\u3061\u3089\u3082\u7a7a\u306a\u3089\u901a\u77e5\u306f\u767a\u751f\u3057\u307e\u305b\u3093\u3002", database_template: "用途別テンプレート", database_help: "\u9867\u5ba2\u30fb\u30ab\u30fc\u30c9\u53f0\u5e33\u30fb\u4f1a\u793e\u30fb\u30d1\u30b9\u30ef\u30fc\u30c9\u4fdd\u7ba1\u30fb\u6ce8\u6587\u30fb\u8acb\u6c42\u30fb\u30e6\u30fc\u30b6\u30fc\u7ba1\u7406\u30fbAPI\u8a8d\u8a3c\u60c5\u5831\u30fb\u5f93\u696d\u54e1\u30fb\u53d6\u5f15\u5148\u30fb\u30b5\u30dd\u30fc\u30c8\u30fb\u8cc7\u7523\u30fb\u30af\u30e9\u30a6\u30c9\u306e\u96db\u5f62\u304c\u3042\u308a\u307e\u3059\u3002\u9805\u76ee\u306f\u6700\u592730\u500b\u307e\u3067\u7de8\u96c6\u3067\u304d\u307e\u3059\u3002\u5408\u6210\u306e\u8a8d\u8a3c\u60c5\u5831\u898b\u672c\u306f\u5b9f\u30b5\u30fc\u30d3\u30b9\u3067\u4f7f\u3048\u307e\u305b\u3093\u3002\u5b9f\u5728\u306e\u500b\u4eba\u60c5\u5831\u3084\u5b9f\u63a5\u7d9a\u5148\u306f\u4f7f\u308f\u306a\u3044\u3067\u304f\u3060\u3055\u3044\u3002\u30e1\u30fc\u30eb\u30fb\u30c9\u30e1\u30a4\u30f3\u578b\u306fexample.invalid\u3092\u4f7f\u3044\u307e\u3059\u3002", template_loading: "読込中…", template_custom: "カスタム（項目を自由に編集）", context_title_auto: "選択した用途に合わせて自動設定", context_title_generic: "空欄時の既定タイトル：Operations archive", template_help: "テンプレート選択後に項目を編集できます。実在の個人情報や実接続先は使わないでください。", kind_phone: "\u5317\u7c73\u306e\u67b6\u7a7a\u4e88\u7d04\u96fb\u8a71\u756a\u53f7\uff08\u975e\u7a3c\u50cd\uff09", kind_domain: "example.invalid ドメイン", kind_card_reference: "無効カード参照値", kind_card_expiry: "カード期限", kind_test_postal: "テスト用郵便番号", kind_credential_preview: "\u8a8d\u8a3c\u306b\u4f7f\u3048\u306a\u3044\u5408\u6210\u8a8d\u8a3c\u60c5\u5831\u306e\u898b\u672c", kind_currency: "通貨", kind_documentation_ip: "文書用IPアドレス", method_explainer: "この手法を知る", explain_how: "どういう対策か", explain_target: "どの攻撃を想定するか", explain_limit: "できないこと・限界", generating: "\u751f\u6210\u3057\u3066\u3044\u307e\u3059\u3002\u5927\u304d\u306a\u30d5\u30a1\u30a4\u30eb\u306f\u5c11\u3057\u6642\u9593\u304c\u304b\u304b\u308b\u3053\u3068\u304c\u3042\u308a\u307e\u3059\u3002\u3053\u306e\u753b\u9762\u3092\u9589\u3058\u305a\u306b\u304a\u5f85\u3061\u304f\u3060\u3055\u3044\u3002", generated: "{name} を生成しました。", failed: "生成に失敗しました。",
     estimate: "暗号化ZIP {archives}個 / ダミーファイル {documents}個（上限40 ZIP・生成内容32MiB・暗号化ZIP累積64MiB）", over_limit: "分岐・階層を減らしてください。暗号化ZIPの上限は40個です。", number_input_invalid: "数値欄に、表示された範囲内の整数を入力してください。",
-    download_again: "生成ファイルを保存", operator_download: "運用情報を保存（配置しない）", inventory_download: "運用台帳を保存（生成ファイルと分けて保管）", summary: "生成結果：ZIP {archives}個 / デコイファイル {documents}個 / カナリア入り {canaries}個", format_breakdown: "形式内訳",
+    download_again: "生成ファイルを保存", operator_download: "運用情報を保存（配置しない）", nest_password_download: "ZIPパスワードを取得（サンプル検証用・配置しない）", inventory_download: "運用台帳を保存（生成ファイルと分けて保管）", summary: "生成結果：ZIP {archives}個 / デコイファイル {documents}個 / カナリア入り {canaries}個", nest_summary: "生成結果：ZIP {archives}個 / デコイファイル {documents}個", format_breakdown: "形式内訳",
     monitoring_not_placed: "カナリアページURLは今回の生成ファイルに入りませんでした。設定を確認して再生成してください。",
     monitoring_placeholder: "例示用URLは監視通知に使えません。運用時は監視サービスが発行したURLを指定してください。",
     schema_limit: "項目は1〜30個にしてください。", invalid_options: "数値範囲は最小,最大（例: 0,100000）で、最小値は最大値以下にしてください。整数項目では小数を使えません。"},
@@ -102,9 +102,9 @@ const translations = {
     canary_note: "Reading a file alone does not trigger an alert; the provider may alert when the URL is accessed. Scanners or link previews may access it automatically. An alert alone cannot identify who viewed the file or caused the request.", canary_advanced_summary: "URL format and input details", canary_advanced_help: "To receive alerts, use a publicly reachable monitoring endpoint. Private IPs and local-only hostnames are rejected, but DNS destinations are not checked. With no URL, only .env samples include the reserved example.invalid placeholder; other formats omit it. Standard .env wraps URLs in single quotes, so choose another format if the URL contains a single quote. URLs containing $ cannot be used in .env. The development/production note layout has separate input restrictions. PowerPoint includes every requested record, split into slides of up to 10 rows.",
     csv_safety_note: "CSV has no cell-type metadata. Text that could be interpreted as a formula is prefixed with an apostrophe to reduce risk. The apostrophe remains in the CSV, and spreadsheet import behavior varies; verify it in the application you use before deployment.",
     format: "File format", filename: "File name (start with a letter or number; letters, numbers, - or _ only; no extension; blank = automatic)", document_title: "Document title", document_rows: "Records in document",
-    nest_desc: "Generate a policy-based password for each branching archive containing decoy files. Choose a primary format and optionally mix in occasional alternatives. Duplicates are detected and replaced as needed to keep every password unique.", nest_layers: "ZIP levels (including the first)",
+    nest_desc: "Generate a policy-based password for each branching archive containing decoy files. File formats are selected randomly and mixed within each ZIP. Duplicates are detected and replaced as needed to keep every password unique.", nest_formats_random: "File formats are selected randomly for each ZIP and mixed across its decoy files.", nest_layers: "ZIP levels (including the first)",
     nest_branches: "Child ZIPs per archive", branches: "Subfolders per folder", decoys: "Decoy files per ZIP", directory_depth: "Maximum folder depth within each ZIP", nest_rows: "Records per document / database",
-    directories: "Folder name candidates (scenario-based default; editable, ASCII comma-separated)", nest_format: "Primary decoy file format",
+    directories: "Target-level folder candidates (selected for the scenario)", nest_auto_settings: "These values and folder candidates are randomized for the selected use when you generate the sample.", nest_directory_pattern: "Folders narrow from year → month → a scenario-specific target → day, owner or review group.", nest_format: "Primary decoy file format",
     nest_varied_formats: "Keep this format common and occasionally mix other formats",
     nest_varied_formats_help: "About 75% of decoys use the selected format. Weighted alternatives such as Excel, SQLite and .env appear among documents inside the encrypted nest.",
     password_policy: "Automatically generated password policy", password_mode: "Generation mode", memorable: "Words + digits / symbols", random: "Fully random",
@@ -112,9 +112,9 @@ const translations = {
     min_length: "Minimum length", max_length: "Maximum length", lowercase: "Lowercase", uppercase: "Uppercase", digits: "Digits", symbols: "Symbols",
     hint_characters: "Trailing characters the recovery note claims are stored elsewhere", password_words: "Word candidates (ASCII, comma-separated; blank for defaults)",
     progressive: "Start shorter and increase length in deeper layers",
-    password_help: "Maintenance notes are designed to make an attacker look for a separate key register. They contain no password characters; the stated withheld-character count is part of the decoy, not a usable hint. Passwords remain in the operator-only file. Progressive length starts at 9 characters in the default 9–13 range and increases in deeper layers. Archives can be attacked offline and in parallel after download, so a successful guess and delay are not guaranteed. A memorable candidate may fall back to a random value if it repeats. Even a 9–13 character password may be impractical to crack; solve time depends on the archive format and attacker resources.",
+    password_help: "Maintenance notes are designed to make an attacker look for a separate key register. They contain no password characters; the stated withheld-character count is part of the decoy, not a usable hint. A separate ZIP password list is provided for authorized sample verification; keep it private and never deploy it. Progressive length starts at 9 characters in the default 9–13 range and increases in deeper layers. Archives can be attacked offline and in parallel after download, so a successful guess and delay are not guaranteed. A memorable candidate may fall back to a random value if it repeats. Even a 9–13 character password may be impractical to crack; solve time depends on the archive format and attacker resources.",
     canary_percent: "Canary probability per decoy (%)", canary_probability: "Sampled independently per file. 0% means none; 100% means all decoys. Up to 400 URLs are accepted. Selected files receive different URLs before one is reused. URLs beyond the number of selected files remain unused; the selected count varies with the per-file probability. Reused URLs cannot identify the exact file from an alert. A blank URL list inserts no monitoring URL.",
-    nest_note: "Use an AES-compatible ZIP tool. Source content is limited to 32 MiB and cumulative encrypted archives to 64 MiB. Save the deployment ZIP and all operator-only JSON files separately. The password/layout file and the lifecycle inventory can contain passwords, URLs, settings and hashes; never deploy or publish either.",
+    nest_note: "Use an AES-compatible ZIP tool. To extract the sample and see how the nested archives work, use the ZIP password list. It contains passwords, so keep it for sample verification only and never deploy or publish it with the decoys. Source content is limited to 32 MiB and cumulative encrypted archives to 64 MiB.",
     database_desc: "Choose a preset to create a SQLite file with fictional data in a main table. You can customize its columns if needed. A supplied canary URL may add a separate connection table; the file does not connect to an existing database.", rows: "Number of records", database_rows_help: "Default: 100 rows. SQLite files are limited to 32 MiB. If generation reaches the limit, reduce the row count or number of columns.", table_name: "Table name", schema: "Column definitions", add_column: "+ Add column",
     database_help: "Choose a customer, card inventory, company, password vault, orders, sales transactions, invoices, employees, user management, vendors, support tickets, assets or cloud inventory template. Edit up to 30 columns. Replacing company, department, status and text candidates with fictional values from your business context can make the records more credible. To provide candidate names or emails, change the kind to Text. Do not use real personal data or live endpoints. Company-associated email/domain values use company-matched subdomains under reserved example.invalid; rows without a company use example.invalid. By default, password vault login_url values use the reserved example.invalid domain and cannot reach real services.",
     database_note: "Card data uses a clearly invalid reference only; no PAN or CVV. Phone fields use the reserved fictional +1-202-555-0100–0199 range, including in Japanese-language samples. Password fields contain random synthetic strings that are not linked to real accounts or services; no real credentials or hashes are imported. Reading a database alone does not alert. The Password Vault template places the canary URL in one login_url record when that column exists; otherwise it uses a connection table. Other templates also use a connection table. The monitoring service alerts only if the URL is requested.",
@@ -127,7 +127,7 @@ const translations = {
     generate: "Generate file",
     generating: "Generating. Larger files may take a little while. Keep this page open until generation finishes.", generated: "Generated {name}.", failed: "Generation failed.", generation_settings_changed: "Settings changed during generation, so the result was discarded. Generate again with the current settings.", number_input_invalid: "Enter a whole number within the range shown for the selected method.",
     estimate: "{archives} encrypted ZIPs / {documents} decoy files (limit: 40 ZIPs, 32 MiB of source content, and 64 MiB cumulative encrypted archives)", over_limit: "Reduce depth or branching. The limit is 40 encrypted ZIPs.",
-    download_again: "Save generated file", operator_download: "Save operator information (do not deploy)", inventory_download: "Save operations inventory separately from generated files", summary: "Generated: {archives} ZIPs / {documents} decoy files / {canaries} with canary URLs", format_breakdown: "Formats",
+    download_again: "Save generated file", operator_download: "Save operator information (do not deploy)", nest_password_download: "Get ZIP passwords (sample verification only; do not deploy)", inventory_download: "Save operations inventory separately from generated files", summary: "Generated: {archives} ZIPs / {documents} decoy files / {canaries} with canary URLs", nest_summary: "Generated: {archives} ZIPs / {documents} decoy files", format_breakdown: "Formats",
     schema_limit: "Use 1–30 columns.", invalid_options: "Enter the numeric range as min,max (for example 0,100000), with minimum no greater than maximum. Integer fields do not accept decimals.",
   },
 };
@@ -179,6 +179,8 @@ translations.en.maze_reduce_branches_to = "branching to {value}";
 translations.ja.maze_or = "または";
 translations.en.maze_or = "or";
 translations.ja.nest_limit_adjust = "上限40個以内にするには、{options}にしてください。";
+translations.ja.nest_formats_random = "ZIPごとにファイル形式をランダムに選び、各ZIP内で複数の形式を混ぜます。";
+translations.ja.nest_directory_pattern = "フォルダーは年 → 月 → 用途別の対象 → 日付・担当者・確認グループなどの順に細分化します。編集した候補名は対象階層に追加します。";
 translations.en.nest_limit_adjust = "To stay within 40 ZIPs, reduce {options}.";
 translations.ja.nest_reduce_layers_to = "ZIP階層数を{value}以下";
 translations.en.nest_reduce_layers_to = "ZIP layers to {value}";
@@ -206,7 +208,7 @@ const methodExplanations = {
     web: {title:"スタティック・デコイ・ポータル", how:"アーカイブや管理ポータルに見える静的HTMLを作ります。", target:"公開URLや管理画面らしいサブディレクトリを探索し、リンクやファイルをたどる攻撃を想定します。", limit:"静的ページです。認証、ログイン状態、設定変更、アクセス制御、通知処理は実装しません。画面を開くだけではリンク先のカナリアURLにアクセスしません。"},
     fake_trap: {title:"フェイクトラップ", how:"警告、通報済み表示、認証中スピナーのいずれかを示す静的HTMLを作ります。画面表示だけで、通報・認証・情報収集や接続の維持は行いません。", target:"デコイ経路に到達し、表示を読む人やAIエージェントが、検知された可能性を考えて再確認する状況を想定します。", limit:"表示を無視するスクリプトや、別経路を並列に探索する攻撃者には働きません。ログ記録や通知は配置先で別途設定してください。遅延効果は保証されません。"},
     ransomware_tripwire: {title:"ランサムウェア・デコイフラッド", how:"架空の業務ファイル一式と、指定ファイルの内容変更・削除・差し替えをローカル記録するPython標準ライブラリ製の監視スクリプトを生成します。配置ZIPと監視スクリプトは別々に保存します。", target:"ランサムウェアなどが監視対象のファイルを暗号化・削除・置換する状況を想定します。", limit:"監視スクリプトは約1秒間隔の確認で、読み取りだけのアクセスは検知しません。検知前に実データが損なわれる可能性があり、プロセス停止・端末隔離・復元は行いません。監視対象の差し替えや監視停止にも弱く、見逃し・誤検知があります。"},
-    nest: {title:"エンクリプテッド・ディープ・ネスト", how:"暗号化ZIPを分岐・多層化し、各層に文書や次のアーカイブを混在させます。選択形式を中心に、Excel・SQLite・.envなども時々混ぜられます。パスワードと復元メモの対応は管理者専用ファイルに分けます。復元メモは別の鍵台帳があるよう示しますが、実際のパスワード文字は含みません。ファイルごとに異なるカナリアURLを割り当てると接触先を識別でき、URLを再利用した場合はグループまでの識別になります。認証情報保管庫シナリオでは、.envにシナリオ別環境変数、その他の形式に架空login_url項目を使い、password値は変えません。", target:"バックアップや設定を急いで一括回収する攻撃者と、候補を順に展開して秘密を探す攻撃者を想定します。", limit:"持ち出した後に並列・オフラインで解析する攻撃者は、現場の時間を使いません。強いパスワードなら解読不能で、反対にヒントが露骨なら罠と見抜かれます。通常データの暗号化やバックアップの代替ではありません。"},
+    nest: {title:"エンクリプテッド・ディープ・ネスト", how:"暗号化ZIPを分岐・多層化し、各層に文書や次のアーカイブを混在させます。複数のファイル形式をランダムに混ぜます。サンプルを解凍して検証するためのZIPパスワード一覧を別に取得できます。復元メモは別の鍵台帳があるよう示しますが、実際のパスワード文字は含みません。認証情報保管庫シナリオでは、文書に架空のlogin_url項目を使い、password値は変えません。", target:"バックアップや設定を急いで一括回収する攻撃者と、候補を順に展開して秘密を探す攻撃者を想定します。", limit:"持ち出した後に並列・オフラインで解析する攻撃者は、現場の時間を使いません。強いパスワードなら解読不能で、反対にヒントが露骨なら罠と見抜かれます。通常データの暗号化やバックアップの代替ではありません。"},
     stream: {title:"インフィニット・ストリーム", how:"認証付きの隔離配信経路で、接続中は総容量・総時間で終わらない応答を返します。帯域と同時接続を抑え、管理者が停止できます。", target:"ファイル取得を完了するまで待つ、全量ダウンロード型の攻撃者を想定します。短時間で撤収したい攻撃者の時間と注意を拘束する狙いです。", limit:"バックエンドは無通信が5秒続くと接続を終了します。受信側が読み取らず書き込みが詰まった場合も対象です。部分取得、並列探索、明示的な切断でも迂回され、接続自体が罠と疑われることがあります。GUIはサーバーを起動せず、認証付き隔離経路・開始検知・負荷管理は配置側で必要です。"},
     directory_maze: {title:"ディレクトリ・メイズ", how:"実際のフォルダーとHTMLリンクで有限の階層・分岐を作り、文書や設定ファイルを配置します。認証情報保管庫シナリオでは、.envにシナリオ別環境変数、その他の形式に架空login_url項目を使い、password値は変えません。", target:"サブディレクトリ名を総当たりし、見つかったファイルを広く収集するクローラやAI生成ツールを想定します。", limit:"階層・ファイル数は有限で、URL重複排除や並列化で探索は速くなります。HTMLを全走査するだけの攻撃者には遅滞効果がなく、重要情報の見落としを保証しません。"},
     encoding_maze: {title:"エンコーディング・メイズ", how:"選択した業務シナリオに合わせ、候補ごとに独立した架空レコード・ファイル名・タイトルを作ってから多段変換します。認証情報保管庫では、.envにシナリオ別環境変数、その他の形式に架空login_url項目を使い、password値は変えません。", target:"取得後に複数候補を復元・正規化し、どれが価値ある情報か見極めようとする攻撃者を想定します。", limit:"暗号化ではありません。一括デコードは容易で、データベース自体が読むだけで通知するわけでもありません。"},
@@ -217,7 +219,7 @@ const methodExplanations = {
     web: {title:"Static Decoy Portal", how:"Creates a static page that resembles an archive or operations portal.", target:"Attacks that enumerate public URLs and admin-like subdirectories, then follow links or collect files.", limit:"Static HTML has no authentication, session, setting changes, access control or alert delivery. Opening the page does not fetch its canary link."},
     fake_trap: {title:"Fake Trap", how:"Creates static HTML with a warning, a reported-message display or an authentication spinner. The page does not report, authenticate, collect information or keep a connection open.", target:"A person or AI agent reaches a decoy path, reads the display and may reconsider whether access has been detected.", limit:"This has no effect on scripts that ignore the display or attackers exploring other paths in parallel. Configure hosting logs and alerts separately; delay is not guaranteed."},
     ransomware_tripwire: {title:"Ransomware Decoy Flood", how:"Generates fictional business files and a Python standard-library monitor that locally records content changes, deletion or replacement of those specific files. The deployment ZIP and monitor script are separate downloads.", target:"Ransomware or another process encrypts, deletes or replaces a monitored tripwire file.", limit:"The monitor polls about once per second and does not detect read-only access. Real data may be damaged before an alert; it does not stop processes, isolate a device or restore data. It can miss brief changes and may produce false alarms."},
-    nest: {title:"Encrypted Deep Nest", how:"Builds branching layers of encrypted ZIP files containing decoy files and more archives. The selected primary format stays common; weighted occasional alternatives can include Excel, SQLite and .env. Passwords and the mapping to recovery-note files stay in the operator-only file. The notes imply a separate key register but disclose no password characters. A distinct canary URL per file can identify which assigned file was contacted; reused URLs identify only a group. In the Password Vault scenario, .env files use the scenario's environment variable and other formats use the synthetic login_url field; password values stay unchanged.", target:"Intruders rapidly collecting backups/configuration and those who open candidate archives to find secrets.", limit:"The selected primary format is used for about 75% of decoys when format mixing is enabled. Parallel/offline analysis after exfiltration adds no on-site delay. Strong passwords can be infeasible to crack; obvious clues reveal the trap. This does not replace normal encryption or backups."},
+    nest: {title:"Encrypted Deep Nest", how:"Builds branching layers of encrypted ZIP files containing decoy files and more archives. Multiple file formats are selected randomly and mixed within each ZIP. A separate ZIP password list is available to extract and verify the sample. The notes imply a separate key register but disclose no password characters. In the Password Vault scenario, documents use a synthetic login_url field and password values stay unchanged.", target:"Intruders rapidly collecting backups/configuration and those who open candidate archives to find secrets.", limit:"Parallel/offline analysis after exfiltration adds no on-site delay. Strong passwords can be infeasible to crack; obvious clues reveal the trap. This does not replace normal encryption or backups."},
     stream: {title:"Infinite Stream", how:"An authenticated, isolated endpoint returns data without a total size or duration cutoff while connected, with bandwidth/concurrency caps and operator stop.", target:"Bulk-download workflows that wait for the file to finish, occupying a rushed intruder's time and attention.", limit:"The backend closes a connection after five seconds without socket activity, including when a stalled write blocks delivery. Partial downloads, parallel discovery and intentional disconnects also bypass it; an endless response may itself look suspicious. The GUI does not start it; deployment, authentication, start-event monitoring and capacity limits belong in the host environment."},
     directory_maze: {title:"Directory Maze", how:"Creates finite real directories and HTML links with branches, documents and configuration files. In the Password Vault scenario, .env files use the scenario's environment variable and other formats put the canary in a synthetic login_url field without changing password values.", target:"Crawlers and AI-generated tools that enumerate subdirectory names and download discovered files.", limit:"The tree is finite. URL deduplication and parallelism speed exploration; a crawler that only indexes links gains little delay. It cannot guarantee that important files are missed."},
     encoding_maze: {title:"Encoding Maze", how:"Creates independent synthetic records, file names and titles for the selected business scenario, then applies layered encodings. In the Password Vault scenario, .env files use the scenario's environment variable and other formats put the canary in a synthetic login_url field without changing password values.", target:"Intruders who restore and inspect multiple candidates after collection to identify useful information.", limit:"This is not encryption; batch decoding is easy. It does not alert when read."},
@@ -271,7 +273,7 @@ Object.assign(methodFlows.en, {
  env:{context:"Example: place a monitoring-service URL supplied by the operator in a decoy configuration file or document.",steps:[["1. Place a decoy","Put a plausible-looking file on an authorized discovery path."],["2. Intruder collects it","The intruder finds the file and inspects the apparent endpoint."],["3. URL is requested","An intruder or scanner sends an HTTP request to the monitoring URL."],["4. Alert and investigate","If the monitoring service receives the request, it alerts the responder to inspect logs."]],ifCase:["An access to the monitoring URL from inside the network can be detected as a sign of suspicious activity.","The alert can prompt an early response (the URL must be reachable internally and alerting must be configured)."],elseCase:["If the canary page is easy for legitimate users to reach, accidental visits can trigger alerts and make attack activity harder to distinguish.","Reading alone, never testing the URL, or blocked outbound traffic produces no URL alert."],response:"Configure the monitoring service and alert destination separately from web or OS auditing of file retrieval.",note:"An alert records a request, not the identity of an attacker; timely response and containment are not guaranteed."},
  database:{context:"Example: place a SQLite file containing only synthetic customer records in a separate decoy area.",steps:[["1. Build the decoy","Generate a single table with fictional customer or order records."],["2. Place it plausibly","Use a backup-like name and authorized location relevant to the environment."],["3. Intruder collects candidates","The intruder takes the decoy and may compare it with other database files."],["4. Verify contents","Checking each candidate's records and context may add selection time."]],ifCase:"An intruder may mistake a decoy for real data or stop checking before finding a real candidate.",elseCase:"The intruder may ignore the decoy, obtain the real database elsewhere, or collect everything in bulk.",response:"Configure hosting logs, OS or DB read auditing separately; a canary URL request is a distinct event.",note:"This is a separate decoy database, not production-record mixing. Reading alone does not alert or prevent a real leak."},
  web:{context:"Example: put a static archive or operations portal lookalike on a dedicated decoy path.",steps:[["1. Prepare the page","Choose a title and optionally a link to an operator-supplied canary URL."],["2. Intruder explores","The page is encountered while looking for an administrative area or backup."],["3. Inspect contents","The intruder reviews the page or link and judges whether it leads to useful data."],["4. Record contact","Hosting access logs can record a request when separately configured."]],ifCase:"Inspecting the page and its link may add candidate-checking work.",elseCase:"The intruder may ignore the page, use another route, or never request the link.",response:"Configure monitoring for page requests and canary-service alerts as separate events.",note:"The generated page is static: no login or persistent state, and opening it does not request the linked URL."},
- nest:{context:"Example: a backup-like archive contains fictional documents and branching encrypted ZIPs.",steps:[["1. Build layers","Place decoy documents and nested ZIPs across multiple branches."],["2. Protect the mapping","Keep passwords and structure in a separate operator-only companion."],["3. Intruder explores","The intruder searches for passwords, opens candidates and inspects their contents."],["4. Repeat selection","Checking several branches may consume time for choosing and opening candidates."]],ifCase:"If candidates remain indistinguishable during exploration and unchecked branches may contain useful information, continuing adds work while stopping risks missing real data. Finding one fake document does not prove every unchecked branch is fake.",elseCase:"Unnatural names or structure, or a contradiction with independently known production information, may raise suspicion; this does not necessarily establish what is in unchecked branches. Without identifying a trap, an intruder can also collect everything and analyze it in parallel later, reducing on-site delay while potentially still facing selection work. Obtaining real data through a separate route can also reduce the effect.",response:"Configure access auditing or canary-use alerts separately. Never deploy the private password inventory.",note:"Indistinguishability through the final branch is not guaranteed. Opening a ZIP alone does not alert; assess actual effectiveness through controlled comparisons."},
+ nest:{context:"Example: a backup-like archive contains fictional documents and branching encrypted ZIPs.",steps:[["1. Build layers","Place decoy documents and nested ZIPs across multiple branches."],["2. Keep test passwords private","The verification list is for authorized sample extraction and is not part of deployment."],["3. Intruder explores","The intruder searches for passwords, opens candidates and inspects their contents."],["4. Repeat selection","Checking several branches may consume time for choosing and opening candidates."]],ifCase:"If candidates remain indistinguishable during exploration and unchecked branches may contain useful information, continuing adds work while stopping risks missing real data. Finding one fake document does not prove every unchecked branch is fake.",elseCase:"Unnatural names or structure, or a contradiction with independently known production information, may raise suspicion; this does not necessarily establish what is in unchecked branches. Without identifying a trap, an intruder can also collect everything and analyze it in parallel later, reducing on-site delay while potentially still facing selection work. Obtaining real data through a separate route can also reduce the effect.",response:"Configure access auditing separately. Keep the sample verification password list private and never deploy it.",note:"Indistinguishability through the final branch is not guaranteed. Opening a ZIP alone does not alert; assess actual effectiveness through controlled comparisons."},
  stream:{context:"Example: an isolated download endpoint resembles a backup that a client may wait to complete.",steps:[["1. Prepare a server","Deploy the generated sample in isolation; configure authentication, bandwidth and concurrency limits."],["2. Receive a request","The server begins delivering dummy data to an authenticated requester."],["3. Keep streaming","While connected, the response has no total size or duration cutoff."],["4. Observe the start","A separately collected start event can prompt investigation and operator stop."]],ifCase:"A client waiting for the full download may give responders additional time.",elseCase:"Partial retrieval, disconnecting, parallel exploration or an inactivity timeout ends or bypasses the wait.",response:"Start and monitor the server separately; set up logs, alerts, limits and an operator stop procedure.",note:"The tool does not start the server. A connection with five seconds of inactivity closes; attacker delay is not guaranteed."},
  directory_maze:{context:"Example: distribute decoy files across archive, reports and backup directories.",steps:[["1. Generate a tree","Create finite directories and fictional files, optionally linking branches with HTML."],["2. Host in isolation","Separate it from legitimate paths and configure hosting access logs."],["3. Intruder explores","The intruder follows directories or links and collects files."],["4. Check candidates","Finding useful-looking data may involve inspecting additional documents."]],ifCase:"Sequential traversal and inspection may add requests and selection work.",elseCase:"Parallel crawling, URL deduplication and bulk offline analysis may reduce on-site delay.",response:"Monitor hosting logs and canary URL use separately; retain the operator mapping privately.",note:"The tree is finite. Missing real information or receiving a timely alert is not guaranteed."},
  encoding_maze:{context:"Example: wrap several independent fictional invoice candidates in multiple encoding layers.",steps:[["1. Create candidates","Generate distinct fictional records and filenames for the chosen business scenario."],["2. Encode in layers","Wrap each candidate in multiple encodings; this is not encryption."],["3. Intruder decodes","After collection, the intruder reads the format and restores each layer."],["4. Assess content","The restored candidates are compared to identify useful information."]],ifCase:"Individual content assessment may add selection work after decoding.",elseCase:"Known formats can be decoded in bulk and parallelized to reduce the work.",response:"Use hosting-side monitoring for retrieval; distinguish it from alerts when a canary URL is requested.",note:"Offline decoding and reading are not automatically detected. Decode order and URL mappings are kept in the operator file."},
@@ -680,8 +682,8 @@ translations.ja.downloads_region = "生成ファイル";
 translations.en.downloads_region = "Generated files";
 translations.ja.reset_defaults_confirm = "画面上の設定と結果・ダウンロードリンクを消して、起動時の初期値に戻します。すでにダウンロードしたファイルは消えません。画面の言語設定は保持します。続けますか？";
 translations.en.reset_defaults_confirm = "Reset the settings to their startup defaults and clear the current results and download links? Files already downloaded will remain, and your language choice will be kept.";
-translations.ja.reset_defaults_operator_confirm = "管理者専用ファイルの保存確認が済んでいません。初期値に戻すと、そのダウンロードリンクと今回のパスワード・URL対応情報は失われます。すでに保存したファイルは消えません。続けますか？";
-translations.en.reset_defaults_operator_confirm = "You have not confirmed saving every operator-only file. Resetting will remove their download links and this generation's password and URL mappings. Files already downloaded will remain. Continue?";
+translations.ja.reset_defaults_operator_confirm = "管理者専用ファイルまたは検証用パスワード一覧の保存確認が済んでいません。初期値に戻すと、そのダウンロードリンクと今回のパスワード・URL対応情報は失われます。すでに保存したファイルは消えません。続けますか？";
+translations.en.reset_defaults_operator_confirm = "You have not confirmed saving every operator-only file or verification password list. Resetting will remove their download links and this generation's password and URL mappings. Files already downloaded will remain. Continue?";
 translations.ja.numeric_range = "範囲 {min}〜{max}";
 translations.en.numeric_range = "Range {min}–{max}";
 translations.ja.candidate_values_preview = "候補: {values}{more}";
@@ -1445,10 +1447,9 @@ for (const [name, kind] of [["id", "id"], ["name", "name"], ["email", "email"], 
   ["phone", "phone"], ["department", "department"], ["status", "status"], ["last_contact", "date"]]) addColumn(name, kind);
 function updateCsvSafetyNote() {
   const kind = $('input[name="kind"]:checked')?.value;
-  const selector = {env: "#canary-format", nest: "#nest-format", directory_maze: "#maze-format", encoding_maze: "#encoding-format"}[kind];
+  const selector = {env: "#canary-format", directory_maze: "#maze-format", encoding_maze: "#encoding-format"}[kind];
   const csvSelected = selector && $(selector).value === "csv";
-  const csvMayBeMixedIntoNest = kind === "nest" && $("#nest-varied-formats").checked;
-  $("#csv-safety-note").hidden = !csvSelected && !csvMayBeMixedIntoNest;
+  $("#csv-safety-note").hidden = !csvSelected;
 }
 function updateFields(forceClear = false) {
   const selected = $('input[name="kind"]:checked').value;
@@ -1483,7 +1484,6 @@ function updateFields(forceClear = false) {
 function updateVaultDomainFields() {
   const kind = $('input[name="kind"]:checked')?.value;
   const use = (kind === "database" && $("#database-template").value === "passwords")
-    || (kind === "nest" && $("#nest-scenario").value === "passwords" && ($("#nest-format").value !== "env" || $("#nest-varied-formats").checked))
     || (kind === "directory_maze" && $("#maze-scenario").value === "passwords" && $("#maze-format").value !== "env")
     || (kind === "encoding_maze" && $("#encoding-scenario").value === "passwords" && $("#encoding-format").value !== "env");
   const panel = $("#vault-domain-fields");
@@ -1493,25 +1493,54 @@ function updateVaultDomainFields() {
 function vaultDomainSettings() {
   return {vault_domain: $("#vault-domain").value.trim(), vault_domain_authorized: $("#vault-domain-authorized").checked};
 }
-for (const selector of ["#database-template", "#nest-scenario", "#maze-scenario", "#encoding-scenario", "#nest-format", "#nest-varied-formats", "#maze-format", "#encoding-format"]) {
+for (const selector of ["#database-template", "#nest-scenario", "#maze-scenario", "#encoding-scenario", "#maze-format", "#encoding-format"]) {
   $(selector).addEventListener("change", () => { updateVaultDomainFields(); updateCsvSafetyNote(); });
 }
 const nestDirectoryPresets = {
-  crm: ["finance", "operations", "exports", "backups", "archive", "config", "reports"],
-  migration: ["migration", "source", "staging", "imports", "batches", "review", "exports"],
-  archive: ["archive", "retention", "snapshots", "monthly", "history", "manifests", "exports"],
-  cards: ["payments", "cardholders", "billing", "renewals", "reconciliation", "expiry", "reports"],
-  companies: ["organizations", "companies", "contacts", "ownership", "industries", "relationships", "exports"],
-  passwords: ["vault", "credentials", "services", "recovery", "rotation", "access", "archive"],
-  api_credentials: ["api", "integrations", "credentials", "clients", "tokens", "services", "rotation"],
-  invoices: ["finance", "billing", "receivables", "payments", "overdue", "reconciliation", "statements"],
-  employees: ["hr", "personnel", "departments", "payroll", "onboarding", "roles", "reviews"],
-  vendors: ["procurement", "suppliers", "contracts", "reviews", "due_diligence", "services", "finance"],
-  orders: ["sales", "orders", "fulfillment", "shipments", "returns", "billing", "reconciliation"],
-  tickets: ["support", "cases", "queue", "escalations", "resolution", "customers", "reports"],
-  assets: ["assets", "hardware", "endpoints", "licenses", "facilities", "lifecycle", "assignments"],
-  cloud: ["platform", "subscriptions", "identity", "storage", "deployments", "regions", "recovery"]
+  crm: ["customer_1048", "customer_2176", "customer_3891", "account_west", "account_enterprise"],
+  migration: ["batch_014", "batch_027", "source_legacy", "target_import", "delta_review"],
+  archive: ["customer_1048", "customer_2176", "account_west", "account_enterprise", "retention_hold"],
+  cards: ["cardholder_1048", "cardholder_2176", "renewal_batch", "billing_west"],
+  companies: ["company_1048", "company_2176", "company_west", "enterprise_accounts"],
+  passwords: ["service_billing", "service_support", "service_archive", "service_portal"],
+  api_credentials: ["integration_billing", "integration_support", "client_1048", "client_2176"],
+  invoices: ["customer_1048", "customer_2176", "region_west", "enterprise_accounts"],
+  employees: ["department_finance", "department_ops", "department_support", "region_west"],
+  vendors: ["vendor_1048", "vendor_2176", "supplier_west", "service_partner"],
+  orders: ["customer_1048", "customer_2176", "region_west", "enterprise_accounts"],
+  tickets: ["customer_1048", "customer_2176", "region_west", "priority_queue"],
+  assets: ["region_west", "region_east", "office_014", "datacenter_02"],
+  cloud: ["subscription_014", "subscription_027", "tenant_west", "platform_shared"]
 };
+const nestProfiles = {
+  crm: {shapes:[[3,2],[4,2],[3,3]], decoys:[3,7], depth:[3,5], rows:[25,70]},
+  migration: {shapes:[[3,2],[4,2],[3,3]], decoys:[4,7], depth:[3,5], rows:[30,80]},
+  archive: {shapes:[[2,2],[3,2],[4,2]], decoys:[3,6], depth:[2,5], rows:[20,60]},
+  cards: {shapes:[[2,2],[3,2],[3,3]], decoys:[3,5], depth:[2,4], rows:[15,50]},
+  companies: {shapes:[[2,2],[3,2],[3,3]], decoys:[3,6], depth:[2,5], rows:[20,65]},
+  passwords: {shapes:[[2,2],[3,2]], decoys:[3,5], depth:[2,4], rows:[12,35]},
+  api_credentials: {shapes:[[2,2],[3,2]], decoys:[3,5], depth:[2,4], rows:[12,35]},
+  invoices: {shapes:[[2,2],[3,2],[3,3]], decoys:[3,6], depth:[2,5], rows:[20,65]},
+  employees: {shapes:[[2,2],[3,2],[3,3]], decoys:[3,6], depth:[2,5], rows:[20,60]},
+  vendors: {shapes:[[2,2],[3,2],[3,3]], decoys:[3,6], depth:[2,5], rows:[20,60]},
+  orders: {shapes:[[2,2],[3,2],[3,3]], decoys:[3,6], depth:[2,5], rows:[20,65]},
+  tickets: {shapes:[[2,2],[3,2],[3,3]], decoys:[3,6], depth:[2,5], rows:[20,60]},
+  assets: {shapes:[[2,2],[3,2],[3,3]], decoys:[3,6], depth:[2,5], rows:[20,60]},
+  cloud: {shapes:[[2,2],[3,2],[3,3]], decoys:[3,6], depth:[2,5], rows:[20,60]}
+};
+function randomNestInteger(range) { return range[0] + Math.floor(Math.random() * (range[1] - range[0] + 1)); }
+function randomizeNestSettings() {
+  const scenario = $("#nest-scenario").value;
+  const profile = nestProfiles[scenario] || nestProfiles.crm;
+  const [layers, branches] = profile.shapes[Math.floor(Math.random() * profile.shapes.length)];
+  $("#layers").value = layers;
+  $("#branches").value = branches;
+  $("#decoys").value = randomNestInteger(profile.decoys);
+  $("#directory-depth").value = randomNestInteger(profile.depth);
+  $("#nest-rows").value = randomNestInteger(profile.rows);
+  $("#directories").value = (nestDirectoryPresets[scenario] || nestDirectoryPresets.crm).join(",");
+  estimate();
+}
 const scenarioTemplateAliases = {crm: "customers", migration: "customers", archive: "customers"};
 function updateScenarioSchemaSummaries() {
   const ready = databaseTemplatesLanguage === language;
@@ -1532,24 +1561,17 @@ function updateScenarioSchemaSummaries() {
 for (const selector of ["#nest-scenario", "#maze-scenario", "#encoding-scenario"]) {
   $(selector).addEventListener("change", updateScenarioSchemaSummaries);
 }
-let activeNestDirectoryScenario = $("#nest-scenario").value;
 $("#nest-scenario").addEventListener("change", () => {
-  const directories = $("#directories");
-  const previousPreset = nestDirectoryPresets[activeNestDirectoryScenario];
-  const nextPreset = nestDirectoryPresets[$("#nest-scenario").value];
-  if (previousPreset && nextPreset
-      && directories.value.split(",").map(value => value.trim()).join(",") === previousPreset.join(",")) {
-    directories.value = nextPreset.join(",");
-  }
-  activeNestDirectoryScenario = $("#nest-scenario").value;
+  randomizeNestSettings();
 });
+randomizeNestSettings();
 const previewUrlFields = {
-  env: ["#env-url"], nest: ["#nest-url"], database: ["#db-url"], web: ["#web-url"],
+  env: ["#env-url"], database: ["#db-url"], web: ["#web-url"],
   directory_maze: ["#maze-url"], encoding_maze: ["#encoding-url"],
 };
 const previewUrlRedactions = new WeakMap();
 const monitoringUrlFields = {
-  env: ["#env-url"], nest: ["#nest-url"], database: ["#db-url"], web: ["#web-url"],
+  env: ["#env-url"], database: ["#db-url"], web: ["#web-url"],
   directory_maze: ["#maze-url"], encoding_maze: ["#encoding-url"],
 };
 function hasReservedCanaryUrl(value) {
@@ -2032,7 +2054,7 @@ function renderDownloads(data) {
   }
   const operatorFiles = companions.filter(item => item.role !== "deployment" && !item.name.endsWith(".inventory.json"));
   for (const companion of operatorFiles) {
-    const label = companion.name === "ransomware_tripwire_monitor.py" ? t("tripwire_monitor_download") : t("operator_download");
+    const label = companion.role === "verification" ? t("nest_password_download") : companion.name === "ransomware_tripwire_monitor.py" ? t("tripwire_monitor_download") : t("operator_download");
     downloadLink(companion, label);
   }
   if (hasDeploymentPackage) {
@@ -2229,11 +2251,15 @@ function renderDownloads(data) {
   }
   if (data.summary && data.summary.archives) {
     const note = document.createElement("p");
-    const formatCounts = data.summary.format_counts;
-    const formatNote = formatCounts && Object.keys(formatCounts).length
-      ? ` ${t("format_breakdown")}: ${Object.entries(formatCounts).map(([format, count]) => `${t(`format_${format}`)} ${count}`).join(", ")}.`
-      : "";
-    note.textContent = t("summary", data.summary) + formatNote;
+    if (data.summary.kind === "nest") {
+      note.textContent = t("nest_summary", data.summary);
+    } else {
+      const formatCounts = data.summary.format_counts;
+      const formatNote = formatCounts && Object.keys(formatCounts).length
+        ? ` ${t("format_breakdown")}: ${Object.entries(formatCounts).map(([format, count]) => `${t(`format_${format}`)} ${count}`).join(", ")}.`
+        : "";
+      note.textContent = t("summary", data.summary) + formatNote;
+    }
     $("#downloads").append(note);
   }
   if (data.summary && ["stream", "directory_maze", "encoding_maze"].includes(data.summary.kind)) {
@@ -2290,6 +2316,7 @@ form.addEventListener("submit", async event => {
   form.querySelectorAll('[aria-invalid="true"]').forEach(clearInvalid);
   if (generationInProgress) return;
   const kind = $('input[name="kind"]:checked').value;
+  if (kind === "nest") randomizeNestSettings();
   if (["data_dilution", "honeyword"].includes(kind)) return;
   if (kind === "database" && !document.querySelector(".column-row")) {
     result.textContent = t("template_loading");
@@ -2330,9 +2357,8 @@ form.addEventListener("submit", async event => {
   try {
     settings = {
       env: () => ({format: $("#canary-format").value, canary_url: $("#env-url").value, canary_link_style: $("#canary-link-style").value, canary_context: $("#canary-context").value, canary_field:"", canary_label:"", env_layout: "commented_production", env_suffix: "development", env_variable: "URL", rows: CANARY_DEFAULT_ROWS}),
-      nest: () => ({scenario: $("#nest-scenario").value, ...($("#nest-scenario").value === "passwords" && ($("#nest-format").value !== "env" || $("#nest-varied-formats").checked) ? vaultDomainSettings() : {}), layers: Number($("#layers").value), branches: Number($("#branches").value), decoys: Number($("#decoys").value), directory_depth: Number($("#directory-depth").value), rows: Number($("#nest-rows").value),
-        format: $("#nest-format").value, varied_formats: $("#nest-varied-formats").checked, directories: $("#directories").value.split(",").map(v => v.trim()),
-        canary_urls: $("#nest-url").value.split(/\r?\n/).filter(value => value.trim()), canary_percent: Number($("#canary-percent").value),
+      nest: () => ({scenario: $("#nest-scenario").value, layers: Number($("#layers").value), branches: Number($("#branches").value), decoys: Number($("#decoys").value), directory_depth: Number($("#directory-depth").value), rows: Number($("#nest-rows").value),
+        directories: $("#directories").value.split(",").map(v => v.trim()),
         password_policy: {mode: $("#password-mode").value, min_length: Number($("#min-length").value), max_length: Number($("#max-length").value),
           lowercase: $("#lowercase").checked, uppercase: $("#uppercase").checked, digits: $("#digits").checked, symbols: $("#symbols").checked, progressive: $("#progressive").checked, hints: $("#hints").value,
           hint_characters: Number($("#hint-characters").value), ...($("#password-words").value.trim() ? {words: $("#password-words").value.split(",").map(v => v.trim())} : {})}}),
@@ -2575,7 +2601,7 @@ $("#settings-file").addEventListener("change", async event => {
     $("#canary-rows").value = String(CANARY_DEFAULT_ROWS);
     $("#canary-field").value = "";
     $("#canary-label").value = "";
-    activeNestDirectoryScenario = $("#nest-scenario").value;
+    randomizeNestSettings();
     // Ownership attestation must be given by the current operator, not carried in an imported config.
     $("#vault-domain-authorized").checked = false;
     $("#db-email-domain-authorized").checked = false;
@@ -2587,8 +2613,7 @@ $("#settings-file").addEventListener("change", async event => {
       addColumn(name, kind); $("#columns").lastElementChild.querySelector(".column-options").value = options;
     }
     form.querySelectorAll('input[type="url"], [data-secret-url], #env-url, #db-url, #web-url')
-      .forEach(el => { el.value = ""; });
-    $("#env-url").value = $("#env-url").defaultValue;
+      .forEach(el => { el.value = el.defaultValue; });
     method.checked = true; updateFields(true); updateMethodFilter("all"); estimate(); updateMazeEstimate(); result.textContent = t("config_loaded");
   } catch (error) { result.textContent = error.message === "unsafe_setting_text" ? t("unsafe_setting_text") : error.message === "sensitive_setting_text" ? t("sensitive_setting_text") : t("config_invalid"); }
 });

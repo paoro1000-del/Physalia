@@ -1,7 +1,6 @@
 """Bounded trees of AES-encrypted ZIPs with varied synthetic documents."""
 from dataclasses import dataclass, field
 import io
-import json
 import posixpath
 import secrets
 import zipfile
@@ -15,19 +14,57 @@ from physalia.formats import FORMATS, render, render_switchable_env, resolve_con
 from physalia.i18n import translate
 from physalia.naming import plausible_filename
 from physalia.passwords import make_password, validate_policy
-from physalia.validation import CanaryURLCycle, canary_url_list, filename, integer
+from physalia.validation import filename, integer
 from physalia.scenarios import place_canary, scenario_for
 
 MAX_LAYERS = 8
 MAX_NODES = 40
 MAX_CONTENT_BYTES = 32 * 1024 * 1024
 MAX_ARCHIVE_BYTES = 64 * 1024 * 1024
-PRIMARY_FORMAT_PERCENT = 75
-ALTERNATE_FORMAT_WEIGHTS = {
-    "xlsx": 20, "sqlite": 20, "env": 15, "csv": 15,
-    "pdf": 10, "json": 10, "txt": 5, "html": 3, "pptx": 2,
+DIRECTORY_DIMENSIONS = {
+    "crm": (("customer_1048", "customer_2176", "customer_3891", "account_west", "account_enterprise"),
+            ("day_03", "day_08", "day_14", "day_21", "day_27"),
+            ("owner_team_a", "owner_team_b", "review_queue", "regional_review")),
+    "migration": (("batch_014", "batch_027", "source_legacy", "target_import", "delta_review"),
+                  ("customer_1048", "customer_2176", "account_west", "account_enterprise"),
+                  ("day_03", "day_08", "day_14", "day_21", "day_27")),
+    "archive": (("customer_1048", "customer_2176", "account_west", "account_enterprise", "retention_hold"),
+                ("snapshot_01", "snapshot_15", "day_08", "day_21"),
+                ("owner_team_a", "owner_team_b", "restore_review", "retention_check")),
+    "cards": (("cardholder_1048", "cardholder_2176", "renewal_batch", "billing_west"),
+              ("day_03", "day_08", "day_14", "day_21", "day_27"),
+              ("review_team_a", "review_team_b", "reconciliation", "expiry_review")),
+    "companies": (("company_1048", "company_2176", "company_west", "enterprise_accounts"),
+                  ("contact_updates", "ownership_review", "day_08", "day_21"),
+                  ("owner_team_a", "owner_team_b", "industry_review")),
+    "passwords": (("service_billing", "service_support", "service_archive", "service_portal"),
+                  ("account_1048", "account_2176", "account_admin", "recovery_queue"),
+                  ("rotation_review", "owner_team_a", "owner_team_b", "access_review")),
+    "api_credentials": (("integration_billing", "integration_support", "client_1048", "client_2176"),
+                        ("rotation_01", "rotation_15", "scope_review", "day_21"),
+                        ("owner_team_a", "owner_team_b", "access_review", "release_check")),
+    "invoices": (("customer_1048", "customer_2176", "region_west", "enterprise_accounts"),
+                 ("day_03", "day_08", "day_14", "day_21", "day_27"),
+                 ("collector_team_a", "collector_team_b", "overdue_review", "reconciliation")),
+    "employees": (("department_finance", "department_ops", "department_support", "region_west"),
+                  ("employee_1048", "employee_2176", "employee_3891", "payroll_review"),
+                  ("manager_team_a", "manager_team_b", "onboarding", "role_review")),
+    "vendors": (("vendor_1048", "vendor_2176", "supplier_west", "service_partner"),
+                ("contract_014", "contract_027", "renewal_review", "day_21"),
+                ("owner_team_a", "owner_team_b", "due_diligence", "finance_review")),
+    "orders": (("customer_1048", "customer_2176", "region_west", "enterprise_accounts"),
+               ("day_03", "day_08", "day_14", "day_21", "day_27"),
+               ("fulfillment_team_a", "fulfillment_team_b", "returns_review", "billing_check")),
+    "tickets": (("customer_1048", "customer_2176", "region_west", "priority_queue"),
+                ("case_014", "case_027", "day_08", "day_21"),
+                ("agent_team_a", "agent_team_b", "escalation_review", "resolution_check")),
+    "assets": (("region_west", "region_east", "office_014", "datacenter_02"),
+               ("device_1048", "device_2176", "endpoint_3891", "license_review"),
+               ("assigned_team_a", "assigned_team_b", "lifecycle_review")),
+    "cloud": (("subscription_014", "subscription_027", "tenant_west", "platform_shared"),
+              ("region_east", "region_west", "resource_group_1048", "resource_group_2176"),
+              ("deployment_014", "deployment_027", "owner_team_a", "recovery_review")),
 }
-DEFAULT_DIRECTORIES = ["finance", "operations", "exports", "backups", "archive", "config", "reports"]
 HINT_NOTE_PRESETS = {
     "ja": (
         "データ移行 引継ぎメモ\n展開キー控えは月次の鍵管理票を参照。\n末尾{hint}文字は別管理。\n",
@@ -64,45 +101,38 @@ def generate_nest(settings, language="ja"):
     decoys = integer(settings.get("decoys", 4), "decoys", 0, 10, language)
     directory_depth = integer(settings.get("directory_depth", 2), "directory_depth", 1, 5, language)
     rows = integer(settings.get("rows", 20), "rows", 1, 100, language)
-    chance = integer(settings.get("canary_percent", 25), "canary_percent", 0, 100, language)
     count = sum(branches ** n for n in range(layers))
     if count > MAX_NODES:
         raise ValueError(translate("node_limit", language, count=count, maximum=MAX_NODES))
-    fmt = settings.get("format", "txt")
-    if not isinstance(fmt, str) or fmt not in FORMATS:
-        raise ValueError(translate("invalid_format", language))
-    varied_formats = settings.get("varied_formats", True)
-    if not isinstance(varied_formats, bool):
-        raise ValueError(translate("invalid_format", language))
-    directories = settings.get("directories", DEFAULT_DIRECTORIES)
+    rng = secrets.SystemRandom()
+    scenario_name, scenario = scenario_for(settings, language)
+    directories = settings.get("directories", DIRECTORY_DIMENSIONS.get(scenario_name, DIRECTORY_DIMENSIONS["crm"])[0])
     if not isinstance(directories, list) or not 1 <= len(directories) <= 20:
         raise ValueError(translate("directories_error", language))
     directories = [filename(v, language) for v in directories]
     if len({directory.casefold() for directory in directories}) != len(directories):
         raise ValueError(translate("directories_error", language))
     policy = validate_policy(settings.get("password_policy", {}), language)
-    url_cycle = CanaryURLCycle(canary_url_list(settings, language))
-    scenario_name, scenario = scenario_for(settings, language)
+    # Encrypted Deep Nest is a decoy-only sample; it never places canary files.
     context = resolve_context({"canary_context": scenario["context"]}, language)
+    directory_dimensions = DIRECTORY_DIMENSIONS.get(scenario_name, DIRECTORY_DIMENSIONS["crm"])
+    current_year = datetime.now(timezone.utc).year
+    year_names = [str(year) for year in range(current_year - 3, current_year + 1)]
+    month_names = [f"{month:02d}_{name}" for month, name in enumerate(
+        ("january", "february", "march", "april", "may", "june", "july", "august",
+         "september", "october", "november", "december"), 1)]
+    directory_levels = (year_names, month_names,
+                        list(dict.fromkeys((*directory_dimensions[0], *directories))),
+                        list(directory_dimensions[1]), list(directory_dimensions[2]))
     period = datetime.now(timezone.utc).strftime("%Y%m")
     basename = plausible_filename("nest")
-    rng = secrets.SystemRandom()
     inventory, documents, consumed, archived = [], [], 0, 0
     format_counts = {name: 0 for name in FORMATS}
     passwords = set()
 
     def path():
-        parts, used = [], set()
-        for _ in range(rng.randint(1, directory_depth)):
-            candidates = [name for name in directories if name.casefold() not in used]
-            if not candidates:
-                candidates = [name for name in directories if not parts or name.casefold() != parts[-1].casefold()]
-            if not candidates:
-                candidates = directories
-            selected = rng.choice(candidates)
-            parts.append(selected)
-            used.add(selected.casefold())
-        return "/".join(parts)
+        depth = rng.randint(1, directory_depth)
+        return "/".join(rng.choice(directory_levels[level]) for level in range(depth))
 
     def budget(content):
         nonlocal consumed
@@ -151,17 +181,10 @@ def generate_nest(settings, language="ja"):
             used_members.add(key)
             return True
 
-        for _ in range(decoys):
-            token_url = url_cycle.next() if rng.randrange(100) < chance else ""
-            document_fmt = fmt
-            if varied_formats and rng.randrange(100) >= PRIMARY_FORMAT_PERCENT:
-                alternatives = [(name, weight) for name, weight in ALTERNATE_FORMAT_WEIGHTS.items() if name != fmt]
-                ticket = rng.randrange(sum(weight for _, weight in alternatives))
-                for name, weight in alternatives:
-                    if ticket < weight:
-                        document_fmt = name
-                        break
-                    ticket -= weight
+        archive_formats = rng.sample(tuple(FORMATS), len(FORMATS))
+        for decoy_index in range(decoys):
+            token_url = ""
+            document_fmt = archive_formats[decoy_index % len(archive_formats)]
             format_counts[document_fmt] += 1
             if document_fmt == "env":
                 content = render_switchable_env({"env_variable": scenario["env_key"]}, title, token_url, language)
@@ -269,26 +292,17 @@ def generate_nest(settings, language="ja"):
             note_path = hint_path(outer_name)
             write_archive_member(delivery, note_path, hint_text(hint), language=language)
             inventory[0]["hint_file"] = note_path
-    canary_examples = [
-        {"path": item["path"], "field": item.get("canary_field"),
-         "record": item.get("canary_record"), "location": item.get("canary_location")}
-        for item in documents if item.get("canary")
-    ][:3]
-    manifest = {
-        "format": "Physalia operator inventory v3", "warning": translate("operator_warning", language),
-        "deployment": outer_name, "policy": policy, "layers": layers, "branches": branches,
-        "scenario": scenario_name, "schema": scenario["schema"],
-        "primary_document_format": fmt, "varied_formats": varied_formats,
-        "format_counts": {name: amount for name, amount in format_counts.items() if amount},
-        "archives": inventory, "documents": documents,
-        "summary": {"archives": count, "documents": len(documents), "canaries": sum(d["canary"] for d in documents),
-                    "primary_document_format": fmt, "varied_formats": varied_formats,
-                    "format_counts": {name: amount for name, amount in format_counts.items() if amount},
-                    "canary_location_examples": canary_examples},
-    }
-    companion = Artifact(f"{basename}.operator.json", "application/json",
-                         json.dumps(manifest, ensure_ascii=False, indent=2, allow_nan=False).encode("utf-8"))
+    summary = {"archives": count, "documents": len(documents), "canaries": 0,
+               "format_counts": {name: amount for name, amount in format_counts.items() if amount}}
+    password_lines = [
+        "Physalia Encrypted Deep Nest verification passwords",
+        "For authorized sample verification only. Contains passwords; keep private and do not deploy.",
+        "",
+    ]
+    password_lines.extend(f"{item['path']}\t{item['password']}" for item in inventory)
+    companion = Artifact(f"{basename}_zip_passwords.txt", "text/plain; charset=utf-8",
+                         "\n".join(password_lines).encode("utf-8"), role="verification")
     deployment = output.getvalue()
     if len(deployment) > MAX_ARCHIVE_BYTES:
         raise ValueError(translate("archive_size_limit", language))
-    return Artifact(f"{basename}_deployment.zip", "application/zip", deployment, [companion], manifest["summary"])
+    return Artifact(f"{basename}_deployment.zip", "application/zip", deployment, [companion], summary)

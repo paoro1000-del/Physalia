@@ -614,26 +614,28 @@ def render(fmt, title, url, data, language="ja", reference=None, context=None, a
             display_row = list(map(str, row))
             if link_target and column_index is not None:
                 display_row[column_index] = label
-            for visible_text in wrapped_lines(" | ".join(display_row)):
+            row_text = " | ".join(display_row)
+            link_start = (sum(len(value) + 3 for value in display_row[:column_index])
+                          if link_target and column_index is not None else -1)
+            link_end = link_start + len(label) if link_start >= 0 else -1
+            consumed = 0
+            for visible_text in wrapped_lines(row_text):
                 if y < 45:
                     pdf.showPage()
                     y = page_heading()
                 pdf.drawString(40, y, visible_text)
+                if link_target and link_start >= 0:
+                    line_start, line_end = consumed, consumed + len(visible_text)
+                    overlap_start = max(link_start, line_start)
+                    overlap_end = min(link_end, line_end)
+                    if overlap_start < overlap_end:
+                        left = 40 + pdfmetrics.stringWidth(
+                            visible_text[:overlap_start - line_start], font, 7)
+                        right = 40 + pdfmetrics.stringWidth(
+                            visible_text[:overlap_end - line_start], font, 7)
+                        pdf.linkURL(link_target, (left, y - 2, min(555, right), y + 9), relative=0)
+                consumed += len(visible_text)
                 y -= 10
-            if link_target and column_index is not None:
-                link_text = f"{display_headers[column_index]}: {label}"
-                if y < 55:
-                    pdf.showPage()
-                    y = page_heading()
-                for link_line in wrapped_lines(link_text, max_width=503):
-                    if y < 45:
-                        pdf.showPage()
-                        y = page_heading()
-                    pdf.drawString(52, y, link_line)
-                    link_width = pdfmetrics.stringWidth(link_line, font, 7)
-                    pdf.linkURL(link_target, (52, y - 2, min(555, 52 + link_width), y + 9), relative=0)
-                    y -= 10
-                y -= 2
         pdf.save()
     else:
         raise ValueError(translate("invalid_format", language))

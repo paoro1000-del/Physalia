@@ -35,6 +35,15 @@ def attach_inventory(asset, kind, settings, language):
                 location["artifact"] = new_name + artifact_name[len(old_name):]
                 break
 
+    if kind == "nest":
+        # The sample needs only a private password list for authorized testing.
+        # Do not emit the opaque lifecycle inventory used by other generators.
+        asset.summary.update({"kind": kind, "has_monitoring_url": False,
+                              "canary_url_configured": False, "canary_placements": 0,
+                              "canary_urls_supplied": 0, "canary_urls_used": 0,
+                              "canary_urls_unused": 0, "reserved_canary_host": False})
+        return asset
+
     raw_urls = settings.get("canary_urls")
     if kind in ("nest", "directory_maze", "encoding_maze") and raw_urls is not None:
         active_urls = [url for url in raw_urls if isinstance(url, str) and url.strip()] if isinstance(raw_urls, list) else []

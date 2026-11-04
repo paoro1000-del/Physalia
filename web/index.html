@@ -213,20 +213,21 @@
           <input id="canary-field" type="hidden" value=""><input id="canary-label" type="hidden" value="">
         </div>
         <div id="nest-fields" class="fields" hidden>
-          <div class="panel-title"><h3 data-i18n="nest_title">エンクリプテッド・ディープ・ネスト</h3><p data-i18n="nest_desc">ZIPごとに方針に沿ったパスワードを生成し、分岐構造と選択形式を中心にしたダミーファイルを作ります。重複を検出し、必要に応じてランダム方式で置き換えて一意にします。</p></div>
+          <div class="panel-title"><h3 data-i18n="nest_title">エンクリプテッド・ディープ・ネスト</h3><p data-i18n="nest_desc">ZIPごとに方針に沿ったパスワードを生成し、分岐構造の中に複数形式のダミーファイルを作ります。重複を検出し、必要に応じてランダム方式で置き換えて一意にします。</p></div>
           <label for="nest-scenario" data-i18n="scenario_label">デコイの用途</label><select id="nest-scenario"><option value="crm" data-i18n="scenario_crm">顧客管理の登録簿</option><option value="migration" data-i18n="scenario_migration">顧客データ移行</option><option value="archive" data-i18n="scenario_archive">顧客データ保管</option><option value="cards" data-i18n="scenario_cards">支払カード台帳</option><option value="companies" data-i18n="scenario_companies">取引先企業一覧</option><option value="passwords" data-i18n="scenario_passwords">認証情報保管庫</option><option value="api_credentials" data-i18n="scenario_api_credentials">API&#35469;&#35388;&#24773;&#22577;&#21488;&#24115;</option><option value="invoices" data-i18n="scenario_invoices">請求書・入金一覧</option><option value="employees" data-i18n="scenario_employees">従業員・部署一覧</option><option value="vendors" data-i18n="scenario_vendors">仕入先・委託先台帳</option><option value="orders" data-i18n="scenario_orders">受注・販売台帳</option><option value="tickets" data-i18n="scenario_tickets">サポートチケット一覧</option><option value="assets" data-i18n="scenario_assets">IT資産台帳</option><option value="cloud" data-i18n="scenario_cloud">クラウド資産一覧</option></select><p id="nest-scenario-schema" class="help scenario-schema-summary" aria-live="polite" hidden></p>
           <p class="help" data-i18n="scenario_help">用途に合う合成データのスキーマ・ファイル名・タイトル・URL文脈をそろえます。実在する個人情報は使いません。</p>
           <div class="form-grid">
-            <div><label for="layers" data-i18n="nest_layers">ZIP階層数（最初を含む）</label><input id="layers" type="number" value="3" min="1" max="8" required aria-describedby="nest-estimate"></div>
-            <div><label for="branches" data-i18n="nest_branches">各ZIPに含める子ZIP数</label><input id="branches" type="number" value="2" min="1" max="3" required aria-describedby="nest-estimate"></div>
-            <div><label for="decoys" data-i18n="decoys">各ZIP内のダミーファイル数</label><input id="decoys" type="number" value="4" min="0" max="10" required aria-describedby="nest-estimate"></div>
-            <div><label for="directory-depth" data-i18n="directory_depth">各ZIP内のフォルダー深度（最大）</label><input id="directory-depth" type="number" value="2" min="1" max="5" required></div>
-            <div><label for="nest-rows" data-i18n="nest_rows">ダミー文書・DBのレコード件数</label><input id="nest-rows" type="number" value="20" min="1" max="100" required></div>
+            <div><label for="layers" data-i18n="nest_layers">ZIP階層数（最初を含む）</label><input id="layers" type="number" value="3" min="1" max="8" required readonly aria-describedby="nest-estimate"></div>
+            <div><label for="branches" data-i18n="nest_branches">各ZIPに含める子ZIP数</label><input id="branches" type="number" value="2" min="1" max="3" required readonly aria-describedby="nest-estimate"></div>
+            <div><label for="decoys" data-i18n="decoys">各ZIP内のダミーファイル数</label><input id="decoys" type="number" value="4" min="0" max="10" required readonly aria-describedby="nest-estimate"></div>
+            <div><label for="directory-depth" data-i18n="directory_depth">各ZIP内のフォルダー深度（最大）</label><input id="directory-depth" type="number" value="4" min="1" max="5" required readonly></div>
+            <div><label for="nest-rows" data-i18n="nest_rows">ダミー文書・DBのレコード件数</label><input id="nest-rows" type="number" value="20" min="1" max="100" required readonly></div>
           </div>
-          <label for="directories" data-i18n="directories">フォルダー名候補（用途別の初期値・編集可、英数字・カンマ区切り）</label><input id="directories" value="finance,operations,exports,backups,archive,config,reports" maxlength="1300">
-          <div><label for="nest-format" data-i18n="nest_format">主なダミーファイル形式</label><select id="nest-format"><option value="env" data-i18n="format_env">.env</option><option value="txt" data-i18n="format_txt" selected>テキスト（.txt）</option><option value="json" data-i18n="format_json">JSON</option><option value="csv" data-i18n="format_csv">CSV</option><option value="html" data-i18n="format_html">HTML文書（架空レコード）</option><option value="pdf" data-i18n="format_pdf">PDF</option><option value="xlsx" data-i18n="format_xlsx">Excel（.xlsx）</option><option value="pptx" data-i18n="format_pptx">PowerPoint（.pptx）</option><option value="sqlite" data-i18n="format_sqlite">SQLite（.db）</option></select></div>
-          <label class="check-label"><input id="nest-varied-formats" type="checkbox" checked><span data-i18n="nest_varied_formats">選択形式を中心に、他形式も時々混ぜる</span></label>
-          <p class="help" data-i18n="nest_varied_formats_help">選択した形式を約75%に保ち、残りにExcel・SQLite・.envなどを重み付きで混ぜます。これは暗号化ネスト内のダミー文書に適用されます。</p>
+          <label for="directories" data-i18n="directories">対象階層の候補名（用途に応じて自動設定）</label><input id="directories" value="customer_1048,customer_2176,customer_3891,account_west,account_enterprise" maxlength="1300" readonly>
+          <p class="help" data-i18n="nest_auto_settings">上記の設定値と候補名は、用途に応じて生成時に自動でランダム設定します。</p>
+          <p class="help" data-i18n="nest_directory_pattern">フォルダーは年 → 月 → 用途別の対象 → 日付・担当などの順に細分化します。</p>
+          <div hidden aria-hidden="true"><select id="nest-format"><option value="env">.env</option><option value="txt" selected>Text</option><option value="json">JSON</option></select><input id="nest-varied-formats" type="checkbox" checked><input id="canary-percent" type="number" value="0"></div>
+          <p class="help" data-i18n="nest_formats_random">ファイル形式は生成ごとにランダムに選び、複数の形式を混ぜます。</p>
            <details class="nest-password-details"><summary data-i18n="nest_password_details">パスワード生成の詳細（初期値で作成できます）</summary>
            <fieldset aria-describedby="password-help"><legend data-i18n="password_policy">自動生成するパスワードの方針</legend>
             <div class="form-grid"><div><label for="password-mode" data-i18n="password_mode">生成方式</label><select id="password-mode"><option value="memorable" data-i18n="memorable">単語＋数字・記号</option><option value="random" data-i18n="random">完全ランダム</option></select></div>
@@ -239,11 +240,8 @@
             <label class="check-label"><input id="progressive" type="checkbox" checked><span data-i18n="progressive">序盤は短く、深い階層ほど長くする</span></label>
             <p id="password-help" class="help" data-i18n="password_help">保守メモは、別の鍵台帳を探させるためのデコイです。実際のパスワード文字は含まず、伏せ字の文字数も利用可能な手掛かりではありません。パスワード本体は管理者専用ファイルにのみ保存されます。既定の9〜13文字では、段階設定により序盤を短くし、深い階層ほど長くします。ZIP取得後はオフラインで並列試行できるため、解読成功や遅延は保証されません。単語形式の候補が重複した場合はランダム値に切り替わります。9〜13文字でも解読困難な場合があり、所要時間はZIP形式や攻撃設備に左右されます。</p>
            </fieldset></details>
-          <div class="form-grid"><div><label for="nest-url"><span data-i18n="canary_urls">カナリアURL（1行に1つ）</span> <span class="optional" data-i18n="optional">任意</span></label><textarea id="nest-url" data-secret-url rows="3" maxlength="820000" placeholder="https://...&#10;https://..."></textarea></div>
-          <div><label for="canary-percent" data-i18n="canary_percent">ダミーへのカナリア配置率（%）</label><input id="canary-percent" type="number" min="0" max="100" value="25" required></div></div>
-          <p class="help" data-i18n="canary_probability">各ファイルで個別に抽選します。0%なら配置せず、100%なら全ダミーに配置します。複数URLは再利用前に別々のファイルに配置し、最大400URLまで指定できます。抽選で選ばれたファイル数よりURLが多い場合、余りは未使用です。同じURLを再利用した場合、通知からファイルを特定できません。URLが空欄なら通知用URLは入りません。</p>
           <div id="nest-estimate" class="inline-note" aria-live="polite"></div>
-          <div class="inline-note" data-i18n="nest_note">AES対応のZIPツールで開けます。生成本文は32MiB、暗号化ZIPの累積サイズは64MiBまでです。配置用ZIPと、パスワード・構成を含むJSON、運用台帳JSONを別々に保存してください。管理者専用JSONは配置・公開しないでください。</div>
+          <div class="inline-note" data-i18n="nest_note">AES対応のZIPツールで開けます。サンプルを解凍して動作を確かめる場合は、ZIPパスワード一覧を使います。パスワードを含むため、検証専用に保管し、デコイと一緒に配置・公開しないでください。生成本文は32MiB、暗号化ZIPの累積サイズは64MiBまでです。</div>
         </div>
         <div id="database-fields" class="fields" hidden>
           <div class="panel-title"><h3 data-i18n="database_title">デコイ・データベース</h3><p data-i18n="database_desc">項目の構成とデータ種類を指定してSQLiteを生成します。</p></div>
@@ -251,7 +249,8 @@
            <div class="form-grid">
           <div><label for="table-name" data-i18n="table_name">テーブル名</label><input id="table-name" value="customers" maxlength="48"></div>
           <div><label for="rows" data-i18n="rows">レコード件数</label><input id="rows" type="number" value="100" min="1" max="10000" required><p class="help database-rows-help" data-i18n="database_rows_help">初期値は100件です。SQLiteファイルは最大32 MiBです。上限に達した場合は、件数か列数を減らしてください。</p></div>
-           <div><label for="db-url"><span data-i18n="canary_url">カナリアURL</span> <span class="optional" data-i18n="optional">任意</span></label><textarea id="db-url" rows="1" inputmode="url" spellcheck="false" autocapitalize="none" maxlength="2048" placeholder="https://..." autocomplete="off"></textarea></div></div>
+           <div><label for="db-url"><span data-i18n="canary_url">カナリアURL</span> <span class="optional" data-i18n="optional">任意</span></label><textarea id="db-url" rows="1" inputmode="url" spellcheck="false" autocapitalize="none" maxlength="2048" placeholder="https://..." autocomplete="off">__LOCAL_CANARY_URL__</textarea></div></div>
+          <p class="help" data-i18n="local_canary_scope">初期のカナリアページURLは、このPCでPhysaliaを起動している間だけ動作確認に使えます。別PCからは届きません。本番運用では、HTTPSで外部ネットワークからアクセスできる場所にカナリアページを公開し、そのURLをここに指定してください。</p>
            <p class="help" data-i18n="database_identifier_help">テーブル名・列名は、英字または_で始まる英数字と_のみ、48文字以内です。sqlite_で始まる名前は使えません。例: customers、last_contact。日本語の表示項目名とは別に、ここには英数字の名前を入力します。</p>
            <details class="database-email-details"><summary data-i18n="database_email_summary">メール用ドメイン（専用ドメインを使う場合）</summary>
            <div class="form-grid"><div><label for="db-email-domain" data-i18n="email_domain">隔離デコイ専用メールドメイン（任意）</label><input id="db-email-domain" type="text" maxlength="204" placeholder="decoy.example-corp.jp" autocomplete="off"></div></div>
@@ -271,7 +270,8 @@
           <div class="panel-title"><h3 data-i18n="web_title">スタティック・デコイ・ポータル</h3><p data-i18n="web_desc">静的なアーカイブ画面を生成します。</p></div>
           <label for="web-scenario" data-i18n="web_scenario_label">サイトの用途</label><select id="web-scenario"><option value="operations" data-i18n="web_scenario_operations">運用ポータル</option><option value="shared" data-i18n="web_scenario_shared">共有ドキュメント</option><option value="archive" data-i18n="web_scenario_archive">業務アーカイブ</option><option value="records" data-i18n="web_scenario_records">記録管理</option></select>
           <label for="title" data-i18n="page_title">画面タイトル</label><input id="title" type="text" data-i18n-placeholder="default_page_title" maxlength="80">
-          <label for="web-url"><span data-i18n="canary_url">カナリアURL</span> <span class="optional" data-i18n="optional">任意</span></label><textarea id="web-url" rows="1" inputmode="url" spellcheck="false" autocapitalize="none" placeholder="https://..." maxlength="2048" autocomplete="off"></textarea>
+          <label for="web-url"><span data-i18n="canary_url">カナリアURL</span> <span class="optional" data-i18n="optional">任意</span></label><textarea id="web-url" rows="1" inputmode="url" spellcheck="false" autocapitalize="none" placeholder="https://..." maxlength="2048" autocomplete="off">__LOCAL_CANARY_URL__</textarea>
+          <p class="help" data-i18n="local_canary_scope">初期のカナリアページURLは、このPCでPhysaliaを起動している間だけ動作確認に使えます。別PCからは届きません。本番運用では、HTTPSで外部ネットワークからアクセスできる場所にカナリアページを公開し、そのURLをここに指定してください。</p>
           <p class="help" data-i18n="web_help">URLを指定するとリンクを配置します。ページを開くだけではURLにアクセスしません。</p>
           <div class="inline-note" data-i18n="web_note">静的HTMLです。ログイン、設定変更、アクセス監視、無限配信には別途サーバーが必要です。</div>
         </div>
@@ -321,7 +321,8 @@
            <div><label for="maze-depth" data-i18n="maze_depth">ルートからのディレクトリ階層数</label><input id="maze-depth" type="number" value="3" min="1" max="6" required aria-describedby="maze-estimate"></div>
            <div><label for="maze-branches" data-i18n="branches">次階層への分岐数</label><input id="maze-branches" type="number" value="3" min="1" max="5" required aria-describedby="maze-estimate"></div>
            <div><label for="maze-files" data-i18n="maze_files">各ディレクトリのダミーファイル数</label><input id="maze-files" type="number" value="1" min="1" max="3" required aria-describedby="maze-estimate"></div>
-           <div><label for="maze-url"><span data-i18n="canary_urls">カナリアURL（1行に1つ）</span> <span class="optional" data-i18n="optional">任意</span></label><textarea id="maze-url" data-secret-url rows="3" maxlength="820000" placeholder="https://...&#10;https://..."></textarea></div></div>
+           <div><label for="maze-url"><span data-i18n="canary_urls">カナリアURL（1行に1つ）</span> <span class="optional" data-i18n="optional">任意</span></label><textarea id="maze-url" data-secret-url rows="3" maxlength="820000" placeholder="https://...&#10;https://...">__LOCAL_CANARY_URL__</textarea></div></div>
+          <p class="help" data-i18n="local_canary_scope">初期のカナリアページURLは、このPCでPhysaliaを起動している間だけ動作確認に使えます。別PCからは届きません。本番運用では、HTTPSで外部ネットワークからアクセスできる場所にカナリアページを公開し、そのURLをここに指定してください。</p>
            <label class="check-label"><input id="maze-cross-links" type="checkbox" checked><span data-i18n="maze_cross_links">別枝・親へのリンクを配置して回遊経路を作る</span></label></details>
           <div class="inline-note" data-i18n="directory_note">全ダミーファイルを選択した1形式に統一します。最大400ディレクトリ・生成内容16MiB。循環するのはHTMLリンクで、シンボリックリンクや再帰展開する仕掛けは作りません。URL重複を除外する探索では巡回が止まります。カナリアURLは配置ファイル数まで割り当て、管理者専用JSONにパスとの対応を記録します。配置ファイルよりURLが多い場合、余りは未使用です。再利用URLの通知では接触ファイルを特定できません。</div>
         </div>
@@ -335,7 +336,8 @@
           <p id="encoding-estimate" class="help" data-i18n="encoding_estimate" aria-live="polite">変換処理の目安：{operations}回（候補{candidates}件×各{layers}段）。これは生成サイズの予測ではありません。生成上限16MiB。</p>
            <details class="encoding-advanced"><summary data-i18n="encoding_advanced_summary">変換方式とカナリア設定（初期値で作成できます）</summary>
            <fieldset><legend data-i18n="encoding_codecs">各階層で使用する変換方式</legend><div class="checks" id="encoding-codecs"><label><input type="checkbox" value="base64" checked>Base64</label><label><input type="checkbox" value="base64url">Base64url</label><label><input type="checkbox" value="hex" checked>Hex</label><label><input type="checkbox" value="percent" checked>Percent encoding</label><label><input type="checkbox" value="gzip_base64" checked>Gzip + Base64</label></div></fieldset>
-           <label for="encoding-url"><span data-i18n="canary_urls">カナリアURL（1行に1つ）</span> <span class="optional" data-i18n="optional">任意</span></label><textarea id="encoding-url" data-secret-url rows="3" maxlength="820000" placeholder="https://...&#10;https://..."></textarea></details>
+           <label for="encoding-url"><span data-i18n="canary_urls">カナリアURL（1行に1つ）</span> <span class="optional" data-i18n="optional">任意</span></label><textarea id="encoding-url" data-secret-url rows="3" maxlength="820000" placeholder="https://...&#10;https://...">__LOCAL_CANARY_URL__</textarea>
+          <p class="help" data-i18n="local_canary_scope">初期のカナリアページURLは、このPCでPhysaliaを起動している間だけ動作確認に使えます。別PCからは届きません。本番運用では、HTTPSで外部ネットワークからアクセスできる場所にカナリアページを公開し、そのURLをここに指定してください。</p></details>
           <div class="inline-note" data-i18n="encoding_note">各層はencodingとpayloadを持つJSONです。暗号化ではありません。管理者専用JSONにシナリオ・復元順序・URLと候補の対応・SHA-256を記録します。生成内容16MiBまで。短いスクリプトで一括復元できるため、遅滞効果は探索・検証の運用で評価してください。候補数よりURLが多い場合、余りは未使用です。再利用URLの通知では接触候補を特定できません。</div>
         </div>
         <div id="vault-domain-fields" class="fields" hidden>
