@@ -3,7 +3,6 @@ from dataclasses import dataclass, field
 import io
 import posixpath
 import secrets
-import zipfile
 from datetime import datetime, timezone
 
 import pyzipper
@@ -284,16 +283,7 @@ def generate_nest(settings, language="ja"):
         raise ValueError(translate("unique_path_error", language))
 
     outer_name = f"{basename}.zip"
-    outer, hint = node(1, outer_name)
-    # A separate unencrypted delivery ZIP contains the outer archive and optional recovery-note decoy.
-    # It never contains passwords or the operator inventory.
-    output = io.BytesIO()
-    with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as delivery:
-        write_archive_member(delivery, outer_name, outer, language=language)
-        if hint:
-            note_path = hint_path(outer_name)
-            write_archive_member(delivery, note_path, hint_text(), language=language)
-            inventory[0]["hint_file"] = note_path
+    outer, _root_hint = node(1, outer_name)
     summary = {"archives": count, "documents": len(documents), "canaries": 0,
                "format_counts": {name: amount for name, amount in format_counts.items() if amount}}
     password_lines = [
@@ -304,7 +294,5 @@ def generate_nest(settings, language="ja"):
     password_lines.extend(f"{item['path']}\t{item['password']}" for item in inventory)
     companion = Artifact(f"{basename}_zip_passwords.txt", "text/plain; charset=utf-8",
                          "\n".join(password_lines).encode("utf-8"), role="verification")
-    deployment = output.getvalue()
-    if len(deployment) > MAX_ARCHIVE_BYTES:
-        raise ValueError(translate("archive_size_limit", language))
-    return Artifact(f"{basename}_deployment.zip", "application/zip", deployment, [companion], summary)
+    # Deliver the first AES-encrypted archive itself, without a plaintext ZIP wrapper.
+    return Artifact(outer_name, "application/zip", outer, [companion], summary)

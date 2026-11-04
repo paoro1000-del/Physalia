@@ -38,6 +38,18 @@ def attach_inventory(asset, kind, settings, language):
     if kind == "nest":
         # The sample needs only a private password list for authorized testing.
         # Do not emit the opaque lifecycle inventory used by other generators.
+        original_outer_name = next((old_name for old_name, new_name in renamed.items()
+                                    if new_name == asset.name and old_name.endswith(".zip")), None)
+        if original_outer_name:
+            for companion in asset.companions:
+                if companion.role != "verification":
+                    continue
+                lines = companion.content.decode("utf-8").splitlines()
+                companion.content = ("\n".join(
+                    asset.name + line[len(original_outer_name):]
+                    if line.startswith(original_outer_name) else line
+                    for line in lines
+                )).encode("utf-8")
         asset.summary.update({"kind": kind, "has_monitoring_url": False,
                               "canary_url_configured": False, "canary_placements": 0,
                               "canary_urls_supplied": 0, "canary_urls_used": 0,

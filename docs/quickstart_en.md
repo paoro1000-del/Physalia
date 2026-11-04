@@ -37,7 +37,7 @@ Artifacts contain fictional data and are saved by your browser. The app does not
 
 ### Reviewing ZIPs and databases
 
-Extract the ZIP to inspect its contents. For the Static Decoy Portal or Directory Maze, open the extracted `index.html` to inspect the pages. Deploy manually to a test environment you control. Review databases with a SQLite viewer you trust. Keep the Encrypted Deep Nest deployment ZIP separate from its operator-only JSON; never place the latter in a public directory.
+Extract ZIPs to inspect their contents. For the Static Decoy Portal or Directory Maze, open the extracted `index.html` to inspect the pages. Deploy manually to a test environment you control. Review databases with a SQLite viewer you trust. The Encrypted Deep Nest ZIP is encrypted itself; store its verification password list separately and never place that list in a public directory.
 
 ### Using Path Maze and Sparse Decoy
 
@@ -71,7 +71,7 @@ If you temporarily keep outputs inside the project, put them in the repository's
 
 ### Opening an Encrypted Deep Nest sample
 
-Save both `*_deployment.zip` and `*.operator.json` from the browser downloads. Extract the deployment ZIP to get the encrypted archive, then look up its password in the operator JSON. Open it with an archive utility that supports AES-encrypted ZIP files; repeat for any nested ZIPs. The operator JSON contains passwords and placement details for every layer. Do not publish or deploy it; store it separately in a restricted location. If you lose the operator JSON, you may no longer be able to open the encrypted archives.
+The downloaded `Physalia_*.zip` is itself the first AES-encrypted archive; there is no ordinary ZIP wrapper to extract first. Open it with an archive utility that supports AES-encrypted ZIP files and enter the matching path's password from `*_zip_passwords.txt`. Use the same list for nested archives. The password list is only for sample verification; it contains passwords, so keep it private and never deploy or publish it with the decoys.
 
 ## 3. If you deploy a sample
 

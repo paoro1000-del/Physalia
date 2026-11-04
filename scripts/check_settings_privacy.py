@@ -57,7 +57,9 @@ def main():
         print("Canary URL controls may be exported in settings: " + ", ".join(sorted(unsafe)),
               file=sys.stderr)
         return 1
-    required_url_fields = {"nest-url", "maze-url", "encoding-url"}
+    # Encrypted Deep Nest no longer accepts canary URLs. Keep capacity checks
+    # for the remaining multi-URL generators only.
+    required_url_fields = {"maze-url", "encoding-url"}
     if not required_url_fields.issubset(parser.fields):
         print("Cannot inspect every multi-URL generation control", file=sys.stderr)
         return 2
