@@ -868,6 +868,15 @@ translations.en.quick_filename_note = "The filename is chosen for the selected s
 translations.ja.quick_file_env_standard_help = "通常設定形式の.envファイルを作ります。レコード件数は使いません。先頭ドットのファイル名を保つためZIPに入ります。詳細設定のカナリアURLは引き継ぎ、URL項目の値として入れます。作成前に内容を確認してください。ファイルを読むだけではカナリアURLへアクセスしません。";
 translations.en.quick_file_env_standard_help = "Creates a standard .env settings file. No record count is used. It is packaged in a ZIP to preserve the leading dot in its filename. The canary URL from detailed settings is kept as the URL value; review the file before using it. Reading it alone does not request the canary URL.";
 translations.en.env_dev_url_authorization = "For hosts outside example.invalid, confirm that you own the host and route it only to an isolated test endpoint without production authentication.";
+Object.assign(translations.en, {
+  candidate_values_error: "Enter one to 100 candidate values, separated by commas.",
+  category_description: "Detection helps identify decoy contact or use. Delay adds work for an attacker. Decoy luring directs attention to fictional assets or pages. Post-exfiltration disruption makes copied candidates harder to assess or use. AI attack aware means AI agents are included in evaluation; the method may also affect human and scripted attacks. Detection and alerts may require separate setup, and no effect is guaranteed.",
+  category_guide: "What the tags mean",
+  column_name_error: "Enter a valid, unique column name.",
+  request_too_large: "The generation request is too large. Reduce the amount of input and try again.",
+  sensitive_setting_text: "Settings may contain credentials or payment data. Remove sensitive values before saving or loading.",
+  tag_ai: "AI attack aware",
+});
 translations.ja.quick_file_env_switch_help = "開発・本番の切替メモ付き.env.{suffix}を作ります。開発URLを有効にし、カナリアURLは本番用のコメント行に入れます。レコード件数は使いません。詳細設定の有効URLやメモは引き継ぐため、作成前に内容を確認してください。ファイルを読むだけではURLへアクセスしません。これはデコイ見本です。実アプリや本番設定には読み込ませず、隔離した検証環境だけで使ってください。";
 translations.en.quick_file_env_switch_help = "Creates .env.{suffix} with development/production switch notes. The development URL is active; the canary URL goes in a commented production line. No record count is used. Active URLs and notes from detailed settings are kept; review them before creating the file. Reading it alone does not request either URL. This is a decoy sample: do not load it into a real application or production configuration; use it only in an isolated test environment.";
 translations.ja.quick_preview_available = " 生成後、ダウンロード欄に架空レコードの先頭10件を表示します。";
@@ -953,6 +962,36 @@ Object.assign(translations.ja, {settings_privacy_summary:"設定JSONに保存さ
 Object.assign(translations.en, {settings_privacy_summary:"What the settings JSON contains", settings_privacy_help:"Dedicated URL fields and ownership confirmations are not saved. Domain values and ordinary settings may remain in the JSON. URLs or secrets in free-text fields are not automatically removed, so do not enter real data or secrets, and store the JSON securely."});
 Object.assign(translations.ja, {context_help:"用途に合う見出し・項目・架空データを設定します。レコード形式では、1件の自然なURL項目にカナリアURLを置き、生成結果に項目名とレコード番号を表示します。.envでは用途に合う設定キーを使います。"});
 Object.assign(translations.en, {context_help:"Chooses matching headings, fields and fictional data. Record formats place the canary URL in a natural URL field in one record; the result shows its field and record number. .env files use a matching setting key."});
+Object.assign(translations.ja, {
+  canary_file_result_summary:"{format}ファイルを作成しました（{rows}件）。",
+  database_result_summary:"データベースを作成しました（{rows}件、{columns}項目）。",
+  database_result_preset:"使用テンプレート：{preset}",
+  database_canary_field:"カナリアURLは「{field}」列のレコード{record}に配置しました。",
+  database_canary_api_field:"API接続先「{field}」のレコード{record}に配置しました。",
+  database_canary_table:"カナリアURLを接続先テーブルに配置しました。",
+  database_preview_title:"データプレビュー",
+  database_preview_caption:"全{rows}件のうち、{count}件をプレビューしています。",
+  canary_preview_caption:"生成した全{count}件のレコードを確認できます。",
+  preview_table_scroll_hint:"表を横にスクロールして右側の項目を確認できます。ページ送りでレコードを切り替えます。",
+  preview_page_status:"{start}–{end}件 / {total}件（{page}/{pages}ページ）",
+  preview_previous:"前へ", preview_next:"次へ",
+  preview_canary_target:"カナリアURLを設定したレコード{record}です。セルを強調表示しています。プレビューではURLを伏せています。"
+});
+Object.assign(translations.en, {
+  canary_file_result_summary:"Created {format} file with {rows} records.",
+  database_result_summary:"Created database with {rows} records and {columns} fields.",
+  database_result_preset:"Template: {preset}",
+  database_canary_field:"Canary URL is placed in record {record}, field {field}.",
+  database_canary_api_field:"Canary URL is placed in record {record}, API endpoint {field}.",
+  database_canary_table:"Canary URL is stored in a separate connection table.",
+  database_preview_title:"Data preview",
+  database_preview_caption:"Previewing {count} of {rows} records.",
+  canary_preview_caption:"All {count} generated records are available in the preview.",
+  preview_table_scroll_hint:"Scroll horizontally to see more fields. Use the page controls to move through records.",
+  preview_page_status:"Records {start}–{end} of {total} (page {page} of {pages})",
+  preview_previous:"Previous", preview_next:"Next",
+  preview_canary_target:"This is record {record} containing the canary URL. Its cell is highlighted; the URL is hidden in the preview."
+});
 Object.assign(translations.ja, {canary_location_title:"カナリアURLの配置", canary_location_record:"{path} — {field}列、レコード {record}", canary_location_env:"{path} — .env の {field}（本番用設定のコメント行）", canary_location_label:"{path} — {label}", canary_location_hidden:"この結果欄には配置先だけを表示しています。URL自体はダウンロードしたファイルで確認してください。", canary_location_unknown:"生成ファイル内に配置されています。詳細は運用者用インベントリを確認してください。"});
 Object.assign(translations.en, {canary_location_title:"Canary URL placement", canary_location_record:"{path} — {field} column, record {record}", canary_location_env:"{path} — .env {field} (commented production setting)", canary_location_label:"{path} — {label}", canary_location_hidden:"This result shows the placement only. Open the downloaded file to inspect the URL.", canary_location_unknown:"The URL is in the generated file. See the operator inventory for its location."});
 Object.assign(translations.ja, {canary_help:"動作確認：HTML形式でファイルを生成し、その中のリンクを押すと、左メニューの「カナリア接触ログ」で確認できます。", canary_note:"ファイルを読むだけでは通知されません。URLへのアクセスはスキャナーやリンクプレビューでも発生し、攻撃者や閲覧者の特定には使えません。初期URLは起動中のサンプルで共通のため、接触したファイルを区別できません。再起動後は新しいURLになります。生成器はURLへ接続しません。", canary_advanced_help:"外部の監視サービスを使う場合は、自分のアカウント用に発行されたHTTPS URLを指定します。URLに空白やフラグメント（#以降）は使えません。.env形式では$を含むURLは使えず、通常形式ではシングルクォートも使えません。"});
@@ -2085,6 +2124,15 @@ function renderDownloads(data) {
       const caption = document.createElement("caption");
       caption.textContent = t(isDatabasePreview ? "database_preview_caption" : "canary_preview_caption",
         {count: previewRows.length, rows: data.summary.rows});
+      const placement = data.summary.canary_placement || {};
+      const targetRecord = Number.isInteger(Number(placement.record)) ? Number(placement.record) : 0;
+      const targetFieldIndex = typeof placement.field === "string" ? previewColumns.indexOf(placement.field) : -1;
+      if (targetRecord > 0 && targetRecord <= previewRows.length) {
+        const targetNote = document.createElement("p");
+        targetNote.className = "database-preview-target-note";
+        targetNote.textContent = t("preview_canary_target", {record: targetRecord});
+        section.append(targetNote);
+      }
       const scrollHint = document.createElement("p");
       scrollHint.id = "generated-preview-scroll-hint";
       scrollHint.className = "database-preview-scroll-hint";
@@ -2117,20 +2165,65 @@ function renderDownloads(data) {
       thead.append(headerRow);
       table.append(thead);
       const tbody = document.createElement("tbody");
-      for (const row of previewRows) {
-        if (!Array.isArray(row)) continue;
-        const tr = document.createElement("tr");
-        for (let index = 0; index < previewColumns.length; index += 1) {
-          const td = document.createElement("td");
-          const value = row[index];
-          td.textContent = value == null ? "" : String(value);
-          tr.append(td);
+      const pageSize = 10;
+      const pageCount = Math.max(1, Math.ceil(previewRows.length / pageSize));
+      let currentPage = targetRecord > 0 && targetRecord <= previewRows.length
+        ? Math.floor((targetRecord - 1) / pageSize) : 0;
+      const controls = document.createElement("div");
+      controls.className = "database-preview-controls";
+      const previous = document.createElement("button");
+      previous.type = "button";
+      previous.textContent = t("preview_previous");
+      const pageStatus = document.createElement("span");
+      pageStatus.className = "database-preview-page-status";
+      pageStatus.setAttribute("aria-live", "polite");
+      const next = document.createElement("button");
+      next.type = "button";
+      next.textContent = t("preview_next");
+      controls.append(previous, pageStatus, next);
+      controls.hidden = pageCount <= 1;
+      function renderPreviewPage() {
+        const start = currentPage * pageSize;
+        const end = Math.min(start + pageSize, previewRows.length);
+        tbody.replaceChildren();
+        for (let offset = start; offset < end; offset += 1) {
+          const row = previewRows[offset];
+          if (!Array.isArray(row)) continue;
+          const recordNumber = offset + 1;
+          const isTargetRecord = recordNumber === targetRecord;
+          const tr = document.createElement("tr");
+          if (isTargetRecord) {
+            tr.classList.add("canary-preview-target-row");
+            tr.setAttribute("aria-current", "true");
+          }
+          for (let index = 0; index < previewColumns.length; index += 1) {
+            const td = document.createElement("td");
+            const value = row[index];
+            td.textContent = value == null ? "" : String(value);
+            if (isTargetRecord && index === targetFieldIndex) {
+              td.classList.add("canary-preview-target-cell");
+            }
+            tr.append(td);
+          }
+          tbody.append(tr);
         }
-        tbody.append(tr);
+        pageStatus.textContent = t("preview_page_status", {
+          start: previewRows.length ? start + 1 : 0, end, total: previewRows.length,
+          page: currentPage + 1, pages: pageCount,
+        });
+        previous.disabled = currentPage <= 0;
+        next.disabled = currentPage >= pageCount - 1;
       }
+      previous.addEventListener("click", () => {
+        if (currentPage > 0) { currentPage -= 1; renderPreviewPage(); }
+      });
+      next.addEventListener("click", () => {
+        if (currentPage < pageCount - 1) { currentPage += 1; renderPreviewPage(); }
+      });
+      renderPreviewPage();
       table.append(tbody);
       scroll.append(table);
-      section.append(scrollHint, scroll);
+      section.append(scrollHint, scroll, controls);
       $("#downloads").append(section);
     }
   }
@@ -2336,7 +2429,7 @@ function configControls() {
 const nonPersistentCanaryUrlControls = new Set(["env-url", "db-url", "web-url"]);
 const internalCanaryTemplateControls = new Set(["canary-field", "canary-label"]);
 const nonPersistentOperatorAttestations = new Set([
-  "env-dev-url-authorized", "db-email-domain-authorized", "vault-domain-authorized",
+  "db-email-domain-authorized", "vault-domain-authorized",
 ]);
 const unsafeSettingText = /[\p{Cc}\p{Zl}\p{Zp}\p{Cs}\u061c\u200e\u200f\u202a-\u202e\u2066-\u206f]/u;
 function hasUnsafeSettingText(value) { return typeof value === "string" && unsafeSettingText.test(value); }
@@ -2374,7 +2467,8 @@ if ($("#save-settings")) $("#save-settings").addEventListener("click", () => {
     // Keep the positional slots for compatibility, but never export canary tokens.
     controls: controls.map(el => el.type === "checkbox"
       ? (nonPersistentOperatorAttestations.has(el.id) ? false : el.checked)
-      : nonPersistentCanaryUrlControls.has(el.id) || internalCanaryTemplateControls.has(el.id) ? "" : el.value),
+      : nonPersistentCanaryUrlControls.has(el.id) ? ""
+        : internalCanaryTemplateControls.has(el.id) ? "" : el.value),
     columns};
   const url = URL.createObjectURL(new Blob([JSON.stringify(config, null, 2)], {type: "application/json"}));
   const link = document.createElement("a"); link.href = url; link.download = "adg-settings.json"; link.click();

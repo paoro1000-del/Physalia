@@ -594,7 +594,7 @@ def generate_canary(settings, language="ja", include_metadata=False):
         sample_rows = list(records(columns, count, language))
         if url:
             canary_row = secrets.randbelow(count)
-            if not use_email_link:
+            if not use_email_link and fmt not in ("xlsx", "pptx"):
                 sample_rows[canary_row][canary_column] = url
             canary_cell = (canary_row, canary_column)
         content = render(fmt, title, url, sample_rows, language, context=context, columns=columns,
@@ -664,7 +664,7 @@ def generate_canary(settings, language="ja", include_metadata=False):
             metadata["canary_locations"] = [canary_location]
         if fmt in ("xlsx", "pptx", "sqlite"):
             preview_rows = []
-            for row in sample_rows[:PREVIEW_ROW_LIMIT]:
+            for row in sample_rows:
                 preview_rows.append([
                     (("[URL hidden]" if language == "en" else "[URLは非表示]") if url and value == url else value)
                     for value in row

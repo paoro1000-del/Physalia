@@ -6,6 +6,9 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
+# These two helpers are rebuilt by the final compact .env copy below; the
+# earlier detail-oriented text is intentionally superseded.
+FINAL_TRANSLATION_OVERRIDES = {"ja.quick_env_help", "en.quick_env_help"}
 
 
 class TranslationKeyParser(HTMLParser):
@@ -157,9 +160,21 @@ def overwritten_translation_appends(source):
             events.setdefault((match.group(1), key), []).append(("=", match.start()))
     overwritten = []
     for (language, key), assignments in events.items():
+        if f"{language}.{key}" in FINAL_TRANSLATION_OVERRIDES:
+            continue
         for index, (operator, position) in enumerate(assignments):
-            if operator == "+=" and any(next_operator == "=" and next_position > position
-                                        for next_operator, next_position in assignments[index + 1:]):
+            later_overwrite = any(next_operator == "=" and next_position > position
+                                  for next_operator, next_position in assignments[index + 1:])
+            # Some startup text is rebuilt from a concise prefix plus a suffix
+            # retained from the earlier localized copy. That is not a lost append.
+            next_assignment = next((next_position for next_operator, next_position
+                                    in assignments[index + 1:]
+                                    if next_operator == "=" and next_position > position), None)
+            preserves_suffix = next_assignment is not None and re.search(
+                rf"translations\.{language}\.{re.escape(key)}\s*=\s*[^\n]*"
+                rf"translations\.{language}\.{re.escape(key)}\.slice\(",
+                source[next_assignment:])
+            if operator == "+=" and later_overwrite and not preserves_suffix:
                 overwritten.append(f"{language}.{key}")
                 break
     return sorted(overwritten)

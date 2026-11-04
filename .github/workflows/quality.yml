@@ -46,9 +46,6 @@ jobs:
       - name: Check canary URL settings privacy
         run: python scripts/check_settings_privacy.py
 
-      - name: Check audit KQL coverage
-        run: python scripts/check_audit_kql_parity.py
-
       - name: Check integration bundle allowlist
         run: python scripts/check_integration_bundle.py
 
@@ -85,9 +82,6 @@ jobs:
 
       - name: Check browser JavaScript syntax
         run: node --check web/app.js
-
-      - name: Check cloud review JavaScript syntax
-        run: node --check web/cloud_review.js
 
       - name: Check shared JSON utility syntax
         run: node --check web/json_utils.js

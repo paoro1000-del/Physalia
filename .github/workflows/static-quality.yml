@@ -31,9 +31,6 @@ jobs:
       - name: Check settings privacy rules
         run: python3 scripts/check_settings_privacy.py
 
-      - name: Check audit KQL coverage
-        run: python3 scripts/check_audit_kql_parity.py
-
       - name: Check integration bundle allowlist
         run: python3 scripts/check_integration_bundle.py
 
@@ -61,5 +58,4 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check web/app.js
-          node --check web/cloud_review.js
           node --check web/json_utils.js

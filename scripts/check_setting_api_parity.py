@@ -8,6 +8,12 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 MULTI_URL_LEGACY_KEYS = {"canary_url"}
 DOMAIN_HELPER_KEYS = {"vault_domain", "vault_domain_authorized"}
+# The compact .env form deliberately fixes these values in the UI. The
+# backend retains them for direct API callers and older operator workflows.
+BACKEND_ONLY_SETTINGS = {
+    "env": {"env_dev_comment", "env_dev_url", "env_dev_url_authorized",
+            "env_prod_comment", "title"},
+}
 PROPERTY = re.compile(r"^\s*([A-Za-z_$][\w$]*)\s*:")
 BUILDER = re.compile(r"^\s*([A-Za-z_$][\w$]*)\s*:\s*\(\)\s*=>\s*\(\s*\{", re.S)
 
@@ -159,7 +165,8 @@ def main():
         emitted = browser[kind]
         rejected_by_backend = sorted(emitted - accepted)
         absent_from_ui = sorted(accepted - emitted - (
-            MULTI_URL_LEGACY_KEYS if kind in ("nest", "directory_maze", "encoding_maze") else set()))
+            MULTI_URL_LEGACY_KEYS if kind in ("nest", "directory_maze", "encoding_maze") else set())
+            - BACKEND_ONLY_SETTINGS.get(kind, set()))
         if rejected_by_backend:
             errors.append(f"{kind}: browser sends backend-rejected keys: " + ", ".join(rejected_by_backend))
         if absent_from_ui:

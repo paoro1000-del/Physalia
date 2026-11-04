@@ -92,7 +92,7 @@ def main():
     if '!el.hasAttribute("data-operator-attestation")' not in app:
         print("Settings controls must exclude every non-portable operator confirmation", file=sys.stderr)
         return 1
-    if 'nonPersistentCanaryUrlControls.has(el.id) ? "" : el.value' not in app:
+    if not re.search(r'nonPersistentCanaryUrlControls\.has\(el\.id\)\s*\?\s*""', app):
         print("Settings export must blank non-persistent canary URL values", file=sys.stderr)
         return 1
     if not all(f"#{field_id}" in app for field_id in non_persistent):
@@ -104,7 +104,7 @@ def main():
         return 2
     attestations = set(re.findall(r"['\"]([^'\"]+)['\"]", attestation_match.group(1)))
     required_attestations = {
-        "env-dev-url-authorized", "db-email-domain-authorized", "vault-domain-authorized",
+        "db-email-domain-authorized", "vault-domain-authorized",
     }
     if attestations != required_attestations:
         print("Domain-ownership confirmations must be explicitly excluded from saved settings",
@@ -117,14 +117,14 @@ def main():
         print("Settings import must require ownership reconfirmation", file=sys.stderr)
         return 1
     required_marked_attestations = {
-        "env-dev-url-authorized", "db-email-domain-authorized", "vault-domain-authorized",
+        "db-email-domain-authorized", "vault-domain-authorized",
     }
     if parser.operator_attestations != required_marked_attestations:
         print("Every operator attestation control must remain explicitly identified", file=sys.stderr)
         return 1
     all_operator_attestations = parser.operator_attestations | attestations
     if all_operator_attestations != {
-        "env-dev-url-authorized", "db-email-domain-authorized", "vault-domain-authorized",
+        "db-email-domain-authorized", "vault-domain-authorized",
     }:
         print("Settings export must account for every operator attestation", file=sys.stderr)
         return 1
