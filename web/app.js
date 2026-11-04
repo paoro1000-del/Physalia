@@ -359,8 +359,8 @@ methodFlows.ja.nest.steps[3] = ["4. 解凍するか判断", "他の候補も偽�
 methodFlows.en.nest.steps[3] = ["4. Decide what to extract", "Suspicion may extend to other candidates, creating a choice between spending effort to inspect them and discarding files of uncertain value."];
 methodFlows.ja.nest.ifCase = "本物と偽物を途中で見分けられない場合、デコイの確認だけでなく、別途回収した本物の暗号化ファイルも偽物かもしれないと疑う可能性があります。解凍・確認を続ければ作業が増え、打ち切れば本物を見落とし得ます。偽文書を1つ見つけても、未確認の枝や別ファイルがすべて偽物とは断定できません。";
 methodFlows.en.nest.ifCase = "If genuine files and decoys cannot be distinguished during inspection, suspicion may extend to separately collected genuine encrypted files. Continuing to decrypt and inspect adds work; stopping can mean missing real data. Finding one fake document does not prove that unchecked branches or other files are fake.";
-methodFlows.ja.nest.note = "生成するデコイZIPには本物の秘密を入れません。本物への疑いが生じるかは仮説で、最後まで判別できないことも保証できません。ZIPを開くだけでは自動通知されません。";
-methodFlows.en.nest.note = "The generated decoy ZIP contains no real secrets. Suspicion extending to real files is a hypothesis, and indistinguishability is not guaranteed. Opening a ZIP alone does not trigger an alert.";
+delete methodFlows.ja.nest.note;
+delete methodFlows.en.nest.note;
 methodFlows.ja.env.ifCase = ["内部ネットワークから監視URLへアクセスされると、そのリクエストを攻撃の兆候として検知し、早期対応の手掛かりにできます。内部からURLへ到達でき、通知設定が必要です。", "盗まれたファイルのURLが後から外部接続可能な環境で試された場合も、監視先に要求が届けば検知できます。記録される時刻や接続元情報はサービスや設定によって異なります。"];
 methodFlows.ja.env.elseCase = ["カナリアページが正規利用者もアクセスしやすい場所にあると、誤接触による通知が攻撃の兆候に紛れる可能性があります。", "踏み台・VPN・サンドボックス経由の接続元情報は攻撃者本人を示すとは限りません。ファイルが拡散すると、第三者やスキャナーのアクセスも混ざります。", "URLが試されない場合や通信が遮断された場合、通知されません。"];
 methodFlows.ja.env.steps[2][0] = "3. URLにアクセス";
@@ -1496,36 +1496,36 @@ for (const selector of ["#database-template", "#nest-scenario", "#maze-scenario"
   $(selector).addEventListener("change", () => { updateVaultDomainFields(); updateCsvSafetyNote(); });
 }
 const nestDirectoryPresets = {
-  crm: ["customer_1048", "customer_2176", "customer_3891", "account_west", "account_enterprise"],
-  migration: ["batch_014", "batch_027", "source_legacy", "target_import", "delta_review"],
-  archive: ["customer_1048", "customer_2176", "account_west", "account_enterprise", "retention_hold"],
-  cards: ["cardholder_1048", "cardholder_2176", "renewal_batch", "billing_west"],
-  companies: ["company_1048", "company_2176", "company_west", "enterprise_accounts"],
-  passwords: ["service_billing", "service_support", "service_archive", "service_portal"],
-  api_credentials: ["integration_billing", "integration_support", "client_1048", "client_2176"],
-  invoices: ["customer_1048", "customer_2176", "region_west", "enterprise_accounts"],
-  employees: ["department_finance", "department_ops", "department_support", "region_west"],
-  vendors: ["vendor_1048", "vendor_2176", "supplier_west", "service_partner"],
-  orders: ["customer_1048", "customer_2176", "region_west", "enterprise_accounts"],
-  tickets: ["customer_1048", "customer_2176", "region_west", "priority_queue"],
-  assets: ["region_west", "region_east", "office_014", "datacenter_02"],
-  cloud: ["subscription_014", "subscription_027", "tenant_west", "platform_shared"]
+  crm: ["1048_customer", "2176_customer", "3891_customer", "west_01_account", "enterprise_02_account"],
+  migration: ["014_migration_batch", "027_migration_batch", "01_legacy_source", "02_import_target", "03_delta_review"],
+  archive: ["1048_customer", "2176_customer", "west_01_account", "enterprise_02_account", "01_retention_hold"],
+  cards: ["1048_cardholder", "2176_cardholder", "01_renewal_batch", "west_billing"],
+  companies: ["1048_company", "2176_company", "west_company", "enterprise_01_account"],
+  passwords: ["01_billing_service", "02_support_service", "03_archive_service", "04_service_portal"],
+  api_credentials: ["01_billing_integration", "02_support_integration", "1048_client", "2176_client"],
+  invoices: ["1048_customer", "2176_customer", "west_region", "enterprise_01_account"],
+  employees: ["01_finance_department", "02_ops_department", "03_support_department", "west_region"],
+  vendors: ["1048_vendor", "2176_vendor", "west_supplier", "01_service_partner"],
+  orders: ["1048_customer", "2176_customer", "west_region", "enterprise_01_account"],
+  tickets: ["1048_customer", "2176_customer", "west_region", "01_priority_queue"],
+  assets: ["west_region", "east_region", "014_office", "02_datacenter"],
+  cloud: ["014_subscription", "027_subscription", "west_tenant", "01_shared_platform"]
 };
 const nestProfiles = {
-  crm: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,10], depth:[6,8], rows:[120,240]},
-  migration: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,10], depth:[6,8], rows:[150,280]},
-  archive: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,9], depth:[6,8], rows:[120,220]},
-  cards: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,9], depth:[6,8], rows:[100,180]},
-  companies: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,9], depth:[6,8], rows:[100,200]},
-  passwords: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,9], depth:[6,8], rows:[60,120]},
-  api_credentials: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,9], depth:[6,8], rows:[60,120]},
-  invoices: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,9], depth:[6,8], rows:[120,240]},
-  employees: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,9], depth:[6,8], rows:[100,200]},
-  vendors: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,9], depth:[6,8], rows:[100,200]},
-  orders: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,9], depth:[6,8], rows:[120,240]},
-  tickets: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,9], depth:[6,8], rows:[100,200]},
-  assets: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,9], depth:[6,8], rows:[100,200]},
-  cloud: {shapes:[[3,3],[3,4],[4,3]], decoys:[6,9], depth:[6,8], rows:[100,200]}
+  crm: {shapes:[[3,3],[3,4]], decoys:[6,7], depth:[6,8], rows:[1000,1200]},
+  migration: {shapes:[[3,3],[3,4]], decoys:[6,7], depth:[6,8], rows:[1000,1200]},
+  archive: {shapes:[[3,3],[3,4]], decoys:[6,7], depth:[6,8], rows:[1000,1200]},
+  cards: {shapes:[[3,3],[3,4]], decoys:[6,7], depth:[6,8], rows:[1000,1200]},
+  companies: {shapes:[[3,3],[3,4]], decoys:[6,7], depth:[6,8], rows:[1000,1200]},
+  passwords: {shapes:[[3,3],[3,4]], decoys:[6,7], depth:[6,8], rows:[1000,1200]},
+  api_credentials: {shapes:[[3,3],[3,4]], decoys:[6,7], depth:[6,8], rows:[1000,1200]},
+  invoices: {shapes:[[3,3],[3,4]], decoys:[6,7], depth:[6,8], rows:[1000,1200]},
+  employees: {shapes:[[3,3],[3,4]], decoys:[6,7], depth:[6,8], rows:[1000,1200]},
+  vendors: {shapes:[[3,3],[3,4]], decoys:[6,7], depth:[6,8], rows:[1000,1200]},
+  orders: {shapes:[[3,3],[3,4]], decoys:[6,7], depth:[6,8], rows:[1000,1200]},
+  tickets: {shapes:[[3,3],[3,4]], decoys:[6,7], depth:[6,8], rows:[1000,1200]},
+  assets: {shapes:[[3,3],[3,4]], decoys:[6,7], depth:[6,8], rows:[1000,1200]},
+  cloud: {shapes:[[3,3],[3,4]], decoys:[6,7], depth:[6,8], rows:[1000,1200]}
 };
 function randomNestInteger(range) { return range[0] + Math.floor(Math.random() * (range[1] - range[0] + 1)); }
 function randomizeNestSettings() {
@@ -1534,7 +1534,7 @@ function randomizeNestSettings() {
   const [layers, branches] = profile.shapes[Math.floor(Math.random() * profile.shapes.length)];
   const decoys = randomNestInteger(profile.decoys);
   const archives = Array.from({length: layers}, (_, level) => branches ** level).reduce((sum, count) => sum + count, 0);
-  const totalRecordBudget = 30000;
+  const totalRecordBudget = 150000;
   const rowMaximum = Math.min(profile.rows[1], Math.floor(totalRecordBudget / (archives * decoys)));
   $("#layers").value = layers;
   $("#branches").value = branches;

@@ -11,6 +11,12 @@ from copy import deepcopy
 from datetime import date, datetime, timedelta
 
 from physalia.i18n import translate
+from physalia.japanese_names import (
+    FAMILY_PAIRS as DATA_FAMILY_PAIRS,
+)
+from physalia.japanese_names import (
+    GIVEN_PAIRS as DATA_GIVEN_PAIRS,
+)
 from physalia.validation import (
     canary_url,
     identifier,
@@ -161,6 +167,12 @@ FAMILY_PAIRS = (
 )
 GIVEN = tuple(pair[0] for pair in GIVEN_PAIRS)
 GIVEN_JA = tuple(pair[1] for pair in GIVEN_PAIRS)
+FAMILY = tuple(pair[0] for pair in FAMILY_PAIRS)
+FAMILY_JA = tuple(pair[1] for pair in FAMILY_PAIRS)
+GIVEN_PAIRS = DATA_GIVEN_PAIRS
+GIVEN = tuple(pair[0] for pair in GIVEN_PAIRS)
+GIVEN_JA = tuple(pair[1] for pair in GIVEN_PAIRS)
+FAMILY_PAIRS = DATA_FAMILY_PAIRS
 FAMILY = tuple(pair[0] for pair in FAMILY_PAIRS)
 FAMILY_JA = tuple(pair[1] for pair in FAMILY_PAIRS)
 DEPARTMENTS = (
@@ -1277,12 +1289,12 @@ def records(columns, rows, language="en"):
     japanese = language == "ja"
     today = date.today()
     now = datetime.now().replace(microsecond=0)
+    total_name_combinations = len(GIVEN) * len(FAMILY)
+    name_pair_count = min(rows, total_name_combinations)
     name_pairs = [
-        (given_index, family_index)
-        for given_index in range(len(GIVEN))
-        for family_index in range(len(FAMILY))
+        divmod(index, len(FAMILY))
+        for index in rng.sample(range(total_name_combinations), k=name_pair_count)
     ]
-    rng.shuffle(name_pairs)
     organization_pool = [
         f"{stem} {suffix}" for stem in ORG_STEMS for suffix in ORG_SUFFIXES
     ]

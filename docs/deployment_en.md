@@ -1,5 +1,9 @@
 # Deployment, detection and response for small teams
 
+## Synthetic names
+
+Sample names are formed by independently combining 1,000 public surname candidates with 1,000 given-name candidates. Surnames are ordered by estimated population; given names come from curated popular male and female candidates and spelling variants, not an official nationwide ranking. A combination may match a real person. Associated records remain synthetic. See `THIRD_PARTY_NOTICES.md` for attribution and license. A name alone may still be personal information; do not treat generated names as information about the real people they may match.
+
 [日本語](deployment_ja.md)
 
 ## Findings and changes
@@ -133,7 +137,7 @@ An authorized operator can review decoy-contact and Infinite Stream authenticati
 | Canary Token | HTTPS URLs in nine formats | Token issuance/notifications by your service; credential tokens require an actual provider-issued token, not random keys |
 | Config File Trap | .env generator | Isolated backup placement, server or OS read auditing |
 | Decoy Database | 14 editable profiles: customers, card inventory, companies, password vault, orders, sales transactions, invoices, employees, user management, API credential inventory, vendors, support tickets, assets and cloud inventory. Each creates a standalone SQLite file capped at 32 MiB with a main table; a supplied canary URL replaces one Password Vault login URL or API credential endpoint value, or is stored in a separate connection table for other profiles. The tool does not connect to an existing database. | Financial amounts use a lower-value-skewed synthetic distribution; order and sales totals are linked to the item and quantity. Vendor risk tiers affect annual-cost ranges and review recency. Asset status affects the age of the last inventory check. Asset names are paired with matching categories when configured values allow it. Cloud endpoints reflect service and environment while remaining under the reserved `.invalid` domain. JPY amounts are whole numbers and other currencies use two decimal places. No PAN/CVV, usable passwords, API keys or credential hashes are generated. API credential previews are synthetic strings that cannot authenticate. Rotation-due rows have older rotation dates, and last-used timestamps are not earlier than the recorded rotation. No production import; database reads require separate auditing. An optional email domain must be owned and dedicated to an isolated decoy; generation makes no DNS or mail requests. Do not use production mailboxes; route inbound mail only to an isolated sink. |
-| Encrypted Deep Nest | Branching AES ZIPs, clues, selected primary decoy format with optional weighted variation | Folder-name defaults follow the selected scenario and remain editable. About 75% use the primary format when enabled; exact counts are in the operator inventory. Download alerts; distinguish on-site delay from offline analysis |
+| Encrypted Deep Nest | Nested encrypted ZIP decoy archive | The downloaded artifact is the encrypted archive itself; use the generated password list to extract each layer. It contains synthetic files only, with no canary files or URLs. |
 | Directory Maze | Finite linked static directories; all decoys use one selected format | Placement and logging; evaluate parallelism and URL deduplication |
 | Encoding Maze | Layered candidates matching a selected business scenario | Measure comparison effort; automated decoding remains possible |
 | Infinite Stream | Standalone generated server | Authenticated isolated proxy; log starts at the gateway because normal access logs may wait for response completion |

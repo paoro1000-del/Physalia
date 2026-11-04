@@ -11,9 +11,7 @@ dist/
 !.env.example
 .envrc
 .secrets/
-# Local agent instructions, editor settings, and integration configuration.
-AGENTS.md
-CLAUDE.md
+# Local agent overrides, editor settings, and integration configuration.
 GEMINI.md
 .agents/
 .claude/
