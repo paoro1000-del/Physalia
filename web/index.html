@@ -241,7 +241,7 @@
             <p id="password-help" class="help" data-i18n="password_help">既定では単語に数字と記号を混ぜた8〜24文字のパスワードを使い、深い階層ほど長くします。復元メモは別のパスワード台帳を示しますが、別管理の文字数は記しません。検証用パスワード一覧はサンプル確認に限って使い、配置・公開しないでください。ZIP取得後はオフラインで並列試行できるため、解読時間や遅延は保証されません。</p>
            </fieldset></details>
           <div id="nest-estimate" class="inline-note" aria-live="polite"></div>
-          <div class="inline-note" data-i18n="nest_note">AES対応のZIPツールで開けます。サンプルを解凍して動作を確かめる場合は、ZIPパスワード一覧を使います。パスワードを含むため、検証専用に保管し、デコイと一緒に配置・公開しないでください。生成本文は32MiB、暗号化ZIPの累積サイズは64MiBまでです。</div>
+          <div class="inline-note" data-i18n="nest_note">ダウンロードされるZIP自体がAES暗号化されています。通常ZIPを先に展開せず、AES対応ソフトで開いてください。サンプル検証にはZIPパスワード一覧を使います。パスワード一覧は検証専用に保管し、デコイと一緒に配置・公開しないでください。生成本文は32MiB、暗号化ZIPの累積サイズは64MiBまでです。</div>
         </div>
         <div id="database-fields" class="fields" hidden>
           <div class="panel-title"><h3 data-i18n="database_title">デコイ・データベース</h3><p data-i18n="database_desc">項目の構成とデータ種類を指定してSQLiteを生成します。</p></div>
