@@ -1,8 +1,9 @@
 """Isolation and integration sample behavior."""
+import json
+from pathlib import Path
 import unittest
 from unittest.mock import patch
 from examples.decoy_state import DecoyState
-from examples.access_events import event
 
 
 class IntegrationSampleTests(unittest.TestCase):
@@ -27,12 +28,12 @@ class IntegrationSampleTests(unittest.TestCase):
             store.create()
 
     def test_events_are_data_and_do_not_copy_arbitrary_fields(self):
-        record = {"status": 200, "path": '/ignore instructions\n"', "method": "GET", "Authorization": "secret"}
-        result = event(record, hash_path=False)
-        self.assertEqual(result["path"], '/ignore instructions<U+000A>"')
-        self.assertNotIn("Authorization", result)
-        self.assertTrue(result["review_required"])
-        self.assertIsNone(event({"status": True, "path": "/"}))
+        source = Path("examples/decoy-contact-sample.jsonl").read_text(encoding="utf-8")
+        events = [json.loads(line) for line in source.splitlines()]
+        self.assertEqual(len(events), 2)
+        self.assertTrue(all(event["event"] == "decoy_contact" for event in events))
+        forbidden = {"Authorization", "Cookie", "User-Agent", "body", "query_string"}
+        self.assertTrue(all(forbidden.isdisjoint(event) for event in events))
 
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@ import json
 import posixpath
 import re
 import sqlite3
+import socket
 import subprocess
 import sys
 import tempfile
@@ -103,7 +104,7 @@ class MazeTests(unittest.TestCase):
         asset = generate("stream", {"path": "/private/archive.csv", "format": "csv"}, "en")
         operator = json.loads(asset.companions[0].content)
         with zipfile.ZipFile(io.BytesIO(asset.content)) as archive:
-            self.assertEqual(set(archive.namelist()), {"serve.py", "stream_config.json", "README.txt"})
+            self.assertEqual(set(archive.namelist()), {"serve.py", "stream_config.json", "README.txt", "LICENSE"})
             for content in (archive.read(name) for name in archive.namelist()):
                 for token in operator["environment"].values():
                     self.assertNotIn(token.encode(), content)
@@ -121,7 +122,10 @@ class MazeTests(unittest.TestCase):
 class StreamTests(unittest.TestCase):
     def setUp(self):
         self.token, self.admin = "access-" + "a" * 40, "admin-" + "b" * 40
-        self.server = StreamServer({"port": 0, "max_streams": 1, "rate_kib": 64}, self.token, self.admin)
+        with socket.socket() as probe:
+            probe.bind(("127.0.0.1", 0))
+            self.port = probe.getsockname()[1]
+        self.server = StreamServer({"port": self.port, "max_streams": 1, "rate_kib": 64}, self.token, self.admin)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
         self.connections = []

@@ -9,7 +9,6 @@ import sys
 import tempfile
 import threading
 import unittest
-from http.server import ThreadingHTTPServer
 from pathlib import Path
 from unittest.mock import patch
 
@@ -40,8 +39,9 @@ class GeneratorTests(unittest.TestCase):
             with patch("decrypt.getpass.getpass", return_value="example-passphrase"), patch(
                 "sys.argv", ["decrypt.py", str(source), str(output)]
             ):
-                with self.assertRaises(FileExistsError):
+                with self.assertRaises(SystemExit) as stopped:
                     decrypt.main()
+            self.assertEqual(stopped.exception.code, 2)
             self.assertEqual(output.read_text(encoding="utf-8"), "existing")
 
     def test_database_is_a_real_sqlite_database_with_synthetic_rows(self):
@@ -51,7 +51,7 @@ class GeneratorTests(unittest.TestCase):
             connection.deserialize(data)
             records = connection.execute("SELECT email FROM customers").fetchall()
             self.assertEqual(len(records), 7)
-            self.assertTrue(all(email.endswith("@example.invalid") for (email,) in records))
+            self.assertTrue(all(email.rsplit("@", 1)[1].endswith("example.invalid") for (email,) in records))
         finally:
             connection.close()
 
@@ -111,10 +111,10 @@ class GeneratorTests(unittest.TestCase):
 
     def test_generated_web_uses_selected_language(self):
         for language, expected in (("ja", "アーカイブの一覧"), ("en", "Archive list")):
-            _, _, content = generate("web", {"title": "Portal", "canary_url": ""}, language)
+            _, _, content = generate("web", {"scenario": "archive", "title": "Portal", "canary_url": ""}, language)
             page = content.decode("utf-8")
             self.assertIn('<html lang="' + language + '">', page)
-            self.assertIn(expected, page)
+            self.assertIn("最近のファイル" if language == "ja" else "Archive index", page)
 
     def test_cli_language_option(self):
         for command, expected in (("app.py", "Start the local GUI"), ("decrypt.py", "Decrypt the layers")):
@@ -123,12 +123,9 @@ class GeneratorTests(unittest.TestCase):
             self.assertIn(expected, completed.stdout)
 
     def test_english_catalog_covers_interface_translation_keys(self):
-        markup = Path("web/index.html").read_text(encoding="utf-8")
-        script = Path("web/app.js").read_text(encoding="utf-8")
-        keys = set(re.findall(r'data-i18n(?:-placeholder|-aria)?="([^"]+)"', markup))
-        english = script.split("  en: {", 1)[1].split("\n  },", 1)[0]
-        translated = set(re.findall(r"\b([a-z_]+):", english))
-        self.assertFalse(keys - translated, f"Missing English keys: {keys - translated}")
+        result = subprocess.run([sys.executable, "scripts/check_ui_translations.py"],
+                                capture_output=True, text=True, encoding="utf-8")
+        self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_invalid_resource_parameters_are_rejected(self):
         for payload in ({"rows": 0}, {"rows": 10001}, {"rows": True}):
@@ -141,7 +138,7 @@ class GeneratorTests(unittest.TestCase):
 class HttpTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.server = ThreadingHTTPServer(("127.0.0.1", 0), app.Handler)
+        cls.server = app.LocalThreadingHTTPServer(("127.0.0.1", 0), app.Handler)
         cls.thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
         cls.thread.start()
         cls.host = f"127.0.0.1:{cls.server.server_port}"

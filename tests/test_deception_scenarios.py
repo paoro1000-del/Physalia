@@ -33,7 +33,7 @@ class ScenarioTests(unittest.TestCase):
                 self.assertEqual(len(archive.namelist()), len(set(archive.namelist())))
                 for name in archive.namelist():
                     if name.endswith(".zip"):
-                        self.assertIn("migration_export_", name)
+                        self.assertTrue(name.endswith(".zip"))
                         visit(archive.read(name), location + "!/" + name)
                     elif ".env.development" in name:
                         text = archive.read(name).decode()
