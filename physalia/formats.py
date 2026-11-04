@@ -225,7 +225,8 @@ def dotenv_value(value, language):
 
 
 def render(fmt, title, url, data, language="ja", reference=None, context=None, app_env="production",
-           columns=None, table="customers", canary_cell=None, sheet_title=None, canary_link_style="text"):
+           columns=None, table="customers", canary_cell=None, sheet_title=None, canary_link_style="text",
+           canary_display_value=None):
     """Render without fetching URLs, macros, scripts, external images or formulas."""
     columns = DEFAULT_COLUMNS if columns is None else columns
     headers = [column["name"] for column in columns]
@@ -278,25 +279,105 @@ def render(fmt, title, url, data, language="ja", reference=None, context=None, a
         table_scroll_hint = ("表を左右にスクロールできます。" if language == "ja"
                              else "Scroll the table horizontally to see all columns.")
         def cell_markup(value, row_index, column_index):
+            if (url and canary_link_style in ("image", "next")
+                    and canary_cell == (row_index, column_index)):
+                display_value = value if canary_display_value is None else canary_display_value
+                return f"<td>{html.escape(str(display_value))}</td>"
             if (url and canary_link_style == "email" and column_index in email_columns
                     and isinstance(value, str) and value
                     and (canary_cell is None or canary_cell == (row_index, column_index))):
                 return f'<td><a href="{html.escape(url, quote=True)}" rel="noreferrer" style="color:inherit;text-decoration:none">{html.escape(value)}</a></td>'
             if url and canary_cell == (row_index, column_index):
                 target = url
+            elif (url and canary_link_style == "button" and canary_cell is not None
+                  and column_index == canary_cell[1]):
+                # Keep the selected link treatment consistent across the
+                # endpoint column; only the planted cell uses the canary URL.
+                target = str(value)
             elif column_index == owned_login_index:
                 target = str(value)
             else:
                 target = ""
             if target and not fullpage_link:
+                if (url and canary_link_style == "button" and canary_cell is not None
+                        and column_index == canary_cell[1]):
+                    return (f'<td><a class="document-link-button" href="{html.escape(target, quote=True)}" '
+                            f'rel="noreferrer">{html.escape(label)}</a></td>')
                 return f'<td><a href="{html.escape(target, quote=True)}" rel="noreferrer" style="color:inherit;text-decoration:none">{html.escape(str(value))}</a></td>'
             return f"<td>{html.escape(str(value))}</td>"
-        rows = "".join(
-            "<tr>" + "".join(
+        def row_markup(row_index, row):
+            return "<tr>" + "".join(
                 cell_markup(value, row_index, column_index)
                 for column_index, value in enumerate(row)
-            ) + "</tr>" for row_index, row in enumerate(data)
-        )
+            ) + "</tr>"
+        pagination_inputs = pagination_controls = pagination_css = ""
+        if canary_link_style == "next":
+            page_size = 10
+            page_count = max(1, (len(data) + page_size - 1) // page_size)
+            canary_page = (canary_cell[0] // page_size
+                           if url and canary_cell is not None else None)
+            pagination_inputs = "".join(
+                f'<input class="pagination-state" type="radio" name="register-page" '
+                f'id="register-page-{page}"{" checked" if page == 1 else ""}>'
+                for page in range(1, page_count + 1)
+            )
+            page_controls = []
+            for page in range(1, page_count + 1):
+                page_numbers = "".join(
+                    f'<label class="page-number" for="register-page-{number}">{number}</label>'
+                    for number in range(1, page_count + 1)
+                )
+                previous = (f'<label class="page-turn" for="register-page-{page - 1}">'
+                            f'{"前へ" if language == "ja" else "Previous"}</label>' if page > 1 else "")
+                if url and page - 1 == canary_page:
+                    next_control = (f'<a class="document-link-button page-turn" '
+                                    f'href="{html.escape(url, quote=True)}" rel="noreferrer">'
+                                    f'{"次へ" if language == "ja" else "Next"} <span aria-hidden="true">→</span></a>')
+                elif page < page_count:
+                    next_control = (f'<label class="page-turn" for="register-page-{page + 1}">'
+                                    f'{"次へ" if language == "ja" else "Next"} <span aria-hidden="true">→</span></label>')
+                else:
+                    next_control = ""
+                page_status = (f"{page} / {page_count}ページ" if language == "ja"
+                               else f"Page {page} of {page_count}")
+                page_controls.append(
+                    f'<div class="page-control page-control-{page}" aria-label="{page_status}">'
+                    f'{previous}<span class="page-status">{page_status}</span>'
+                    f'<span class="page-numbers">{page_numbers}</span>{next_control}</div>'
+                )
+            pagination_controls = '<nav class="pagination-controls" aria-label="' + (
+                "ページ送り" if language == "ja" else "Pagination") + '">' + "".join(page_controls) + "</nav>"
+            rows = "".join(
+                f'<tbody class="register-page register-page-{page}">'
+                + "".join(row_markup(index, data[index])
+                         for index in range((page - 1) * page_size, min(page * page_size, len(data))))
+                + "</tbody>"
+                for page in range(1, page_count + 1)
+            )
+            pagination_css = ('.pagination-state{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}'
+                              '.pagination-controls{display:none;justify-content:space-between;align-items:center;gap:1rem;'
+                              'padding:.85rem 1rem;border-top:1px solid #e4e9ef;background:#fff}'
+                              '.page-control{display:none;align-items:center;justify-content:space-between;gap:.75rem;width:100%}'
+                              '.page-status{color:#697887;font-size:.75rem;white-space:nowrap}'
+                              '.page-numbers{display:flex;align-items:center;gap:.3rem;margin-left:auto}'
+                              '.page-number,.page-turn{display:inline-flex;align-items:center;justify-content:center;min-width:2.2rem;'
+                              'min-height:2rem;padding:.35rem .65rem;border:1px solid #dce4ec;border-radius:6px;background:#fff;'
+                              'color:#526171;font-size:.76rem;font-weight:600;text-decoration:none;cursor:pointer}'
+                              '.page-number:hover,.page-turn:hover{background:#f2f6fb;border-color:#b9cbe0}'
+                              '.register-page{display:none}'
+                              + "".join(f'#register-page-{page}:checked~.pagination-controls'
+                                       '{display:flex}' for page in range(1, page_count + 1))
+                              + "".join(f'#register-page-{page}:checked~.pagination-controls .page-control-{page}'
+                                       '{display:flex}' for page in range(1, page_count + 1))
+                              + "".join(f'#register-page-{page}:checked~#register tbody.register-page-{page}'
+                                       '{display:table-row-group}' for page in range(1, page_count + 1))
+                              + "".join(f'#register-page-{page}:checked~.pagination-controls '
+                                       f'.page-control-{page} .page-number[for="register-page-{page}"]'
+                                       '{border-color:#315f9b;background:#edf3fb;color:#315f9b}'
+                                       for page in range(1, page_count + 1))
+                              + '.pagination-state:focus-visible~.pagination-controls .page-number{outline:2px solid #8cb4ed}')
+        else:
+            rows = '<tbody>' + "".join(row_markup(row_index, row) for row_index, row in enumerate(data)) + '</tbody>'
         link = ""
         if url and canary_cell is None and not fullpage_link and canary_link_style != "email":
             safe_url = html.escape(url, quote=True)
@@ -326,24 +407,39 @@ def render(fmt, title, url, data, language="ja", reference=None, context=None, a
             document_open = '<main class="page-shell">'
             document_close = "</main>"
             table_tabindex = ' tabindex="0"'
+        if url and canary_link_style == "image":
+            brand_mark = (f'<a class="brand-mark brand-mark-link" href="{html.escape(url, quote=True)}" '
+                          f'rel="noreferrer" aria-label="{html.escape(label, quote=True)}" '
+                          'style="color:#fff;text-decoration:none">P</a>')
+        else:
+            brand_mark = '<span class="brand-mark">P</span>'
+        if fullpage_link:
+            sidebar_overview_item = f'<span class="active"><span class="nav-icon">▦</span>{html.escape(title)}</span>'
+            sidebar_register_item = f'<span><span class="nav-icon">≡</span>{"レコード一覧" if language == "ja" else "Records"}<span class="nav-count">{len(data)}</span></span>'
+        else:
+            sidebar_overview_item = f'<a class="active" href="#overview"><span class="nav-icon">▦</span>{html.escape(title)}</a>'
+            sidebar_register_item = f'<a href="#register"><span class="nav-icon">≡</span>{"レコード一覧" if language == "ja" else "Records"}<span class="nav-count">{len(data)}</span></a>'
         workspace_label = "運用管理 / データ台帳" if language == "ja" else "OPERATIONS / DATA REGISTRY"
         records_label = "登録レコード" if language == "ja" else "REGISTERED RECORDS"
         fields_label = "管理項目" if language == "ja" else "TRACKED FIELDS"
         scope_label = "管理対象" if language == "ja" else "REGISTER SCOPE"
         scope_value = "管理台帳" if language == "ja" else "Operations register"
         count_label = "件" if language == "ja" else "rows"
-        return (f'<!doctype html><html lang="{language}"><head><meta charset="utf-8">'
+        page = (f'<!doctype html><html lang="{language}"><head><meta charset="utf-8">'
                 f'<meta name="viewport" content="width=device-width, initial-scale=1">{STATIC_HTML_SECURITY_META}'
                 f'<title>{html.escape(title)}</title>'
                 '<style>:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#f2f5f7;color:#233746;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5}.page-shell{max-width:1200px;min-height:100vh;margin:2.5rem auto;padding:0 1.5rem}.document-full-link{display:block;min-height:100vh;color:inherit;text-decoration:none;cursor:pointer}.document-full-link:focus-visible{outline:3px solid #397ca7;outline-offset:-3px}.document-header{padding:1.5rem 1.75rem;background:#fff;border:1px solid #dbe3e8;border-radius:12px;box-shadow:0 3px 14px #2037480d}.document-reference{margin:0 0 .4rem;color:#5d7180;font-size:.82rem;font-weight:600;letter-spacing:.04em}.document-header h1{margin:0;color:#18384d;font-size:clamp(1.4rem,3vw,2rem);line-height:1.25}.document-link{margin:1rem 0 0}.document-link a{color:#176b91;font-weight:600;text-underline-offset:3px}.document-link-button{display:inline-block;padding:.6rem 1rem;border-radius:6px;background:#176b91;color:#fff!important;text-decoration:none}.document-link-button:hover{background:#125774}.document-link-button:focus-visible,.document-link-image:focus-visible,.document-pagination a:focus-visible{outline:3px solid #397ca7;outline-offset:3px}.document-link-image{display:inline-flex;align-items:center;gap:.35rem}.document-link-image svg{width:20px;height:20px}.document-pagination{display:flex;gap:.4rem}.document-pagination a{min-width:2.4rem;padding:.45rem .7rem;border:1px solid #cbd8e0;border-radius:5px;text-align:center;background:#fff}.table-scroll-hint{display:none}.table-scroll{max-width:100%;margin-top:1.25rem;overflow-x:auto;background:#fff;border:1px solid #dbe3e8;border-radius:10px;box-shadow:0 3px 14px #2037480d}.table-scroll:focus-visible{outline:3px solid #397ca7;outline-offset:3px}table{width:100%;min-width:560px;border-collapse:collapse;text-align:left}caption{padding:.9rem 1rem;color:#526873;text-align:left;font-size:.88rem;font-weight:600}th,td{padding:.75rem 1rem;border-top:1px solid #e5ebef;white-space:nowrap}th{background:#edf2f5;color:#314b5b;font-size:.84rem;font-weight:650}tbody tr:nth-child(even){background:#f8fafb}tbody tr:hover{background:#eef6fa}td a{color:#176b91;text-underline-offset:2px}@media(max-width:640px){.page-shell{margin:1rem auto;padding:0 .75rem}.document-header{padding:1.1rem 1rem;border-radius:9px}.table-scroll-hint{display:block;margin:.75rem .2rem 0;color:#526873;font-size:.82rem}.table-scroll{margin-top:.6rem;border-radius:8px}th,td{padding:.65rem .8rem}}@media print{body{background:#fff}.page-shell{max-width:none;margin:0;padding:0}.document-header,.table-scroll{box-shadow:none}.table-scroll{overflow:visible}table{min-width:0}thead{display:table-header-group}tr{break-inside:avoid;page-break-inside:avoid}th,td{white-space:normal;overflow-wrap:anywhere;padding:.35rem .5rem}.table-scroll-hint{display:none}}'
-                '.app-bar{height:58px;display:flex;align-items:center;gap:.8rem;padding:0 1.5rem;background:#142c3b;color:#e8f0f3;font-size:.78rem;letter-spacing:.06em}.brand-mark{width:25px;height:25px;display:grid;place-items:center;border:1px solid #89a5b3;border-radius:5px;color:#d9e7ed;font-weight:700}.brand-name{font-weight:650}.bar-divider{height:18px;border-left:1px solid #49606d}.workspace-label{color:#b5c6ce}.page-shell{max-width:1360px;margin:0 auto;padding:2.2rem 2.5rem}.page-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:1.5rem;margin-bottom:1.5rem}.heading-kicker{margin:0 0 .5rem;color:#748994;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase}.document-header{padding:0;background:none;border:0;box-shadow:none}.document-reference{margin:0 0 .55rem;color:#657985;font-size:.75rem;font-weight:600;letter-spacing:.04em}.document-reference:before{content:"REF";margin-right:.45rem;color:#718590;font-size:.65rem;letter-spacing:.1em}.document-header h1{color:#173648;font-size:clamp(1.7rem,3vw,2.3rem);font-weight:650;letter-spacing:-.035em}.document-link{margin-top:.8rem}.summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;margin:1.6rem 0;background:#dce4e8;border:1px solid #dce4e8;border-radius:8px;overflow:hidden}.summary-card{min-height:88px;padding:1rem 1.2rem;background:#fff}.summary-label{display:block;margin-bottom:.3rem;color:#71838c;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}.summary-value{color:#1b3b4d;font-size:1.22rem;font-weight:650;letter-spacing:-.02em}.summary-value small{margin-left:.25rem;color:#82919a;font-size:.72rem;font-weight:500;letter-spacing:0}.table-scroll{margin-top:0;border:1px solid #dce4e8;border-radius:8px;box-shadow:0 2px 8px #20374808}.table-scroll table{min-width:920px}caption{padding:1rem 1.15rem;color:#173648;text-align:left;font-size:.95rem;font-weight:650}thead th{position:sticky;top:0;z-index:1;padding:.8rem 1rem;border-top:0;border-bottom:1px solid #d8e1e5;background:#f2f5f6;color:#5a707d;font-size:.7rem;font-weight:700;letter-spacing:.035em;white-space:normal;vertical-align:bottom;text-transform:uppercase}tbody td{padding:.83rem 1rem;border-top:1px solid #edf0f2;font-size:.85rem}tbody tr:nth-child(even){background:#fbfcfc}tbody tr:hover{background:#f2f7f8}td a{color:#176b91;overflow-wrap:anywhere;text-decoration:none;border-bottom:1px solid #b7d2de}td a:hover{color:#104b69;border-color:#176b91}.table-scroll-hint{color:#657985}.document-link-button{background:#176b91;border-radius:5px}@media(min-width:1400px){.page-shell{max-width:1440px}}@media(max-width:760px){.app-bar{padding:0 1rem}.page-shell{padding:1.5rem 1rem}.page-heading{align-items:flex-start;flex-direction:column}.summary-grid{grid-template-columns:1fr}.summary-card{min-height:72px}.table-scroll table{min-width:920px}}@media print{.app-bar{display:none}.page-shell{max-width:none;margin:0;padding:0}.summary-grid{break-inside:avoid}}</style>'
-                f'</head><body><div class="app-bar"><span class="brand-mark">P</span><span class="brand-name">PHYSALIA</span><span class="bar-divider"></span><span class="workspace-label">{html.escape(workspace_label)}</span></div>{document_open}<section class="page-heading"><div><p class="heading-kicker">{html.escape(workspace_label)}</p><header class="document-header"><p class="document-reference">{reference_label}: {ref}</p>'
+                '.app-bar{height:66px;display:flex;align-items:center;gap:1rem;padding:0 max(2rem,calc((100vw - 1440px)/2 + 2rem));background:#fff;border-bottom:1px solid #e4e9ef;color:#182431;font-size:.85rem}.brand-mark{width:31px;height:31px;display:grid;place-items:center;border-radius:9px;background:#315f9b;color:white;font-weight:750}.brand-name{font-weight:680;letter-spacing:-.02em}.bar-divider{height:20px;margin:0 .35rem;border-left:1px solid #e4e9ef}.workspace-label{color:#697887}.page-shell{display:grid;grid-template-columns:224px minmax(0,1fr);max-width:1600px;min-height:calc(100vh - 66px);margin:0 auto;padding:0;background:#f6f8fb}.sidebar{padding:1.5rem 1rem;border-right:1px solid #e4e9ef;background:#fbfcfe}.workspace-switch{display:flex;align-items:center;gap:.7rem;padding:.65rem .55rem 1.25rem;margin-bottom:1.1rem;border-bottom:1px solid #e4e9ef}.workspace-symbol{width:34px;height:34px;display:grid;place-items:center;border-radius:9px;background:#eaf0f8;color:#315f9b;font-weight:700}.workspace-name{display:block;color:#263748;font-size:.8rem;font-weight:650}.workspace-subtitle{display:block;margin-top:.15rem;color:#82909e;font-size:.7rem}.side-label{margin:.3rem .65rem .55rem;color:#8b97a3;font-size:.65rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase}.side-nav{display:grid;gap:.25rem}.side-nav a{display:flex;align-items:center;gap:.65rem;padding:.62rem .7rem;border-radius:7px;color:#526171;font-size:.8rem;text-decoration:none}.side-nav a:hover{background:#f0f3f7}.side-nav a.active{background:#edf3fb;color:#2b5487;font-weight:620}.nav-icon{width:17px;text-align:center;color:#788797}.nav-count{margin-left:auto;color:#7e8a96;font-size:.73rem}.sidebar-note{margin:2rem .3rem 0;padding:.8rem;border:1px solid #e4e9ef;border-radius:8px;background:#fff;color:#697887;font-size:.7rem}.sidebar-note strong{display:block;margin-bottom:.2rem;color:#475666;font-size:.73rem}.main-content{min-width:0;max-width:1360px;width:100%;margin:0 auto;padding:2rem clamp(1.3rem,3vw,3rem) 3rem}.page-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:1.5rem;margin-bottom:1.5rem}.heading-kicker{margin:0 0 .5rem;color:#718096;font-size:.67rem;font-weight:680;letter-spacing:.1em;text-transform:uppercase}.document-header{padding:0;background:none;border:0;box-shadow:none}.document-reference{margin:0 0 .55rem;color:#657985;font-size:.73rem;font-weight:600;letter-spacing:.04em}.document-reference:before{content:"REF";margin-right:.45rem;color:#718590;font-size:.62rem;letter-spacing:.1em}.document-header h1{color:#182431;font-size:clamp(1.65rem,2.5vw,2.05rem);font-weight:660;letter-spacing:-.04em}.document-link{margin-top:.8rem}.summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.85rem;margin:1.5rem 0 1.1rem}.summary-card{min-height:92px;padding:1rem 1.1rem;border:1px solid #e4e9ef;border-radius:10px;background:#fff;box-shadow:0 1px 2px #14263b08,0 8px 24px #14263b08}.summary-label{display:block;margin-bottom:.35rem;color:#697887;font-size:.7rem;font-weight:600}.summary-value{color:#182431;font-size:1.25rem;font-weight:650;letter-spacing:-.02em}.summary-value small{margin-left:.25rem;color:#82909e;font-size:.72rem;font-weight:500;letter-spacing:0}.table-scroll{margin-top:0;border:1px solid #e4e9ef;border-radius:10px;background:#fff;box-shadow:0 1px 2px #14263b08,0 8px 24px #14263b08}.table-scroll table{min-width:920px}caption{padding:1.05rem 1.2rem;color:#263748;text-align:left;font-size:.94rem;font-weight:650}thead th{position:sticky;top:0;z-index:1;padding:.78rem 1rem;border-top:0;border-bottom:1px solid #e4e9ef;background:#fbfcfd;color:#7a8794;font-size:.67rem;font-weight:650;letter-spacing:.035em;white-space:normal;vertical-align:bottom}tbody td{padding:.8rem 1rem;border-bottom:1px solid #edf0f4;font-size:.82rem}tbody tr:nth-child(even){background:#fcfdfe}tbody tr:hover{background:#f5f8fc}tbody tr:last-child td{border-bottom:0}td a{color:#315f9b;overflow-wrap:anywhere;text-decoration:none;border-bottom:1px solid #b7cbe3}td a:hover{color:#234b7d;border-color:#315f9b}td a.document-link-button{display:inline-flex;align-items:center;justify-content:center;min-height:2rem;padding:.42rem .72rem;border:1px solid #254d7f;border-radius:6px;background:#315f9b;color:#fff!important;font-size:.75rem;font-weight:650;line-height:1.2;white-space:nowrap;box-shadow:0 1px 2px #14263b20}td a.document-link-button:hover{background:#234b7d;border-color:#1d416e;color:#fff!important}.table-scroll-hint{color:#697887}.document-link-button{background:#315f9b;border-radius:6px}.side-nav a:focus-visible,.table-scroll:focus-visible,.document-link a:focus-visible{outline:3px solid #8cb4ed;outline-offset:2px}@media(max-width:920px){.page-shell{grid-template-columns:190px minmax(0,1fr)}.sidebar{padding-inline:.7rem}.main-content{padding-inline:1.3rem}}@media(max-width:640px){.app-bar{height:58px;padding:0 1rem}.page-shell{display:block;min-height:calc(100vh - 58px)}.sidebar{display:none}.main-content{padding:1.3rem .9rem 2rem}.page-heading{align-items:flex-start;flex-direction:column}.summary-grid{grid-template-columns:1fr;gap:.55rem}.summary-card{min-height:75px}.table-scroll table{min-width:920px}}@media print{.app-bar,.sidebar{display:none}.page-shell{display:block;max-width:none;margin:0;padding:0;background:#fff}.main-content{max-width:none;padding:0}.summary-card,.table-scroll{box-shadow:none;break-inside:avoid}}</style>'
+                f'</head><body><div class="app-bar">{brand_mark}<span class="brand-name">Physalia</span><span class="bar-divider"></span><span class="workspace-label">{html.escape(workspace_label)}</span></div>{document_open}<aside class="sidebar" aria-label="{html.escape(workspace_label, quote=True)}"><div class="workspace-switch"><span class="workspace-symbol">P</span><span><span class="workspace-name">Physalia</span><span class="workspace-subtitle">{html.escape(workspace_label)}</span></span></div><p class="side-label">{"ワークスペース" if language == "ja" else "WORKSPACE"}</p><nav class="side-nav">{sidebar_overview_item}{sidebar_register_item}</nav><div class="sidebar-note"><strong>{scope_label}</strong>{scope_value}</div></aside><div class="main-content" id="overview"><section class="page-heading"><div><p class="heading-kicker">{html.escape(workspace_label)}</p><header class="document-header"><p class="document-reference">{reference_label}: {ref}</p>'
                 f'<h1>{html.escape(title)}</h1>{link}</header></div></section>'
                 f'<section class="summary-grid" aria-label="{html.escape(workspace_label, quote=True)}"><div class="summary-card"><span class="summary-label">{records_label}</span><span class="summary-value">{len(data)}<small>{count_label}</small></span></div><div class="summary-card"><span class="summary-label">{fields_label}</span><span class="summary-value">{len(display_headers)}</span></div><div class="summary-card"><span class="summary-label">{scope_label}</span><span class="summary-value">{scope_value}</span></div></section>'
                 f'<p class="table-scroll-hint">{html.escape(table_scroll_hint)}</p>'
-                f'<div class="table-scroll" role="region"{table_tabindex} aria-label="{html.escape(title, quote=True)}"><table><caption>{html.escape(title)}</caption><thead><tr>'
+                f'{pagination_inputs}{pagination_controls}<div id="register" class="table-scroll" role="region"{table_tabindex} aria-label="{html.escape(title, quote=True)}"><table><caption>{html.escape(title)}</caption><thead><tr>'
                 + "".join(f'<th scope="col">{html.escape(str(value))}</th>' for value in display_headers)
-                + f"</tr></thead><tbody>{rows}</tbody></table></div>{document_close}</body></html>").encode("utf-8")
+                + f"</tr></thead>{rows}</table></div></div>{document_close}</body></html>").encode("utf-8")
+        if pagination_css:
+            page = page.replace(b"</head>", f'<style>{pagination_css}</style></head>'.encode("utf-8"), 1)
+        return page
     output = io.BytesIO()
     if fmt == "xlsx":
         workbook = Workbook()
@@ -558,6 +654,7 @@ def generate_canary(settings, language="ja", include_metadata=False):
         raise ValueError(translate("invalid_input", language))
     resolved_context = None
     canary_cell = None
+    canary_display_value = None
     canary_field = ""
     if fmt == "env" and layout == "commented_production":
         title = text(settings.get("title", "Operations archive"), "title", 80, language) or "Operations archive"
@@ -603,11 +700,13 @@ def generate_canary(settings, language="ja", include_metadata=False):
         if url:
             canary_row = secrets.randbelow(count)
             if not use_email_link and fmt not in ("xlsx", "pptx"):
+                canary_display_value = sample_rows[canary_row][canary_column]
                 sample_rows[canary_row][canary_column] = url
             canary_cell = (canary_row, canary_column)
         content = render(fmt, title, url, sample_rows, language, context=context, columns=columns,
                          table=table, canary_cell=canary_cell, sheet_title=sheet_title,
-                         canary_link_style=canary_link_style)
+                         canary_link_style=canary_link_style,
+                         canary_display_value=canary_display_value)
     extension, mime = FORMATS[fmt]
     name = (f".env.{suffix}" if layout == "commented_production" else ".env") if fmt == "env" else f"{basename}.{extension}"
     result = (name, mime, content)
@@ -618,7 +717,16 @@ def generate_canary(settings, language="ja", include_metadata=False):
             if not field:
                 field = resolved_context["field"] if resolved_context else "archive_endpoint"
             label = resolved_context["label"] if resolved_context else translate("web_link", language)
-            if canary_cell is not None and fmt != "env":
+            image_logo_link = fmt == "html" and canary_link_style == "image"
+            next_page_link = fmt == "html" and canary_link_style == "next"
+            if image_logo_link:
+                metadata["canary_placement"] = {"kind": "brand_icon"}
+            elif next_page_link and canary_cell is not None:
+                page_number = canary_cell[0] // 10 + 1
+                metadata["canary_placement"] = {"kind": "pagination_next_button", "page": page_number}
+                location_label = (f"Next button on page {page_number}" if language == "en"
+                                  else f"{page_number}ページ目の次へボタン")
+            elif canary_cell is not None and fmt != "env":
                 row_index, column_index = canary_cell
                 field_label = columns[column_index].get("label") or field
                 location_label = (f"{field_label}列・レコード{row_index + 1}" if language == "ja"
@@ -634,6 +742,8 @@ def generate_canary(settings, language="ja", include_metadata=False):
                 else:
                     field = resolved_context["field"].upper() if resolved_context else "SERVICE_URL"
                     location_label = f".env: {field}"
+            elif image_logo_link:
+                location_label = "Physalia brand icon" if language == "en" else "Physaliaロゴアイコン"
             elif canary_cell is not None and fmt != "env":
                 pass
             elif fmt == "txt":
@@ -662,7 +772,14 @@ def generate_canary(settings, language="ja", include_metadata=False):
             else:
                 location_label = field
             canary_location = {"artifact": name, "element": fmt, "label": location_label}
-            if canary_cell is not None and fmt != "env":
+            if image_logo_link:
+                canary_location["element"] = "brand_icon"
+            elif next_page_link and canary_cell is not None:
+                canary_location["element"] = "pagination_next_button"
+                canary_location["page"] = canary_cell[0] // 10 + 1
+                metadata["resolved_canary_context"] = {
+                    **(resolved_context or {}), "field": field, "page": canary_cell[0] // 10 + 1}
+            elif canary_cell is not None and fmt != "env":
                 canary_location.update({"field": field, "record": canary_cell[0] + 1})
                 metadata["resolved_canary_context"] = {
                     **(resolved_context or {}), "field": field, "record": canary_cell[0] + 1}

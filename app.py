@@ -537,7 +537,13 @@ class Handler(BaseHTTPRequestHandler):
             content = content.replace(b"__LOCAL_CANARY_URL__", local_canary_url.encode("ascii"))
             content = content.replace(b"__MAX_GENERATION_REQUEST_BYTES__", str(MAX_REQUEST).encode("ascii"))
             content = content.replace(b"__APP_VERSION__", html.escape(APP_VERSION).encode("utf-8"))
-        self._headers(200, mime, content)
+        # Generated HTML previews open as same-origin blob: documents and
+        # inherit this page's CSP. Permit their self-contained inline styles
+        # while keeping script execution restricted to the app's own files.
+        app_csp = ("default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+                   "connect-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; "
+                   "frame-ancestors 'none'; form-action 'self'") if name == "index.html" else None
+        self._headers(200, mime, content, csp=app_csp)
 
     def do_HEAD(self):
         # Link scanners sometimes probe with HEAD. Record it as a contact too.
