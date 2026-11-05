@@ -63,7 +63,14 @@ DEFAULT_COLUMNS = [
     {"name": "id", "kind": "id"},
     {"name": "name", "kind": "name"},
     {"name": "email", "kind": "email"},
-    {"name": "status", "kind": "status"},
+    {"name": "phone", "kind": "phone"},
+    {"name": "birth_date", "kind": "date"},
+    {"name": "postal_code", "kind": "test_postal"},
+    {"name": "prefecture", "kind": "text"},
+    {"name": "city", "kind": "text"},
+    {"name": "street_address", "kind": "address"},
+    {"name": "created_at", "kind": "date"},
+    {"name": "last_login", "kind": "datetime"},
 ]
 KINDS = {
     "id": "INTEGER",
@@ -87,6 +94,7 @@ KINDS = {
     "card_reference": "TEXT",
     "card_expiry": "TEXT",
     "test_postal": "TEXT",
+    "address": "TEXT",
     "credential_preview": "TEXT",
     "currency": "TEXT",
     "documentation_ip": "TEXT",
@@ -317,20 +325,23 @@ ORG_SUFFIX_SLUGS_JA = dict(
 DATABASE_TEMPLATES = {
     "customers": {
         "table": "customers",
-        "ja": ("顧客管理", "複数の担当者が所属する架空企業・連絡先・対応状況"),
+        "ja": ("BtoC顧客管理", "連絡先、地域に合う住所、登録日、ログイン履歴を含む架空データ"),
         "en": (
-            "Customer management",
-            "Contacts grouped under fictional organizations, with account status",
+            "Consumer customer records",
+            "Synthetic consumer contact, locality-matched address, registration and login details",
         ),
         "columns": [
             {"name": "id", "kind": "id"},
             {"name": "name", "kind": "name"},
             {"name": "email", "kind": "email"},
-            {"name": "company", "kind": "company"},
             {"name": "phone", "kind": "phone"},
-            {"name": "department", "kind": "department"},
-            {"name": "status", "kind": "status"},
-            {"name": "last_contact", "kind": "date"},
+            {"name": "birth_date", "kind": "date"},
+            {"name": "postal_code", "kind": "test_postal"},
+            {"name": "prefecture", "kind": "text"},
+            {"name": "city", "kind": "text"},
+            {"name": "street_address", "kind": "address"},
+            {"name": "created_at", "kind": "date"},
+            {"name": "last_login", "kind": "datetime"},
         ],
     },
     "cards": {
@@ -808,6 +819,8 @@ DATABASE_TEMPLATES = {
 
 TEMPLATE_VALUE_TRANSLATIONS = {
     "ja": {
+        ("customers", "prefecture"): ["東京都", "神奈川県", "大阪府", "愛知県", "福岡県", "北海道", "埼玉県", "千葉県"],
+        ("customers", "city"): ["新宿区", "世田谷区", "横浜市西区", "川崎市川崎区", "大阪市北区", "名古屋市中区", "福岡市中央区", "札幌市中央区", "さいたま市浦和区", "千葉市中央区"],
         ("api_credentials", "service_name"): [
             "\u8ab2\u91d1API",
             "\u30bd\u30fc\u30b9\u7ba1\u7406",
@@ -894,7 +907,26 @@ TEMPLATE_VALUE_TRANSLATIONS = {
         ],
         ("cloud", "environment"): ["本番", "検証", "災害復旧", "旧環境"],
     },
+    "en": {
+        ("customers", "prefecture"): ["Tokyo", "Kanagawa", "Osaka", "Aichi", "Fukuoka", "Hokkaido", "Saitama", "Chiba"],
+        ("customers", "city"): ["Shinjuku-ku", "Setagaya-ku", "Yokohama Nishi-ku", "Kawasaki-ku", "Osaka Kita-ku", "Nagoya Naka-ku", "Fukuoka Chuo-ku", "Sapporo Chuo-ku", "Saitama Urawa-ku", "Chiba Chuo-ku"],
+    },
 }
+
+# Real postal-code/locality pairs checked against Japan Post's published data.
+# The locality is public geographic data; street numbers are generated separately and are synthetic.
+CUSTOMER_ADDRESS_PROFILES = (
+    ("東京都", "新宿区", "Tokyo", "Shinjuku-ku", "160-0022", "新宿", "Shinjuku", 7),
+    ("東京都", "世田谷区", "Tokyo", "Setagaya-ku", "154-0017", "世田谷", "Setagaya", 4),
+    ("神奈川県", "横浜市西区", "Kanagawa", "Yokohama Nishi-ku", "220-0012", "みなとみらい", "Minato Mirai", 7),
+    ("神奈川県", "川崎市川崎区", "Kanagawa", "Kawasaki-ku", "210-0006", "砂子", "Isago", 3),
+    ("大阪府", "大阪市北区", "Osaka", "Osaka Kita-ku", "530-0001", "梅田", "Umeda", 3),
+    ("愛知県", "名古屋市中区", "Aichi", "Nagoya Naka-ku", "460-0008", "栄", "Sakae", 5),
+    ("福岡県", "福岡市中央区", "Fukuoka", "Fukuoka Chuo-ku", "810-0001", "天神", "Tenjin", 6),
+    ("北海道", "札幌市中央区", "Hokkaido", "Sapporo Chuo-ku", "060-0042", "大通西", "Odori Nishi", 19),
+    ("埼玉県", "さいたま市浦和区", "Saitama", "Saitama Urawa-ku", "330-0061", "常盤", "Tokiwa", 10),
+    ("千葉県", "千葉市中央区", "Chiba", "Chiba Chuo-ku", "260-0013", "中央", "Chuo", 4),
+)
 
 CLOUD_SERVICE_SLUGS_JA = {
     "保管API": "archive-api",
@@ -922,6 +954,12 @@ def _template_columns(template_id, language):
 
 
 DATABASE_COLUMN_LABELS_JA = {
+    "birth_date": "生年月日（架空）",
+    "postal_code": "郵便番号",
+    "street_address": "番地（合成）",
+    "prefecture": "都道府県",
+    "city": "市区町村",
+    "last_login": "最終ログイン日時",
     "credential_ref": "\u8a8d\u8a3c\u60c5\u5831\u53c2\u7167ID",
     "key_preview": "\u8a8d\u8a3c\u306b\u4f7f\u3048\u306a\u3044\u5408\u6210\u30ad\u30fc\u898b\u672c",
     "access_scope": "\u6a29\u9650\u7bc4\u56f2",
@@ -1020,6 +1058,13 @@ DATABASE_COLUMN_LABELS_JA = {
     "work_email": "会社メールアドレス",
 }
 DATABASE_COLUMN_LABELS_EN = {
+    "birth_date": "Date of birth (fictional)",
+    "postal_code": "Postal code",
+    "street_address": "Street address (synthetic)",
+    "prefecture": "Prefecture",
+    "city": "City / ward",
+    "created_at": "Registration date",
+    "last_login": "Last login date and time",
     "id": "ID",
     "credential_ref": "Credential reference",
     "key_preview": "Nonfunctional credential preview",
@@ -1046,6 +1091,7 @@ DATABASE_COLUMN_LABELS_EN = {
 }
 DATABASE_COLUMN_LABEL_OVERRIDES = {
     "ja": {
+        "customers": {"postal_code": "郵便番号（地域対応）", "created_at": "会員登録日"},
         "passwords": {"username": "ログイン名", "last_rotated": "パスワード最終更新日"},
         "users": {"username": "ユーザー名", "role": "アクセス権限"},
         "employees": {"role": "役職", "started_at": "入社日"},
@@ -1054,6 +1100,7 @@ DATABASE_COLUMN_LABEL_OVERRIDES = {
         "assets": {"checked_at": "棚卸確認日"},
     },
     "en": {
+        "customers": {"postal_code": "Postal code (locality-matched)", "created_at": "Registration date"},
         "passwords": {
             "username": "Login name",
             "last_rotated": "Password last updated",
@@ -1330,7 +1377,9 @@ def records(columns, rows, language="en"):
         and columns_by_name[email]["kind"] == "email"
         for name, email in reusable_identity_pairs
     )
-    person_profile_count = min(500, max(5, rows // 3)) if reuse_person_profiles else 0
+    person_profile_count = (
+        min(500, len(name_pairs), max(5, rows // 3)) if reuse_person_profiles else 0
+    )
     person_organization_profiles = {}
     issued_column = columns_by_name.get("issued_at")
     due_column = columns_by_name.get("due_at")
@@ -1380,6 +1429,34 @@ def records(columns, rows, language="en"):
     )
     order_feasibility_cache = {}
     for i in range(1, rows + 1):
+        customer_address_values = {}
+        prefecture_column = columns_by_name.get("prefecture")
+        city_column = columns_by_name.get("city")
+        postal_column = columns_by_name.get("postal_code")
+        if prefecture_column and city_column and postal_column:
+            prefecture_candidates = prefecture_column.get("values")
+            city_candidates = city_column.get("values")
+            eligible_profiles = [
+                profile
+                for profile in CUSTOMER_ADDRESS_PROFILES
+                if (not prefecture_candidates or profile[0 if japanese else 2] in prefecture_candidates)
+                and (not city_candidates or profile[1 if japanese else 3] in city_candidates)
+            ]
+            if eligible_profiles:
+                profile = rng.choice(eligible_profiles)
+                chome = rng.randint(1, profile[7])
+                block = rng.randint(1, 30)
+                building = rng.randint(1, 25)
+                customer_address_values = {
+                    "prefecture": profile[0 if japanese else 2],
+                    "city": profile[1 if japanese else 3],
+                    "postal_code": profile[4],
+                    "street_address": (
+                        f"{profile[5]}{chome}丁目{block}-{building}"
+                        if japanese
+                        else f"{profile[6]} {chome}-{block}-{building}"
+                    ),
+                }
         if currency_column:
             currency_values = currency_column.get("values", ("JPY", "USD", "EUR"))
             row_currency = rng.choice(currency_values)
@@ -1996,7 +2073,9 @@ def records(columns, rows, language="en"):
         row = []
         for column in columns:
             kind = column["kind"]
-            if kind == "company":
+            if column["name"].casefold() in customer_address_values:
+                value = customer_address_values[column["name"].casefold()]
+            elif kind == "company":
                 value = company_values[column["name"]]
             elif column["name"].lower() in invoice_dates:
                 value = invoice_dates[column["name"].lower()]
@@ -2245,6 +2324,8 @@ def records(columns, rows, language="en"):
                 value = f"{rng.randint(1, 12):02d}/{(today.year + rng.randint(1, 5)) % 100:02d}"
             elif kind == "test_postal":
                 value = str(rng.randrange(10000, 100000))
+            elif kind == "address":
+                value = f"{rng.randint(1, 8)}-{rng.randint(1, 30)}-{rng.randint(1, 25)}"
             elif kind == "credential_preview":
                 alphabet = (
                     string.ascii_lowercase

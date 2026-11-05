@@ -52,6 +52,10 @@ let databaseTemplates = [];
 let databaseTemplatesLanguage = "";
 let generationInProgress = false;
 const japanese = {};
+const syntheticAddressOption = document.createElement("option");
+syntheticAddressOption.value = "address";
+syntheticAddressOption.dataset.i18n = "kind_address";
+$("#column-template").content.querySelector(".column-kind").append(syntheticAddressOption);
 for (const root of [document, $("#column-template").content]) {
   root.querySelectorAll("[data-i18n]").forEach(element => { japanese[element.dataset.i18n] = element.textContent; });
 }
@@ -192,8 +196,6 @@ Object.assign(translations.en, {
   explain_measurement:"Plausibility and delay depend on the deployment environment and attacker behavior.",
   legal_disclaimer:"This is a general view of Japanese law, not a determination for a particular case. Consult a legal professional familiar with the applicable jurisdiction before deployment.", legal_us_disclaimer:"This is a general view of US law, not a determination for a particular case. Consult a legal professional familiar with the applicable jurisdiction before deployment.",
   legal_us_title:"US legal considerations for implementing countermeasures (federal and state law)", legal_us_risk:"Specific considerations", legal_us_scope:"Federal and state law and contracts may apply. The contents and storage of communications and the locations of those involved can affect the assessment; monitoring is not automatically permitted even on systems you control.", legal_us_more:"US legal background and details",
-  email_domain:"Email domain for an isolated decoy (optional)", email_domain_help:"By default, company names use matching addresses under the reserved example.invalid domain; other rows use example.invalid. Use a domain you own only for an isolated decoy, without production mailboxes. This tool does not perform DNS lookups or send email. Direct any mail to an isolated monitoring sink.",
-  email_domain_authorized:"I own this domain and will use it only for an isolated decoy without production mailboxes.",
   column_options_help:"For numeric fields, enter minimum,maximum (for example 0,100000). Separate text or status candidates with | (for example active|pending). Blank ranges default to 1–100 for quantities, 25–2500 for unit prices, and 0–100000 for other numeric fields.",
   candidate_values_safety:"Candidate values cannot contain real domains, IP addresses, URLs or email addresses. Use reserved examples such as example.invalid, and use the dedicated fields for monitoring URLs and owned domains.",
   vault_domain:"Domain for the isolated decoy (optional)", vault_domain_help:"Used only for fictional login_url fields in the Password Vault scenario. Applies to the standalone database and non-.env files in Encrypted Deep Nest, Directory Maze and Encoding Maze; .env files use environment variables. A supplied domain creates an HTTPS URL that may be reachable. The generator does not resolve or contact it. Use a domain you own, and point wildcard DNS and TLS only at an isolated decoy without production authentication. This is not a monitoring token; use DNS or web-server logs to observe requests. Leave blank to use example.invalid.",
@@ -721,8 +723,18 @@ translations.en.overview_only = "Overview only · no file generated";
 translations.en.default_page_title = "Operations Portal";
 translations.en.env_advanced_summary = "Optional .env settings (defaults are ready)";
 translations.en.nest_password_details = "Password generation options (defaults are ready)";
-translations.en.database_schema_summary = "Edit or add columns (optional; the preset works as-is)";
-translations.en.database_email_summary = "Use a dedicated email domain (usually leave blank)";
+translations.ja.database_schema_summary = "顧客テーブルの項目を編集（任意）";
+translations.en.database_schema_summary = "Edit customer table columns (optional)";
+methodFlows.ja.database.how = "BtoC向けに、合成した顧客連絡先と地域に合う住所、登録日、ログイン履歴を含むSQLiteを作成します。住所の郵便番号・都道府県・市区町村は対応する地域から選び、番地はランダムな合成値です。";
+methodFlows.en.database.how = "Creates a SQLite database with synthetic B2C customer contacts, locality-matched addresses, registration dates and login history. Postal code, prefecture and city are selected as a matching set; street numbers are random synthetic values.";
+translations.ja.database_help = "BtoC向けの架空顧客データを作成します。郵便番号・都道府県・市区町村は実在する地域の対応組から選び、番地はランダムな合成値を付けます。個人宅の住所は参照・生成しません。";
+translations.en.database_help = "Creates fictional B2C customer records with contact, address, registration and login fields. You can edit the columns. Postal codes, prefectures and cities are selected as matching real localities; street numbers are randomly generated synthetic values. No household addresses are imported or reproduced.";
+translations.ja.database_desc = "BtoC向けの架空顧客データを含むSQLiteファイルを作成します。必要に応じて項目を編集できます。指定したカナリアURLは別の接続先テーブルに追加され、既存のデータベースには接続しません。";
+translations.en.database_desc = "Create a SQLite file with fictional B2C customer data. You can edit its columns. A supplied canary URL is added in a separate connection table; the file does not connect to an existing database.";
+translations.ja.database_note = "氏名・メール・電話・番地は合成データです。郵便番号・都道府県・市区町村は実在する地域の組み合わせを使い、個人宅の住所は参照・再現しません。カード番号やCVV、実在の認証情報は生成しません。DB読取だけでは通知されず、カナリアURLへのアクセス時に監視サービスが通知します。";
+translations.en.database_note = "Names, emails, phone numbers and street numbers are synthetic. Postal codes, prefectures and cities use matching real localities; no household addresses are imported or reproduced. No payment card numbers, CVVs or real credentials are generated. Reading the database alone does not alert; the monitoring service alerts only if the canary URL is requested.";
+translations.ja.kind_address = "住所（番地・合成）";
+translations.en.kind_address = "Street address (synthetic)";
 translations.en.maze_advanced_summary = "Folder structure and canary settings (defaults are ready)";
 translations.en.encoding_advanced_summary = "Conversion methods and canary settings (defaults are ready)";
 translations.en.stream_config_summary = "Stream settings (loopback, 8 KiB/s and 2 connections by default)";
@@ -1442,8 +1454,10 @@ $("#add-column").addEventListener("click", () => {
   addColumn();
   if (document.querySelectorAll(".column-row").length !== previousCount) markDatabaseCustom();
 });
-for (const [name, kind] of [["id", "id"], ["name", "name"], ["email", "email"], ["company", "company"],
-  ["phone", "phone"], ["department", "department"], ["status", "status"], ["last_contact", "date"]]) addColumn(name, kind);
+for (const [name, kind] of [["id", "id"], ["name", "name"], ["email", "email"], ["phone", "phone"],
+  ["birth_date", "date"], ["postal_code", "test_postal"], ["prefecture", "text"], ["city", "text"],
+  ["street_address", "address"],
+  ["created_at", "date"], ["last_login", "datetime"]]) addColumn(name, kind);
 function updateCsvSafetyNote() {
   const kind = $('input[name="kind"]:checked')?.value;
   const selector = {env: "#canary-format", directory_maze: "#maze-format", encoding_maze: "#encoding-format"}[kind];
@@ -2365,7 +2379,7 @@ form.addEventListener("submit", async event => {
         password_policy: {mode: $("#password-mode").value, min_length: Number($("#min-length").value), max_length: Number($("#max-length").value),
           lowercase: $("#lowercase").checked, uppercase: $("#uppercase").checked, digits: $("#digits").checked, symbols: $("#symbols").checked, progressive: $("#progressive").checked, hints: $("#hints").value,
           ...($("#password-words").value.trim() ? {words: $("#password-words").value.split(",").map(v => v.trim())} : {})}}),
-      database: () => ({template: $("#database-template").value || "customers", email_domain: $("#db-email-domain").value.trim(), email_domain_authorized: $("#db-email-domain-authorized").checked, ...( $("#database-template").value === "passwords" ? vaultDomainSettings() : {}), rows: Number($("#rows").value), table: $("#table-name").value, columns: columns(), canary_url: $("#db-url").value}),
+      database: () => ({template: $("#database-template").value || "customers", ...( $("#database-template").value === "passwords" ? vaultDomainSettings() : {}), rows: Number($("#rows").value), table: $("#table-name").value, columns: columns(), canary_url: $("#db-url").value}),
       web: () => ({scenario: $("#web-scenario").value, title: $("#title").value, canary_url: $("#web-url").value}),
       fake_trap: () => ({variant: $("#fake-variant").value}),
       ransomware_tripwire: () => ({files: Number($("#tripwire-files").value)}),
@@ -2458,7 +2472,7 @@ function configControls() {
 const nonPersistentCanaryUrlControls = new Set(["env-url", "db-url", "web-url"]);
 const internalCanaryTemplateControls = new Set(["canary-field", "canary-label"]);
 const nonPersistentOperatorAttestations = new Set([
-  "db-email-domain-authorized", "vault-domain-authorized",
+  "vault-domain-authorized",
 ]);
 const unsafeSettingText = /[\p{Cc}\p{Zl}\p{Zp}\p{Cs}\u061c\u200e\u200f\u202a-\u202e\u2066-\u206f]/u;
 function hasUnsafeSettingText(value) { return typeof value === "string" && unsafeSettingText.test(value); }
@@ -2530,12 +2544,13 @@ $("#settings-file").addEventListener("change", async event => {
     // UI v6 stored two trailing values for the retired generator.
     if (config.schema === "adg-ui-v6" && Array.isArray(values)) values = values.slice(0, -2);
     if (Array.isArray(values) && !["adg-ui-v9", "adg-ui-v10", "adg-ui-v11", "adg-ui-v12", "adg-ui-v13", "adg-ui-v14"].includes(config.schema)) {
-      // Older schemas predate the database email-domain controls. v1-v8 also
-      // predate the trailing vault-domain controls; v9 already contains those.
+      // v1-v8 predate the trailing vault-domain controls; v9 already contains them.
       if (config.schema !== "adg-ui-v9") values = [...values, "", false];
-      const emailDomainIndex = legacyControlIndex("db-email-domain");
-      if (emailDomainIndex < 0) throw new Error();
-      values.splice(emailDomainIndex, 0, "", false);
+    }
+    if (Array.isArray(values) && ["adg-ui-v10", "adg-ui-v11", "adg-ui-v12", "adg-ui-v13"].includes(config.schema)) {
+      // These versions stored the retired database email-domain input and attestation.
+      const retiredIndex = legacyControlIndex("db-url") + 1;
+      values.splice(retiredIndex, 2);
     }
     if (Array.isArray(values) && !["adg-ui-v11", "adg-ui-v12", "adg-ui-v13", "adg-ui-v14"].includes(config.schema)) {
       const encodingScenarioIndex = legacyControlIndex("encoding-scenario");
@@ -2607,7 +2622,6 @@ $("#settings-file").addEventListener("change", async event => {
     randomizeNestSettings();
     // Ownership attestation must be given by the current operator, not carried in an imported config.
     $("#vault-domain-authorized").checked = false;
-    $("#db-email-domain-authorized").checked = false;
     $("#database-template").dataset.selected = $("#database-template").value;
     const selectedTemplate = databaseTemplates.find(item => item.id === $("#database-template").value);
     $("#template-description").textContent = selectedTemplate?.description || t("template_help");

@@ -245,24 +245,19 @@
         </div>
         <div id="database-fields" class="fields" hidden>
           <div class="panel-title"><h3 data-i18n="database_title">デコイ・データベース</h3><p data-i18n="database_desc">項目の構成とデータ種類を指定してSQLiteを生成します。</p></div>
-          <div class="template-picker"><label for="database-template" data-i18n="database_template">用途別テンプレート</label><select id="database-template"><option value="custom" data-i18n="template_custom">カスタム（項目を自由に編集）</option><option value="customers" selected data-i18n="template_default_loading">顧客管理（プリセット読込中・既定）</option></select><p id="template-description" class="help" aria-live="polite" data-i18n="template_help">テンプレート選択後に項目を編集できます。実在の個人情報や実接続先は使わないでください。</p></div>
+          <div class="template-picker" hidden><label for="database-template" data-i18n="database_template">用途別テンプレート</label><select id="database-template"><option value="custom" data-i18n="template_custom">カスタム（項目を自由に編集）</option><option value="customers" selected data-i18n="template_default_loading">顧客管理（プリセット読込中・既定）</option></select><p id="template-description" class="help" aria-live="polite" data-i18n="template_help">テンプレート選択後に項目を編集できます。実在の個人情報や実接続先は使わないでください。</p></div>
            <div class="form-grid">
           <div><label for="table-name" data-i18n="table_name">テーブル名</label><input id="table-name" value="customers" maxlength="48"></div>
           <div><label for="rows" data-i18n="rows">レコード件数</label><input id="rows" type="number" value="100" min="1" max="10000" required><p class="help database-rows-help" data-i18n="database_rows_help">初期値は100件です。SQLiteファイルは最大32 MiBです。上限に達した場合は、件数か列数を減らしてください。</p></div>
-           <div><label for="db-url"><span data-i18n="canary_url">カナリアURL</span> <span class="optional" data-i18n="optional">任意</span></label><textarea id="db-url" rows="1" inputmode="url" spellcheck="false" autocapitalize="none" maxlength="2048" placeholder="https://..." autocomplete="off">__LOCAL_CANARY_URL__</textarea></div></div>
+            <div class="full-width"><label for="db-url"><span data-i18n="canary_url">カナリアURL</span> <span class="optional" data-i18n="optional">任意</span></label><textarea id="db-url" rows="1" inputmode="url" spellcheck="false" autocapitalize="none" maxlength="2048" placeholder="https://..." autocomplete="off">__LOCAL_CANARY_URL__</textarea></div></div>
           <p class="help" data-i18n="local_canary_scope">初期のカナリアページURLは、このPCでPhysaliaを起動している間だけ動作確認に使えます。別PCからは届きません。本番運用では、HTTPSで外部ネットワークからアクセスできる場所にカナリアページを公開し、そのURLをここに指定してください。</p>
            <p class="help" data-i18n="database_identifier_help">テーブル名・列名は、英字または_で始まる英数字と_のみ、48文字以内です。sqlite_で始まる名前は使えません。例: customers、last_contact。日本語の表示項目名とは別に、ここには英数字の名前を入力します。</p>
-           <details class="database-email-details"><summary data-i18n="database_email_summary">メール用ドメイン（専用ドメインを使う場合）</summary>
-           <div class="form-grid"><div><label for="db-email-domain" data-i18n="email_domain">隔離デコイ専用メールドメイン（任意）</label><input id="db-email-domain" type="text" maxlength="204" placeholder="decoy.example-corp.jp" autocomplete="off"></div></div>
-          <p class="help" data-i18n="email_domain_help">会社名がある行では予約済みexample.invalid配下の会社名に合わせた値、ない場合はexample.invalidを使います。独自ドメインは所有する隔離デコイ専用とし、本番メールボックスを使わないでください。このツールはDNS照会やメール送信をしません。受信先は隔離した監視用シンクに限定してください。</p>
-          <label class="check-label"><input id="db-email-domain-authorized" type="checkbox" data-operator-attestation><span data-i18n="email_domain_authorized">このドメインを所有し、本番メールボックスのない隔離デコイ専用にします</span></label>
-           </details>
            <details id="database-schema-details" class="database-schema-details"><summary data-i18n="database_schema_summary">列を追加・編集（任意。プリセットのままでも作成できます）</summary>
            <div class="schema-heading"><h4 data-i18n="schema">項目の定義</h4><button type="button" id="add-column" class="secondary" data-i18n="add_column">＋ 項目を追加</button></div>
            <p class="help" data-i18n="column_options_help">数値項目は最小,最大（例: 0,100000）、テキスト・状態などの候補は|区切り（例: active|pending）で指定します。空欄の数量は1〜100、単価は25〜2500、その他の数値は0〜100000になります。</p>
            <div id="columns"></div>
           <p class="help" data-i18n="candidate_values_safety">候補値には実在ドメイン・IPアドレス・URL・メールを指定できません。example.invalidなどの予約済み例示値を使い、監視URLや所有ドメインは専用欄から指定してください。</p>
-          <p class="help" data-i18n="database_help">顧客・カード台帳・企業・パスワード管理・注文・請求・従業員・取引先・サポート・資産・クラウドのテンプレートがあります。項目は最大30個まで編集できます。会社・部署・状態・テキストの候補値を、業務に合う架空の値へ置き換えると自然さを高められます。氏名やメールも候補値を使う場合は型をテキストに変更してください。実在の個人情報や実接続先は使わないでください。メール・ドメイン型はexample.invalidを使います。既定の保管庫login_urlも予約済みのexample.invalid内で、実在サービスへ接続されません。</p>
+           <p class="help" data-i18n="database_help">BtoC向け顧客情報の架空データを作成します。項目は必要に応じて編集できます。実在の個人情報や実接続先は使わないでください。</p>
            </details>
           <div class="inline-note" data-i18n="database_note">カードは実際の番号・CVVを生成せず、明確に無効な見本参照値のみ。パスワード欄には実在アカウントやサービスに結び付かないランダムな合成文字列を入れ、実認証情報やハッシュは取り込みません。DB読取だけでは通知しません。パスワード管理テンプレートではlogin_url列があればその1件に、なければ接続先テーブルに保存します。その他のDBも接続先テーブルを使います。URLにアクセスされた場合だけ監視サービスから通知されます。</div>
         </div>
