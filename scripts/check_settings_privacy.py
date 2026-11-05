@@ -105,9 +105,9 @@ def main():
         print("Cannot inspect non-persistent domain-ownership confirmations", file=sys.stderr)
         return 2
     attestations = set(re.findall(r"['\"]([^'\"]+)['\"]", attestation_match.group(1)))
-    required_attestations = {
-        "db-email-domain-authorized", "vault-domain-authorized",
-    }
+    # The optional database email-domain field was removed from the UI; only
+    # the vault's operator-owned domain confirmation remains.
+    required_attestations = {"vault-domain-authorized"}
     if attestations != required_attestations:
         print("Domain-ownership confirmations must be explicitly excluded from saved settings",
               file=sys.stderr)
@@ -118,16 +118,12 @@ def main():
     if not all(f'$("#{field_id}").checked = false' in app for field_id in attestations):
         print("Settings import must require ownership reconfirmation", file=sys.stderr)
         return 1
-    required_marked_attestations = {
-        "db-email-domain-authorized", "vault-domain-authorized",
-    }
+    required_marked_attestations = required_attestations
     if parser.operator_attestations != required_marked_attestations:
         print("Every operator attestation control must remain explicitly identified", file=sys.stderr)
         return 1
     all_operator_attestations = parser.operator_attestations | attestations
-    if all_operator_attestations != {
-        "db-email-domain-authorized", "vault-domain-authorized",
-    }:
+    if all_operator_attestations != required_attestations:
         print("Settings export must account for every operator attestation", file=sys.stderr)
         return 1
     if not all(f'$("#{field_id}").checked = false' in app for field_id in all_operator_attestations):

@@ -25,7 +25,7 @@ from physalia.validation import (
     vault_decoy_domain,
 )
 
-MAX_ROWS = 10000
+MAX_ROWS = 100000
 MAX_DATABASE_BYTES = 32 * 1024 * 1024
 VAULT_LOGIN_PATHS = {
     "mail-console": "/auth/login",
@@ -71,9 +71,11 @@ DEFAULT_COLUMNS = [
     {"name": "street_address", "kind": "address"},
     {"name": "created_at", "kind": "date"},
     {"name": "last_login", "kind": "datetime"},
+    {"name": "is_deleted", "kind": "boolean"},
 ]
 KINDS = {
     "id": "INTEGER",
+    "boolean": "BOOLEAN",
     "name": "TEXT",
     "username": "TEXT",
     "email": "TEXT",
@@ -342,6 +344,7 @@ DATABASE_TEMPLATES = {
             {"name": "street_address", "kind": "address"},
             {"name": "created_at", "kind": "date"},
             {"name": "last_login", "kind": "datetime"},
+            {"name": "is_deleted", "kind": "boolean"},
         ],
     },
     "cards": {
@@ -954,9 +957,10 @@ def _template_columns(template_id, language):
 
 
 DATABASE_COLUMN_LABELS_JA = {
-    "birth_date": "生年月日（架空）",
+    "is_deleted": "\u8ad6\u7406\u524a\u9664\u30d5\u30e9\u30b0",
+    "birth_date": "生年月日",
     "postal_code": "郵便番号",
-    "street_address": "番地（合成）",
+    "street_address": "番地",
     "prefecture": "都道府県",
     "city": "市区町村",
     "last_login": "最終ログイン日時",
@@ -1022,7 +1026,7 @@ DATABASE_COLUMN_LABELS_JA = {
     "owner_name": "利用者名",
     "password": "パスワード例（使用不可）",
     "payment_status": "支払状況",
-    "phone": "電話番号（北米の予約済み架空番号・非稼働）",
+    "phone": "電話番号",
     "priority": "優先度",
     "product": "商品",
     "purchase_cost": "購入費用",
@@ -1058,9 +1062,10 @@ DATABASE_COLUMN_LABELS_JA = {
     "work_email": "会社メールアドレス",
 }
 DATABASE_COLUMN_LABELS_EN = {
-    "birth_date": "Date of birth (fictional)",
+    "is_deleted": "Soft-delete flag",
+    "birth_date": "Date of birth",
     "postal_code": "Postal code",
-    "street_address": "Street address (synthetic)",
+    "street_address": "Street address",
     "prefecture": "Prefecture",
     "city": "City / ward",
     "created_at": "Registration date",
@@ -1073,7 +1078,7 @@ DATABASE_COLUMN_LABELS_EN = {
     "last_used": "Last used",
     "credential_status": "Credential status",
     "api_endpoint": "API endpoint URL (example.invalid)",
-    "phone": "Phone (non-working North American fictional range)",
+    "phone": "Phone number",
     "mfa_status": "MFA status",
     "documentation_ip": "Documentation IP address",
     "login_url": "Login URL",
@@ -1361,6 +1366,30 @@ def records(columns, rows, language="en"):
     contact_organization_pool = organization_pool[:contact_organization_count]
     organization_index = 0
     used_usernames = set()
+    used_phone_numbers = set()
+
+    def japanese_phone_number():
+        area_codes = (
+            ("03", 4), ("06", 4), ("011", 3), ("022", 3), ("045", 3),
+            ("052", 3), ("075", 3), ("078", 3), ("082", 3), ("092", 3),
+        )
+        while True:
+            if rng.random() < 0.8:
+                number = (
+                    f"{rng.choice(('070', '080', '090'))}-"
+                    f"{rng.randrange(10000):04d}-{rng.randrange(10000):04d}"
+                )
+            else:
+                area_code, exchange_digits = rng.choice(area_codes)
+                subscriber_digits = 10 - len(area_code) - exchange_digits
+                exchange_minimum = 2 * 10 ** (exchange_digits - 1)
+                number = (
+                    f"{area_code}-{rng.randint(exchange_minimum, 10 ** exchange_digits - 1):0{exchange_digits}d}-"
+                    f"{rng.randrange(10 ** subscriber_digits):0{subscriber_digits}d}"
+                )
+            if number not in used_phone_numbers:
+                used_phone_numbers.add(number)
+                return number
     company_columns = [column for column in columns if column["kind"] == "company"]
     columns_by_name = {column["name"].lower(): column for column in columns}
     reusable_identity_pairs = (
@@ -1418,6 +1447,8 @@ def records(columns, rows, language="en"):
     credential_created_column = columns_by_name.get("created_at")
     credential_rotated_column = columns_by_name.get("last_rotated")
     credential_last_used_column = columns_by_name.get("last_used")
+    customer_created_column = columns_by_name.get("created_at")
+    customer_deleted_column = columns_by_name.get("is_deleted")
     currency_column = next(
         (
             column
@@ -1429,6 +1460,26 @@ def records(columns, rows, language="en"):
     )
     order_feasibility_cache = {}
     for i in range(1, rows + 1):
+        customer_lifecycle_values = {}
+        if (
+            customer_created_column
+            and customer_created_column.get("kind") == "date"
+            and customer_deleted_column
+            and customer_deleted_column.get("kind") == "boolean"
+        ):
+            account_age_days = rng.randint(0, 3650)
+            customer_lifecycle_values = {
+                "created_at": (today - timedelta(days=account_age_days)).isoformat(),
+                # Soft deletion stays uncommon, with older accounts more likely
+                # to be deleted: about 0.1% for new accounts up to 5% at 10 years.
+                "is_deleted": rng.random() < (0.001 + 0.049 * account_age_days / 3650),
+            }
+            last_login_column = columns_by_name.get("last_login")
+            if last_login_column and last_login_column.get("kind") == "datetime":
+                customer_lifecycle_values["last_login"] = (
+                    now - timedelta(days=rng.randint(0, account_age_days),
+                                    seconds=rng.randrange(86400))
+                ).isoformat()
         customer_address_values = {}
         prefecture_column = columns_by_name.get("prefecture")
         city_column = columns_by_name.get("city")
@@ -2075,6 +2126,8 @@ def records(columns, rows, language="en"):
             kind = column["kind"]
             if column["name"].casefold() in customer_address_values:
                 value = customer_address_values[column["name"].casefold()]
+            elif column["name"].casefold() in customer_lifecycle_values:
+                value = customer_lifecycle_values[column["name"].casefold()]
             elif kind == "company":
                 value = company_values[column["name"]]
             elif column["name"].lower() in invoice_dates:
@@ -2141,6 +2194,8 @@ def records(columns, rows, language="en"):
                 value = rng.choice(DEPARTMENTS_JA if japanese else DEPARTMENTS)
             elif kind == "integer":
                 value = rng.randint(int(column["min"]), int(column["max"]))
+            elif kind == "boolean":
+                value = False
             elif kind == "decimal":
                 low, high = float(column["min"]), float(column["max"])
                 if (
@@ -2179,10 +2234,12 @@ def records(columns, rows, language="en"):
                 value = rng.choice(("active", "active", "pending", "archived"))
             elif kind == "uuid":
                 value = str(uuid.uuid4())
-            # NANPA reserves 555-0100 through 555-0199 for fictional, non-working use.
-            # https://nanpa.com/numbering/555-line-numbers
             elif kind == "phone":
-                value = f"+1-202-555-01{rng.randrange(100):02d}"
+                value = (
+                    japanese_phone_number()
+                    if japanese
+                    else f"+1-202-555-01{rng.randrange(100):02d}"
+                )
             elif kind == "domain":
                 endpoint_fields = {
                     "endpoint": ("/api/v1", "service"),

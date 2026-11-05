@@ -29,7 +29,7 @@ Each recorded header and string is limited to 512 characters. Authorization head
 - **Path Maze:** creates a finite ZIP of ordinary folders with synthetic files. Processing decoys adds work; parallel encryption may reach real files first.
 - **Sparse Decoy:** generates a script that creates synthetic files with a large logical size at the destination. Copies, backups and synchronization may consume the full logical size and substantial time.
 - **Static decoy portal:** set the context and title. The deployment ZIP contains HTML and fictional documents, with no login feature.
-- **Decoy database:** create a fictional B2C customer table, then review its rows and fields. Postal code, prefecture and city are selected as matching real localities; street numbers are randomly generated synthetic values. No household addresses are imported. It contains no real card numbers or CVVs, and no passwords or API keys that can authenticate. It never connects to an existing database.
+- **Decoy database:** create a fictional B2C customer table with the default name `customers`. Choose 1,000, 10,000 or 100,000 rows. Postal code, prefecture and city are selected as matching real localities; street numbers are generated randomly. Older registration dates have a higher chance of a sparse soft-delete flag. It never connects to an existing database and contains no canary URL.
 - **Encrypted Deep Nest, Directory Maze and Encoding Maze:** review the explanation and estimates, then adjust size, depth and counts. Keep operator-only files separate from deployment artifacts.
 - **Explanation-only methods:** these explain a technique but do not generate a sample or change production.
 

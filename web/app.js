@@ -119,7 +119,7 @@ const translations = {
     password_help: "The default uses word-based 8–24 character passwords with digits and symbols, increasing with depth. Recovery notes point generally to a separate password register and do not claim that a certain number of characters is stored elsewhere. Use the separate password list only to verify your sample, and keep it private. Archives can be attacked offline and in parallel after download, so cracking time and delay are not guaranteed.",
     canary_percent: "Canary probability per decoy (%)", canary_probability: "Sampled independently per file. 0% means none; 100% means all decoys. Up to 400 URLs are accepted. Selected files receive different URLs before one is reused. URLs beyond the number of selected files remain unused; the selected count varies with the per-file probability. Reused URLs cannot identify the exact file from an alert. A blank URL list inserts no monitoring URL.",
     nest_note: "The downloaded ZIP is itself AES-encrypted. Open it directly with an AES-compatible archive tool; there is no ordinary ZIP wrapper to extract first. Use the ZIP password list to verify the sample. It contains passwords, so keep it private and never deploy or publish it with the decoys. Source content is limited to 32 MiB and cumulative encrypted archives to 64 MiB.",
-    database_desc: "Choose a preset to create a SQLite file with fictional data in a main table. You can customize its columns if needed. A supplied canary URL may add a separate connection table; the file does not connect to an existing database.", rows: "Number of records", database_rows_help: "Default: 100 rows. SQLite files are limited to 32 MiB. If generation reaches the limit, reduce the row count or number of columns.", table_name: "Table name", schema: "Column definitions", add_column: "+ Add column",
+    database_desc: "Create a SQLite file containing a fictional B2C customer table. You can customize its columns.", rows: "Number of records", database_rows_help: "Choose 1,000, 10,000 or 100,000 records. SQLite files are limited to 32 MiB; larger selections may need fewer columns.", table_name: "Table name", schema: "Column definitions", add_column: "+ Add column",
     database_help: "Choose a customer, card inventory, company, password vault, orders, sales transactions, invoices, employees, user management, vendors, support tickets, assets or cloud inventory template. Edit up to 30 columns. Replacing company, department, status and text candidates with fictional values from your business context can make the records more credible. To provide candidate names or emails, change the kind to Text. Do not use real personal data or live endpoints. Company-associated email/domain values use company-matched subdomains under reserved example.invalid; rows without a company use example.invalid. By default, password vault login_url values use the reserved example.invalid domain and cannot reach real services.",
     database_note: "Card data uses a clearly invalid reference only; no PAN or CVV. Phone fields use the reserved fictional +1-202-555-0100–0199 range, including in Japanese-language samples. Password fields contain random synthetic strings that are not linked to real accounts or services; no real credentials or hashes are imported. Reading a database alone does not alert. The Password Vault template places the canary URL in one login_url record when that column exists; otherwise it uses a connection table. Other templates also use a connection table. The monitoring service alerts only if the URL is requested.",
     column_name: "Column name", data_kind: "Data generator", data_options: "Candidate values / numeric range", remove_column: "Remove",
@@ -197,7 +197,7 @@ Object.assign(translations.en, {
   legal_disclaimer:"This is a general view of Japanese law, not a determination for a particular case. Consult a legal professional familiar with the applicable jurisdiction before deployment.", legal_us_disclaimer:"This is a general view of US law, not a determination for a particular case. Consult a legal professional familiar with the applicable jurisdiction before deployment.",
   legal_us_title:"US legal considerations for implementing countermeasures (federal and state law)", legal_us_risk:"Specific considerations", legal_us_scope:"Federal and state law and contracts may apply. The contents and storage of communications and the locations of those involved can affect the assessment; monitoring is not automatically permitted even on systems you control.", legal_us_more:"US legal background and details",
   column_options_help:"For numeric fields, enter minimum,maximum (for example 0,100000). Separate text or status candidates with | (for example active|pending). Blank ranges default to 1–100 for quantities, 25–2500 for unit prices, and 0–100000 for other numeric fields.",
-  candidate_values_safety:"Candidate values cannot contain real domains, IP addresses, URLs or email addresses. Use reserved examples such as example.invalid, and use the dedicated fields for monitoring URLs and owned domains.",
+  candidate_values_safety:"Candidate values cannot contain real domains, IP addresses, URLs or email addresses. Use reserved examples such as example.invalid.",
   vault_domain:"Domain for the isolated decoy (optional)", vault_domain_help:"Used only for fictional login_url fields in the Password Vault scenario. Applies to the standalone database and non-.env files in Encrypted Deep Nest, Directory Maze and Encoding Maze; .env files use environment variables. A supplied domain creates an HTTPS URL that may be reachable. The generator does not resolve or contact it. Use a domain you own, and point wildcard DNS and TLS only at an isolated decoy without production authentication. This is not a monitoring token; use DNS or web-server logs to observe requests. Leave blank to use example.invalid.",
   vault_domain_authorized:"I control this domain and direct it only to an isolated decoy without production authentication."
 });
@@ -205,7 +205,7 @@ translations.en.nest_reduce_branches_to = "child ZIPs per archive to {value}";
 const methodExplanations = {
   ja: {
     env: {title:"カナリアファイル", how:"もっともらしい文書や設定ファイルに、運用者が指定した監視URLを埋め込みます。", target:"攻撃者がカナリアファイル（罠ファイル）を盗み出し、そこに書かれたURLへアクセスする場面を想定します。接続先の設定に応じて、通報やリクエスト情報の記録などを行い、侵害後の調査につなげます。", limit:"単体のカナリア生成ではURLを1つ使います。暗号化ネスト、ディレクトリ・メイズ、エンコーディング・メイズはURL一覧からファイルごとに割り当て、台帳に対応を記録します。ファイルの取得・閲覧だけではURL型トークンは発火しません。通信遮断やURLを試さない手順では通知されず、発火してもAIによるアクセスかは判定できません。"},
-    database: {title:"デコイ・データベース", how:"実在人物を含まない、もっともらしいテーブルと架空レコードのDBを作ります。指定項目から最大10,000件を生成します。パスワード管理テンプレートでは、カナリアURLをランダムに選んだ1件のlogin_urlへ配置し、password値は保ちます。", target:"`.db`を探して顧客・注文情報を持ち出す攻撃者と、盗んだ後に本物らしさを検証する攻撃者を想定します。", limit:"本ツールは単独テーブルと架空データを作ります。本番DBへの自動接続・読み取り監視はありません。実データや再現し過ぎたスキーマを使わず、本物も同時に漏れ得る前提で運用します。関連技術のデータ・ディルーションは、本番DBに大量の合成レコードを混ぜ、流出後の選別と利用を難しくする構想です。本ツールでは技術紹介のみを行い、本番DBへの混在は実装しません。"},
+    database: {title:"デコイ・データベース", how:"顧客管理用のcustomersテーブルを初期値として、架空のBtoC顧客データを含むSQLiteを作ります。件数は1,000件、10,000件、100,000件から選べます。", target:"`.db`を探して顧客データを持ち出す攻撃者と、盗んだ後に本物らしさを検証する攻撃者を想定します。", limit:"生成するのはカナリアを含まない単独テーブルです。本番DBへの接続・読み取り監視はありません。登録日が古いほど論理削除フラグのtrue確率が上がりますが、trueは少数です。"},
     web: {title:"スタティック・デコイ・ポータル", how:"アーカイブや管理ポータルに見える静的HTMLを作ります。", target:"公開URLや管理画面らしいサブディレクトリを探索し、リンクやファイルをたどる攻撃を想定します。", limit:"静的ページです。認証、ログイン状態、設定変更、アクセス制御、通知処理は実装しません。画面を開くだけではリンク先のカナリアURLにアクセスしません。"},
     fake_trap: {title:"フェイクトラップ", how:"警告、通報済み表示、認証中スピナーのいずれかを示す静的HTMLを作ります。画面表示だけで、通報・認証・情報収集や接続の維持は行いません。", target:"デコイ経路に到達し、表示を読む人やAIエージェントが、検知された可能性を考えて再確認する状況を想定します。", limit:"表示を無視するスクリプトや、別経路を並列に探索する攻撃者には働きません。ログ記録や通知は配置先で別途設定してください。遅延効果は保証されません。"},
     ransomware_tripwire: {title:"ランサムウェア・デコイフラッド", how:"架空の業務ファイル一式と、指定ファイルの内容変更・削除・差し替えをローカル記録するPython標準ライブラリ製の監視スクリプトを生成します。配置ZIPと監視スクリプトは別々に保存します。", target:"ランサムウェアなどが監視対象のファイルを暗号化・削除・置換する状況を想定します。", limit:"監視スクリプトは約1秒間隔の確認で、読み取りだけのアクセスは検知しません。検知前に実データが損なわれる可能性があり、プロセス停止・端末隔離・復元は行いません。監視対象の差し替えや監視停止にも弱く、見逃し・誤検知があります。"},
@@ -216,7 +216,7 @@ const methodExplanations = {
   },
   en: {
     env: {title:"Canary File", how:"Embeds a monitoring URL supplied by the operator in a plausible document or configuration file.", target:"An intruder steals a canary file and visits the URL inside it. Depending on the destination's configuration, it can report the contact or record request details for follow-up investigation.", limit:"A standalone canary file uses one URL. Encrypted Deep Nest, Directory Maze and Encoding Maze accept up to 400 URLs and record file assignments in their private operator inventory. If a URL is reused, an alert cannot identify the exact file. Reading or downloading a file alone does not trigger an HTTP token. Network blocking or workflows that never test URLs prevent alerts. An alert does not identify whether a human or AI caused it."},
-    database: {title:"Decoy Database", how:"Creates a plausible schema populated only with synthetic records, up to 10,000 rows. The Password Vault template puts its canary URL in one randomly selected login_url record and leaves the password value unchanged.", target:"Intruders collecting .db files for customer or order data, including those who validate stolen data later.", limit:"This creates a standalone database; it does not connect to production or monitor reads. Avoid importing real data. A real database can still leak alongside decoys. The related Data Dilution concept mixes many synthetic records into a production database to make leaked data harder to select and use. This tool introduces the concept but does not mix records into production."},
+    database: {title:"Decoy Database", how:"Creates a standalone SQLite file with a fictional B2C customer table, defaulting to customers. Choose 1,000, 10,000 or 100,000 records.", target:"Intruders collecting .db files for customer data, including those who validate stolen data later.", limit:"The generated artifact is one table with no canary URL. It does not connect to production or monitor reads. Older registration dates have a higher soft-delete probability, while deleted records remain sparse."},
     web: {title:"Static Decoy Portal", how:"Creates a static page that resembles an archive or operations portal.", target:"Attacks that enumerate public URLs and admin-like subdirectories, then follow links or collect files.", limit:"Static HTML has no authentication, session, setting changes, access control or alert delivery. Opening the page does not fetch its canary link."},
     fake_trap: {title:"Fake Trap", how:"Creates static HTML with a warning, a reported-message display or an authentication spinner. The page does not report, authenticate, collect information or keep a connection open.", target:"A person or AI agent reaches a decoy path, reads the display and may reconsider whether access has been detected.", limit:"This has no effect on scripts that ignore the display or attackers exploring other paths in parallel. Configure hosting logs and alerts separately; delay is not guaranteed."},
     ransomware_tripwire: {title:"Ransomware Decoy Flood", how:"Generates fictional business files and a Python standard-library monitor that locally records content changes, deletion or replacement of those specific files. The deployment ZIP and monitor script are separate downloads.", target:"Ransomware or another process encrypts, deletes or replaces a monitored tripwire file.", limit:"The monitor polls about once per second and does not detect read-only access. Real data may be damaged before an alert; it does not stop processes, isolate a device or restore data. It can miss brief changes and may produce false alarms."},
@@ -272,7 +272,7 @@ Object.assign(methodFlows.ja, {
 });
 Object.assign(methodFlows.en, {
  env:{context:"Example: place a monitoring-service URL supplied by the operator in a decoy configuration file or document.",steps:[["1. Place a decoy","Put a plausible-looking file on an authorized discovery path."],["2. Intruder collects it","The intruder finds the file and inspects the apparent endpoint."],["3. URL is requested","An intruder or scanner sends an HTTP request to the monitoring URL."],["4. Alert and investigate","If the monitoring service receives the request, it alerts the responder to inspect logs."]],ifCase:["An access to the monitoring URL from inside the network can be detected as a sign of suspicious activity.","The alert can prompt an early response (the URL must be reachable internally and alerting must be configured)."],elseCase:["If the canary page is easy for legitimate users to reach, accidental visits can trigger alerts and make attack activity harder to distinguish.","Reading alone, never testing the URL, or blocked outbound traffic produces no URL alert."],response:"Configure the monitoring service and alert destination separately from web or OS auditing of file retrieval.",note:"An alert records a request, not the identity of an attacker; timely response and containment are not guaranteed."},
- database:{context:"Example: place a SQLite file containing only synthetic customer records in a separate decoy area.",steps:[["1. Build the decoy","Generate a single table with fictional customer or order records."],["2. Place it plausibly","Use a backup-like name and authorized location relevant to the environment."],["3. Intruder collects candidates","The intruder takes the decoy and may compare it with other database files."],["4. Verify contents","Checking each candidate's records and context may add selection time."]],ifCase:"An intruder may mistake a decoy for real data or stop checking before finding a real candidate.",elseCase:"The intruder may ignore the decoy, obtain the real database elsewhere, or collect everything in bulk.",response:"Configure hosting logs, OS or DB read auditing separately; a canary URL request is a distinct event.",note:"This is a separate decoy database, not production-record mixing. Reading alone does not alert or prevent a real leak."},
+ database:{context:"Example: place a SQLite file containing only fictional customer records in a separate decoy area.",steps:[["1. Build the decoy","Generate a single customer table."],["2. Place it plausibly","Use an authorized location relevant to the environment."],["3. Intruder collects candidates","The intruder takes the decoy and may compare it with other database files."],["4. Verify contents","Checking candidate records and context may add selection time."]],ifCase:"An intruder may mistake a decoy for real data or stop checking before finding a real candidate.",elseCase:"The intruder may ignore the decoy, obtain the real database elsewhere, or collect everything in bulk.",response:"Configure hosting logs and OS or DB read auditing separately."},
  web:{context:"Example: put a static archive or operations portal lookalike on a dedicated decoy path.",steps:[["1. Prepare the page","Choose a title and optionally a link to an operator-supplied canary URL."],["2. Intruder explores","The page is encountered while looking for an administrative area or backup."],["3. Inspect contents","The intruder reviews the page or link and judges whether it leads to useful data."],["4. Record contact","Hosting access logs can record a request when separately configured."]],ifCase:"Inspecting the page and its link may add candidate-checking work.",elseCase:"The intruder may ignore the page, use another route, or never request the link.",response:"Configure monitoring for page requests and canary-service alerts as separate events.",note:"The generated page is static: no login or persistent state, and opening it does not request the linked URL."},
  nest:{context:"Example: a backup-like archive contains fictional documents and branching encrypted ZIPs.",steps:[["1. Build layers","Place decoy documents and nested ZIPs across multiple branches."],["2. Keep test passwords private","The verification list is for authorized sample extraction and is not part of deployment."],["3. Intruder explores","The intruder searches for passwords, opens candidates and inspects their contents."],["4. Repeat selection","Checking several branches may consume time for choosing and opening candidates."]],ifCase:"If candidates remain indistinguishable during exploration and unchecked branches may contain useful information, continuing adds work while stopping risks missing real data. Finding one fake document does not prove every unchecked branch is fake.",elseCase:"Unnatural names or structure, or a contradiction with independently known production information, may raise suspicion; this does not necessarily establish what is in unchecked branches. Without identifying a trap, an intruder can also collect everything and analyze it in parallel later, reducing on-site delay while potentially still facing selection work. Obtaining real data through a separate route can also reduce the effect.",response:"Configure access auditing separately. Keep the sample verification password list private and never deploy it.",note:"Indistinguishability through the final branch is not guaranteed. Opening a ZIP alone does not alert; assess actual effectiveness through controlled comparisons."},
  stream:{context:"Example: an isolated download endpoint resembles a backup that a client may wait to complete.",steps:[["1. Prepare a server","Deploy the generated sample in isolation; configure authentication, bandwidth and concurrency limits."],["2. Receive a request","The server begins delivering dummy data to an authenticated requester."],["3. Keep streaming","While connected, the response has no total size or duration cutoff."],["4. Observe the start","A separately collected start event can prompt investigation and operator stop."]],ifCase:"A client waiting for the full download may give responders additional time.",elseCase:"Partial retrieval, disconnecting, parallel exploration or an inactivity timeout ends or bypasses the wait.",response:"Start and monitor the server separately; set up logs, alerts, limits and an operator stop procedure.",note:"The tool does not start the server. A connection with five seconds of inactivity closes; attacker delay is not guaranteed."},
@@ -326,6 +326,8 @@ function applyMethodKeyPointAdditions() {
     }
   }
 }
+delete methodKeyPointAdditions.ja.database;
+delete methodKeyPointAdditions.en.database;
 
 const flowScenarios = {
  ja: {
@@ -379,8 +381,8 @@ methodFlows.ja.database.ifCase = "DB間でユーザーが一致しない場合�
 methodFlows.en.database.ifCase = "A user absent from one database may reflect different coverage or snapshot dates; absence alone does not prove a fake. Without reliable ground truth, verification can consume resources yet remain inconclusive. If a buyer identifies a resold decoy and shares feedback, the seller's reputation may also suffer.";
 methodFlows.ja.database.elseCase = "攻撃者が登録したユーザーが見当たらなくても、対象テーブル・収録範囲・更新時点を知らなければ判別できない場合があります。逆に、それらを確実に知る場合は手掛かりになり得ます。生成物は架空データだけであり、本物のユーザーを取り込んで検証を妨げる機能はありません。";
 methodFlows.en.database.elseCase = "An attacker's own registered account may be absent because the table, scope or snapshot date is unknown; if those facts are reliably known, absence can be a useful clue. Generated decoys contain only synthetic data and do not import real accounts to defeat this check.";
-methodFlows.ja.database.note = "攻撃者が偽DBを本物と見分ける可能性があります。データ・ディルーションは別の紹介用構想であり、組み合わせても判別不能を保証しません。読み取りだけでは通知されません。";
-methodFlows.en.database.note = "An attacker may distinguish the decoy database from a genuine one. Data Dilution is a separate concept; combining it does not guarantee indistinguishability. Reading alone does not alert.";
+delete methodFlows.ja.database.note;
+delete methodFlows.en.database.note;
 methodFlows.ja.data_dilution.ifCase = "全件が公開されても、本物を選別できなければ、データの信頼性や利用・取引価値が下がる可能性があります。外部情報との照合にも作業が必要で、一致だけでは正解と断定できない場合があります。";
 methodFlows.ja.data_dilution.elseCase = "判別台帳や照会権限も盗まれると、真偽を選別される可能性があります。また、真偽を選ばず大量に自動試行できる攻撃では、低い本物率でも成功が生じ得ます。流出元などが公開された候補の真偽を明らかにした場合も、その範囲では不確実性が減ります。";
 methodFlows.ja.data_dilution.response = "判別台帳と照会権限を分離・監査します。偽パスワードを試したときだけ隔離・検知するハニーワードと、試行制限・MFAを組み合わせる構想も評価します。一般の総当たりを一律に検知・阻止する仕組みではありません。";
@@ -493,8 +495,8 @@ const methodGuidance = {
     },
     database: {
       ifCase:["盗んだDB候補から顧客・注文情報を選別しようとする攻撃者が偽物を本物と誤認すれば、確認や利用に手間がかかり、偽情報を持ち出す可能性があります。"],
-      elseCase:["攻撃者が偽DBを無視する、本物を別経路で得る、候補をまとめて持ち出して後で解析する場合、現場での遅延は小さくなります。","実データとの比較材料が明白だと、偽物を早く見分けられます。"],
-      response:["侵入後にDBやバックアップを探索される環境で、実在するスキーマや業務名に合わせた合成データを使います。","本番DBと分離し、配置場所・アクセスログを管理します。閲覧だけで通知する仕組みではありません。"]
+      elseCase:["攻撃者が偽DBを無視する、本物を別経路で得る、候補をまとめて持ち出して後で解析する場合、現場での遅延は小さくなります。","実データとの比較材料が明白だったり、明らかに偽名や偽住所など偽物だと判別できたりすると、見破られやすくなります。"],
+      response:["侵入後にDBやバックアップを探索される環境で、業務に合わせた架空データを使います。","本番DBと分離し、配置場所やアクセスログを管理します。"]
     },
     web: {
       ifCase:["管理画面やバックアップを探す攻撃者が、偽ポータルのページやリンクを調査すれば、候補の確認に時間を使う可能性があります。","ページ要求やカナリアリンクへのアクセスを監視していれば、探索の兆候を把握できます。"],
@@ -560,8 +562,8 @@ const methodGuidance = {
     },
     database: {
       ifCase:["If an intruder selecting customer or order data from stolen database candidates mistakes a decoy for genuine data, verification or use may take extra work and the intruder may carry away false information."],
-      elseCase:["Ignoring the decoy, obtaining the real database elsewhere, or collecting everything for later offline analysis reduces on-site delay.","Clear comparison clues can make a decoy easy to identify."],
-      response:["Use synthetic data matching the real schema and business context where intruders may search databases or backups.","Keep it separate from production and monitor placement and access. Reading alone does not generate an alert."]
+      elseCase:["Ignoring the decoy, obtaining the real database elsewhere, or collecting everything for later offline analysis reduces on-site delay.","A decoy is easier to identify when comparison data is obvious or names and addresses are clearly fake."],
+      response:["Use synthetic data matching the real schema and business context where intruders may search databases or backups.","Keep it separate from production and monitor placement and access."]
     },
     web: {
       ifCase:["If an intruder searching for an admin portal or backup examines a decoy page and its links, checking the candidate may take extra time.","Monitoring page requests and canary-link requests can provide evidence of exploration."],
@@ -620,6 +622,10 @@ const methodGuidance = {
     }
   }
 };
+methodGuidance.ja.database.response = [
+  "侵入後にDBやバックアップを探索される環境で、業務に合わせた架空データを使います。",
+  "本番DBと分離し、配置場所やアクセスログを管理します。",
+];
 for (const lang of Object.keys(methodGuidance)) {
   for (const [method, fields] of Object.entries(methodGuidance[lang])) Object.assign(methodFlows[lang][method], fields);
 }
@@ -729,12 +735,20 @@ methodFlows.ja.database.how = "BtoC向けに、合成した顧客連絡先と地
 methodFlows.en.database.how = "Creates a SQLite database with synthetic B2C customer contacts, locality-matched addresses, registration dates and login history. Postal code, prefecture and city are selected as a matching set; street numbers are random synthetic values.";
 translations.ja.database_help = "BtoC向けの架空顧客データを作成します。郵便番号・都道府県・市区町村は実在する地域の対応組から選び、番地はランダムな合成値を付けます。個人宅の住所は参照・生成しません。";
 translations.en.database_help = "Creates fictional B2C customer records with contact, address, registration and login fields. You can edit the columns. Postal codes, prefectures and cities are selected as matching real localities; street numbers are randomly generated synthetic values. No household addresses are imported or reproduced.";
-translations.ja.database_desc = "BtoC向けの架空顧客データを含むSQLiteファイルを作成します。必要に応じて項目を編集できます。指定したカナリアURLは別の接続先テーブルに追加され、既存のデータベースには接続しません。";
-translations.en.database_desc = "Create a SQLite file with fictional B2C customer data. You can edit its columns. A supplied canary URL is added in a separate connection table; the file does not connect to an existing database.";
-translations.ja.database_note = "氏名・メール・電話・番地は合成データです。郵便番号・都道府県・市区町村は実在する地域の組み合わせを使い、個人宅の住所は参照・再現しません。カード番号やCVV、実在の認証情報は生成しません。DB読取だけでは通知されず、カナリアURLへのアクセス時に監視サービスが通知します。";
-translations.en.database_note = "Names, emails, phone numbers and street numbers are synthetic. Postal codes, prefectures and cities use matching real localities; no household addresses are imported or reproduced. No payment card numbers, CVVs or real credentials are generated. Reading the database alone does not alert; the monitoring service alerts only if the canary URL is requested.";
-translations.ja.kind_address = "住所（番地・合成）";
-translations.en.kind_address = "Street address (synthetic)";
+translations.ja.database_desc = "BtoC向けの架空顧客テーブルを含むSQLiteファイルを作成します。項目は必要に応じて編集できます。";
+translations.en.database_desc = "Create a SQLite file containing a fictional B2C customer table. You can edit its columns.";
+translations.ja.database_rows_help = "1,000件、10,000件、100,000件から選択します。SQLiteファイルは最大32 MiBです。上限を超える場合は項目数を減らしてください。";
+translations.en.database_rows_help = "Choose 1,000, 10,000 or 100,000 records. SQLite files are limited to 32 MiB; larger selections may need fewer columns.";
+translations.ja.database_note = "架空のBtoC顧客テーブルだけを含むSQLiteファイルです。既存のデータベースには接続しません。";
+translations.en.database_note = "This SQLite file contains only a fictional B2C customer table. It does not connect to an existing database.";
+translations.ja.kind_address = "住所（番地）";
+translations.en.kind_address = "Street address";
+translations.ja.kind_boolean = "論理削除フラグ（BOOLEAN）";
+translations.en.kind_boolean = "Soft-delete flag (BOOLEAN)";
+translations.ja.kind_phone = "電話番号（TEXT）";
+translations.en.kind_phone = "Phone number (TEXT)";
+translations.ja.kind_test_postal = "郵便番号（TEXT）";
+translations.en.kind_test_postal = "Postal code (TEXT)";
 translations.en.maze_advanced_summary = "Folder structure and canary settings (defaults are ready)";
 translations.en.encoding_advanced_summary = "Conversion methods and canary settings (defaults are ready)";
 translations.en.stream_config_summary = "Stream settings (loopback, 8 KiB/s and 2 connections by default)";
@@ -769,10 +783,10 @@ translations.ja.quick_db_filename_note = "ファイル名は用途に合わせ�
 translations.en.quick_db_filename_note = "The filename is chosen for the selected data type. To change it, use the File name field under detailed settings.";
 translations.ja.quick_db_purpose_summary = "PCに保存するDBファイルを作成（サーバー・既存DBは不要）";
 translations.en.quick_db_purpose_summary = "Create a database file on this PC (no server or existing database needed)";
-translations.ja.quick_db_canary_note = "カナリアURLを指定した場合、その値はSQLite内に保存されます。URLが空欄なら通知はなく、DBファイルの作成・ダウンロード・閲覧でも通知されません。URLにアクセスされたとき監視サービスが記録します。生成器自身はURLに接続しません。";
-translations.en.quick_db_canary_note = "If you provide a canary URL, it is stored in the SQLite file. A blank URL means no alert; creating, downloading or viewing the database does not trigger one either. The monitoring service records a request only when the URL is accessed. The generator itself never contacts it.";
-translations.ja.quick_db_purpose = "DBサーバー不要で、架空データだけを含むSQLiteファイルを1つ作成します。既存DBへの接続や変更はしません。カード番号や認証に使えるパスワードは含みません。電話番号は日本語サンプルでも、実在加入者につながらない北米の架空用予約範囲（+1-202-555-0100〜0199）を使います。ファイルは最大32 MiBです。上限を超えた場合は作成件数を減らしてください。カナリアURLを指定すると生成ファイルに含めます。";
-translations.en.quick_db_purpose = "No database server is needed. This creates one SQLite file with fictional data and never connects to or changes an existing database. It contains no payment card numbers or usable passwords. Phone fields use the reserved fictional +1-202-555-0100–0199 range, including in Japanese-language samples. Files are limited to 32 MiB; if generation exceeds the limit, reduce the row count. A supplied canary URL is included in the file.";
+translations.ja.quick_db_canary_note = "デコイ・データベースは架空の顧客テーブルだけを作成し、カナリアURLは含めません。";
+translations.en.quick_db_canary_note = "The decoy database creates only a fictional customer table and does not include a canary URL.";
+translations.ja.quick_db_purpose = "DBサーバー不要で、架空のBtoC顧客テーブルだけを含むSQLiteファイルを作成します。件数は1,000件、10,000件、100,000件から選べます。既存DBには接続しません。ファイルは最大32 MiBです。";
+translations.en.quick_db_purpose = "Create a standalone SQLite file containing only a fictional B2C customer table. Choose 1,000, 10,000 or 100,000 records. It never connects to an existing database and is limited to 32 MiB.";
 translations.ja.database_size_limit = "SQLite生成物が32 MiBの上限を超えました。レコード数、項目数、候補値の長さを減らしてください。";
 translations.en.database_size_limit = "The SQLite artifact exceeds the 32 MiB limit. Reduce the row count, column count or candidate value lengths.";
 translations.ja.quick_db_custom_schema_help = "詳細設定のテーブル名や項目に変更があります。クイック作成では選択中のプリセットを使い、下の項目例の内容に置き換えて作成します。";
@@ -803,10 +817,10 @@ translations.ja.quick_db_rows = "架空レコード{rows}件を作成します�
 translations.en.quick_db_rows = "Creates {rows} fictional records.";
 translations.ja.template_default_loading = "顧客管理（プリセット読込中・既定）";
 translations.en.template_default_loading = "Customer management (default while presets load)";
-translations.ja.quick_db_count_label = "作成件数（1〜10,000）";
-translations.en.quick_db_count_label = "Number of records (1–10,000)";
-translations.ja.quick_db_count_invalid = "作成件数は1〜10,000の範囲で入力してください。";
-translations.en.quick_db_count_invalid = "Enter a record count from 1 to 10,000.";
+translations.ja.quick_db_count_label = "作成件数（1,000 / 10,000 / 100,000）";
+translations.en.quick_db_count_label = "Number of records (1,000 / 10,000 / 100,000)";
+translations.ja.quick_db_count_invalid = "作成件数は1,000件、10,000件、100,000件から選択してください。";
+translations.en.quick_db_count_invalid = "Choose 1,000, 10,000 or 100,000 records.";
 translations.ja.quick_db_example_summary = "生成される架空データの例を見る";
 translations.en.quick_db_example_summary = "View an example of the fictional data";
 translations.ja.stream_generated_summary = "配信上限は {rate} KiB/秒、同時接続は {streams} 件です。起動方法は同梱のREADMEを参照してください。";
@@ -1457,7 +1471,7 @@ $("#add-column").addEventListener("click", () => {
 for (const [name, kind] of [["id", "id"], ["name", "name"], ["email", "email"], ["phone", "phone"],
   ["birth_date", "date"], ["postal_code", "test_postal"], ["prefecture", "text"], ["city", "text"],
   ["street_address", "address"],
-  ["created_at", "date"], ["last_login", "datetime"]]) addColumn(name, kind);
+  ["created_at", "date"], ["last_login", "datetime"], ["is_deleted", "boolean"]]) addColumn(name, kind);
 function updateCsvSafetyNote() {
   const kind = $('input[name="kind"]:checked')?.value;
   const selector = {env: "#canary-format", directory_maze: "#maze-format", encoding_maze: "#encoding-format"}[kind];
@@ -1583,12 +1597,12 @@ $("#nest-scenario").addEventListener("change", () => {
 });
 randomizeNestSettings();
 const previewUrlFields = {
-  env: ["#env-url"], database: ["#db-url"], web: ["#web-url"],
+  env: ["#env-url"], web: ["#web-url"],
   directory_maze: ["#maze-url"], encoding_maze: ["#encoding-url"],
 };
 const previewUrlRedactions = new WeakMap();
 const monitoringUrlFields = {
-  env: ["#env-url"], database: ["#db-url"], web: ["#web-url"],
+  env: ["#env-url"], web: ["#web-url"],
   directory_maze: ["#maze-url"], encoding_maze: ["#encoding-url"],
 };
 function hasReservedCanaryUrl(value) {
@@ -2379,7 +2393,7 @@ form.addEventListener("submit", async event => {
         password_policy: {mode: $("#password-mode").value, min_length: Number($("#min-length").value), max_length: Number($("#max-length").value),
           lowercase: $("#lowercase").checked, uppercase: $("#uppercase").checked, digits: $("#digits").checked, symbols: $("#symbols").checked, progressive: $("#progressive").checked, hints: $("#hints").value,
           ...($("#password-words").value.trim() ? {words: $("#password-words").value.split(",").map(v => v.trim())} : {})}}),
-      database: () => ({template: $("#database-template").value || "customers", ...( $("#database-template").value === "passwords" ? vaultDomainSettings() : {}), rows: Number($("#rows").value), table: $("#table-name").value, columns: columns(), canary_url: $("#db-url").value}),
+      database: () => ({template: "customers", rows: Number($("#rows").value), table: $("#table-name").value, columns: columns()}),
       web: () => ({scenario: $("#web-scenario").value, title: $("#title").value, canary_url: $("#web-url").value}),
       fake_trap: () => ({variant: $("#fake-variant").value}),
       ransomware_tripwire: () => ({files: Number($("#tripwire-files").value)}),

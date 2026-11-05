@@ -248,18 +248,18 @@
           <div class="template-picker" hidden><label for="database-template" data-i18n="database_template">用途別テンプレート</label><select id="database-template"><option value="custom" data-i18n="template_custom">カスタム（項目を自由に編集）</option><option value="customers" selected data-i18n="template_default_loading">顧客管理（プリセット読込中・既定）</option></select><p id="template-description" class="help" aria-live="polite" data-i18n="template_help">テンプレート選択後に項目を編集できます。実在の個人情報や実接続先は使わないでください。</p></div>
            <div class="form-grid">
           <div><label for="table-name" data-i18n="table_name">テーブル名</label><input id="table-name" value="customers" maxlength="48"></div>
-          <div><label for="rows" data-i18n="rows">レコード件数</label><input id="rows" type="number" value="100" min="1" max="10000" required><p class="help database-rows-help" data-i18n="database_rows_help">初期値は100件です。SQLiteファイルは最大32 MiBです。上限に達した場合は、件数か列数を減らしてください。</p></div>
-            <div class="full-width"><label for="db-url"><span data-i18n="canary_url">カナリアURL</span> <span class="optional" data-i18n="optional">任意</span></label><textarea id="db-url" rows="1" inputmode="url" spellcheck="false" autocapitalize="none" maxlength="2048" placeholder="https://..." autocomplete="off">__LOCAL_CANARY_URL__</textarea></div></div>
-          <p class="help" data-i18n="local_canary_scope">初期のカナリアページURLは、このPCでPhysaliaを起動している間だけ動作確認に使えます。別PCからは届きません。本番運用では、HTTPSで外部ネットワークからアクセスできる場所にカナリアページを公開し、そのURLをここに指定してください。</p>
+          <div><label for="rows" data-i18n="rows">レコード件数</label><select id="rows" required><option value="1000" selected>1,000</option><option value="10000">10,000</option><option value="100000">100,000</option></select><p class="help database-rows-help" data-i18n="database_rows_help">SQLiteファイルは最大32 MiBです。上限に達した場合は、件数か列数を減らしてください。</p></div>
+          <div hidden><textarea id="db-url" aria-hidden="true"></textarea></div>
+          </div>
            <p class="help" data-i18n="database_identifier_help">テーブル名・列名は、英字または_で始まる英数字と_のみ、48文字以内です。sqlite_で始まる名前は使えません。例: customers、last_contact。日本語の表示項目名とは別に、ここには英数字の名前を入力します。</p>
            <details id="database-schema-details" class="database-schema-details"><summary data-i18n="database_schema_summary">列を追加・編集（任意。プリセットのままでも作成できます）</summary>
            <div class="schema-heading"><h4 data-i18n="schema">項目の定義</h4><button type="button" id="add-column" class="secondary" data-i18n="add_column">＋ 項目を追加</button></div>
            <p class="help" data-i18n="column_options_help">数値項目は最小,最大（例: 0,100000）、テキスト・状態などの候補は|区切り（例: active|pending）で指定します。空欄の数量は1〜100、単価は25〜2500、その他の数値は0〜100000になります。</p>
            <div id="columns"></div>
-          <p class="help" data-i18n="candidate_values_safety">候補値には実在ドメイン・IPアドレス・URL・メールを指定できません。example.invalidなどの予約済み例示値を使い、監視URLや所有ドメインは専用欄から指定してください。</p>
+          <p class="help" data-i18n="candidate_values_safety">候補値には実在ドメイン・IPアドレス・URL・メールを指定できません。example.invalidなどの予約済み例示値を使ってください。</p>
            <p class="help" data-i18n="database_help">BtoC向け顧客情報の架空データを作成します。項目は必要に応じて編集できます。実在の個人情報や実接続先は使わないでください。</p>
            </details>
-          <div class="inline-note" data-i18n="database_note">カードは実際の番号・CVVを生成せず、明確に無効な見本参照値のみ。パスワード欄には実在アカウントやサービスに結び付かないランダムな合成文字列を入れ、実認証情報やハッシュは取り込みません。DB読取だけでは通知しません。パスワード管理テンプレートではlogin_url列があればその1件に、なければ接続先テーブルに保存します。その他のDBも接続先テーブルを使います。URLにアクセスされた場合だけ監視サービスから通知されます。</div>
+          <div class="inline-note" data-i18n="database_note">BtoC向けの架空顧客情報だけを含むSQLiteテーブルを作成します。</div>
         </div>
         <div id="web-fields" class="fields" hidden>
           <div class="panel-title"><h3 data-i18n="web_title">スタティック・デコイ・ポータル</h3><p data-i18n="web_desc">静的なアーカイブ画面を生成します。</p></div>
@@ -382,6 +382,7 @@
   <label><span data-i18n="column_name">項目名</span><input class="column-name" maxlength="48"><small class="column-friendly-name"></small></label>
   <label><span data-i18n="data_kind">データ種類</span><select class="column-kind">
     <option value="id" data-i18n="kind_id">連番（INTEGER）</option><option value="name" data-i18n="kind_name">氏名（TEXT）</option><option value="username" data-i18n="kind_username">ユーザー名（TEXT）</option><option value="invoice_reference" data-i18n="kind_invoice_reference">請求書番号（TEXT）</option><option value="order_reference" data-i18n="kind_order_reference">注文番号（TEXT）</option><option value="sale_reference" data-i18n="kind_sale_reference">売上番号（TEXT）</option><option value="email" data-i18n="kind_email">メール（TEXT）</option><option value="company" data-i18n="kind_company">会社（TEXT）</option><option value="department" data-i18n="kind_department">部署（TEXT）</option><option value="integer" data-i18n="kind_integer">整数（INTEGER）</option><option value="decimal" data-i18n="kind_decimal">小数（REAL）</option><option value="date" data-i18n="kind_date">日付（TEXT）</option><option value="datetime" data-i18n="kind_datetime">日時（TEXT）</option><option value="status" data-i18n="kind_status">状態（TEXT）</option><option value="uuid" data-i18n="kind_uuid">UUID（TEXT）</option><option value="text" data-i18n="kind_text">テキスト（TEXT）</option><option value="phone" data-i18n="kind_phone">北米の架空予約電話番号（非稼働）</option><option value="domain" data-i18n="kind_domain">example.invalid ドメイン</option><option value="card_reference" data-i18n="kind_card_reference">無効カード参照値</option><option value="card_expiry" data-i18n="kind_card_expiry">カード期限</option><option value="test_postal" data-i18n="kind_test_postal">テスト用郵便番号</option><option value="credential_preview" data-i18n="kind_credential_preview">合成パスワード値（実アカウントとの紐付けなし）</option><option value="currency" data-i18n="kind_currency">通貨</option><option value="documentation_ip" data-i18n="kind_documentation_ip">文書用IPアドレス</option>
+    <option value="boolean" data-i18n="kind_boolean">Logical flag (BOOLEAN)</option>
   </select></label>
   <label><span data-i18n="data_options">候補値 / 数値範囲</span><input class="column-options" maxlength="6100" placeholder="active|pending / 0,10000"></label>
   <button type="button" class="remove-column secondary" data-i18n="remove_column">削除</button>

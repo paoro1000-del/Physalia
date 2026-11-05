@@ -63,7 +63,8 @@ def generate_database(settings: dict, language: str = "ja") -> Artifact:
                         for column in _template_columns_with_labels(template_id, language)}
                        if template_id in DATABASE_TEMPLATES else {})
     basename = plausible_filename("database", extension="sqlite", profile=template_id)
-    url = _canary_url(settings.get("canary_url", ""), language)
+    # Database samples are plain customer tables; canary URLs are not embedded.
+    url = ""
     summary = {"kind": "database", "table": table, "tables": 1, "rows": row_count,
                "columns": len(columns), "template": template_id,
                "preview_columns": [column["name"] for column in columns],
@@ -398,8 +399,7 @@ SETTING_KEYS = {
     "env": {"format", "canary_url", "canary_link_style", "canary_context", "canary_field", "canary_label",
             "env_layout", "env_suffix", "env_variable", "env_dev_url",
             "env_dev_url_authorized", "env_dev_comment", "env_prod_comment", "title", "rows"},
-    "database": {"template", "email_domain", "email_domain_authorized", "vault_domain",
-                 "vault_domain_authorized", "rows", "table", "columns", "canary_url"},
+    "database": {"template", "rows", "table", "columns"},
     "web": {"scenario", "title", "canary_url"},
     "fake_trap": {"variant"},
     "ransomware_tripwire": {"files"},

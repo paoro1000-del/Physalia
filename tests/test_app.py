@@ -128,7 +128,7 @@ class GeneratorTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_invalid_resource_parameters_are_rejected(self):
-        for payload in ({"rows": 0}, {"rows": 10001}, {"rows": True}):
+        for payload in ({"rows": 0}, {"rows": 100001}, {"rows": True}):
             with self.assertRaises(ValueError):
                 generate("database", payload)
         with self.assertRaises(ValueError):
