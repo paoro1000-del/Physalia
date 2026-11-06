@@ -123,6 +123,16 @@
             <li data-i18n="logs_review_5">原本をアクセス制限された場所に保全し、誤検知を確認してから既存のインシデント対応手順に従います。</li>
           </ol>
         </section>
+        <section class="panel intro-panel" aria-labelledby="logs-analysis-title">
+          <h2 id="logs-analysis-title" data-i18n="logs_analysis_title">分析を深めるための考え方</h2>
+          <ul class="intro-limits">
+            <li data-i18n="logs_analysis_facts">記録された事実と解釈を分け、根拠・確度・未確認事項を残します。応答や送信量だけで閲覧・持ち出しを断定できません。</li>
+            <li data-i18n="logs_analysis_sequence">単発イベントではなく、デコイごとの要求系列や時刻を確認します。ヘッダーやIPは手掛かりであり、人物やツールの特定には使えません。</li>
+            <li data-i18n="logs_analysis_correlate">時計ずれを考慮し、自組織の関連ログだけをrequest_idなどで照合します。接触なしも、アクセスなしの証明にはなりません。</li>
+            <li data-i18n="logs_analysis_evaluate">通知連携は秘密URLや不要な個人情報を避け、誤検知と配信失敗を確認します。効果は対照条件と比較して評価します。</li>
+          </ul>
+          <p class="inline-note" data-i18n="logs_analysis_scope">このアプリは外部ログの収集・相関分析・通知を行いません。詳しい評価方法は完全版ガイドを参照してください。</p>
+        </section>
         <section class="panel intro-panel" aria-labelledby="logs-privacy-title">
           <h2 id="logs-privacy-title" data-i18n="logs_privacy_title">プライバシーと安全な調査</h2>
           <p data-i18n="logs_privacy_body">IPアドレスやUser-Agent等は個人を識別し得る情報として、利用目的、必要性、閲覧者、保存期間、削除手順を定めて管理します。送信元端末への接続・スキャン、第三者システムへのログイン、無断追跡や反撃は行いません。デコイへの接触は、別システムへアクセスする権限を与えません。</p>
@@ -132,10 +142,11 @@
       <section id="page-canary" class="workspace-page" aria-labelledby="local-canary-title" hidden>
         <div class="intro"><div><h1 id="local-canary-title" tabindex="-1" data-i18n="local_canary_title">このPCのカナリア接触ログ</h1><p data-i18n="local_canary_help">Physaliaが起動中の同じPCからの接触を記録します。ログは最大500件、アプリ終了時に消えます。</p><p><span data-i18n="local_canary_url">現在のカナリアページURL</span>: <a id="local-canary-url" href="__LOCAL_CANARY_URL__" target="_blank" rel="noopener noreferrer"><code>__LOCAL_CANARY_URL__</code></a></p></div></div>
         <section class="local-canary-panel" aria-label="接触ログ" data-i18n-aria="nav_canary">
+          <p><a class="canary-kit-link" href="/canary-homepage-kit.zip" download data-i18n="canary_kit_download">カナリアページ作製キットをダウンロード</a></p>
+          <p data-i18n="canary_kit_guidance">このキットはカナリアページのサンプルです。実運用では、カナリアだと明示して再確認を促すか、環境に自然になじませて接触情報を継続的に集めるか、目的や利用者に合わせて表示・配置・記録をカスタマイズしてください。メールやTeamsへの通知連携も、組織の運用に合わせて検討してください。このサンプル自体は外部通知を送りません。</p>
           <p data-i18n="local_canary_privacy">接続時の情報、ブラウザーが提供する画面・端末情報、許可された場合の位置情報を記録します。値は偽装・省略される場合があり、自動操作フラグだけでサンドボックスを判定できません。利用許可を得た環境で使い、閲覧を制限してください。</p>
           <p data-i18n="local_canary_limit">この機能は同じPCからの接触のみを受け付けます。送信元IPは通常127.0.0.1です。</p>
           <ol id="local-canary-events" aria-live="polite"><li data-i18n="local_canary_empty">接触ログはありません。</li></ol>
-          <p><a class="canary-kit-link" href="/canary-homepage-kit.zip" download data-i18n="canary_kit_download">カナリアページ作製キットをダウンロード</a></p>
         </section>
       </section>
       <section id="page-generator" class="workspace-page" aria-label="対策紹介とサンプル生成" data-i18n-aria="nav_generator" hidden>
@@ -264,7 +275,7 @@
         <div id="web-fields" class="fields" hidden>
           <div class="panel-title"><h3 data-i18n="web_title">スタティック・デコイ・ポータル</h3><p data-i18n="web_desc">静的なアーカイブ画面を生成します。</p></div>
           <label for="web-scenario" data-i18n="web_scenario_label">サイトの用途</label><select id="web-scenario"><option value="operations" data-i18n="web_scenario_operations">運用ポータル</option><option value="shared" data-i18n="web_scenario_shared">共有ドキュメント</option><option value="archive" data-i18n="web_scenario_archive">業務アーカイブ</option><option value="records" data-i18n="web_scenario_records">記録管理</option></select>
-          <label for="title" data-i18n="page_title">画面タイトル</label><input id="title" type="text" data-i18n-placeholder="default_page_title" maxlength="80">
+          <div hidden><label for="title" data-i18n="page_title">画面タイトル</label><input id="title" type="text" maxlength="80"></div>
           <label for="web-url"><span data-i18n="canary_url">カナリアURL</span> <span class="optional" data-i18n="optional">任意</span></label><textarea id="web-url" rows="1" inputmode="url" spellcheck="false" autocapitalize="none" placeholder="https://..." maxlength="2048" autocomplete="off">__LOCAL_CANARY_URL__</textarea>
           <p class="help" data-i18n="local_canary_scope">初期のカナリアページURLは、このPCでPhysaliaを起動している間だけ動作確認に使えます。別PCからは届きません。本番運用では、HTTPSで外部ネットワークからアクセスできる場所にカナリアページを公開し、そのURLをここに指定してください。</p>
           <p class="help" data-i18n="web_help">URLを指定するとリンクを配置します。ページを開くだけではURLにアクセスしません。</p>
@@ -272,8 +283,11 @@
         </div>
         <div id="fake_trap-fields" class="fields" hidden>
           <div class="panel-title"><h3 data-i18n="fake_title">フェイクトラップ</h3><p data-i18n="fake_desc">警告または待機表示の静的HTMLを生成します。</p></div>
-          <label for="fake-variant" data-i18n="fake_variant">表示パターン</label><select id="fake-variant"><option value="warning" data-i18n="fake_warning">異常アクセスの警告</option><option value="reported" data-i18n="fake_reported">通報済みの警告</option><option value="waiting" data-i18n="fake_waiting">認証中のスピナー</option></select>
-          <p class="inline-note" data-i18n="fake_note">ファイル名を空欄にすると認証・セッション処理に使われる名前から自動で選びます。表示だけの静的ページです。検知・通報・認証・情報収集は行わず、外部への通信やプログラム送信もありません。監視・通知は配信側で別途設定してください。通報済みの表示は実際の通報を意味しません。正規利用者の誤接触に配慮してください。</p>
+          <label for="fake-variant" data-i18n="fake_variant">表示パターン</label><select id="fake-variant"><option value="warning" data-i18n="fake_warning">異常アクセスの警告</option><option value="reported" data-i18n="fake_reported">確認リクエスト受付済み</option><option value="waiting" data-i18n="fake_waiting">セッション確認中</option><option value="maintenance" data-i18n="fake_maintenance">サービスメンテナンス</option><option value="device_review" data-i18n="fake_device_review">新しいデバイスの確認</option><option value="access_request" data-i18n="fake_access_request">アクセス申請の確認</option><option value="sync_status" data-i18n="fake_sync_status">アカウント同期状況</option><option value="policy_update" data-i18n="fake_policy_update">セキュリティ設定更新</option></select>
+          <label class="check-label"><input id="fake-embed-canary" type="checkbox"><span data-i18n="fake_embed_canary">ページ表示時にカナリアURLへ接続する</span></label>
+          <p class="help" data-i18n="fake_canary_default_note">初期状態はOFFです。意図しない外部通信や監視先への接触を避け、明示的に有効化した場合だけ監視要求を含めます。</p>
+          <div id="fake-canary-fields" hidden><label for="fake-canary-url" data-i18n="canary_url">カナリアURL</label><textarea id="fake-canary-url" data-secret-url rows="1" inputmode="url" spellcheck="false" autocapitalize="none" placeholder="https://..." maxlength="2048" autocomplete="off">__LOCAL_CANARY_URL__</textarea><p class="help" data-i18n="fake_canary_help">監視サービスから発行されたHTTPS URLを入力します。生成ページを開くと、そのURLにGET要求を送り、接触として記録します。</p></div>
+          <p class="inline-note" data-i18n="fake_note">カナリアURLを設定すると、ページ表示時に監視先へ接触します。メールスキャナーやプレビューも接触として記録され得ます。URLを設定しない場合、外部通信はありません。認証や端末情報の追加収集はしません。</p>
         </div>
         <div id="ransomware_tripwire-fields" class="fields" hidden>
           <div class="panel-title"><h3 data-i18n="tripwire_title">ランサムウェア・デコイフラッド</h3><p data-i18n="tripwire_desc">架空ファイルと、その変更時に別の架空ファイルを補充するスクリプトを作成します。</p></div>
@@ -281,8 +295,9 @@
           <p class="inline-note" data-i18n="tripwire_note">配置ZIPには架空ファイルだけを入れます。監視スクリプトは運用者専用ファイルとして別に保存し、監視先でPython 3.11以降を使って実行します。ファイル内容の変更・削除・差し替えを最短約1秒間隔でローカル記録します。読み取りだけは検知せず、自動停止もしません。見逃しや誤検知があり、本番データの保護や復元にはなりません。対象ディレクトリは正規アプリの書き込み経路から外し、ログは別の保護された場所へ保存してください。</p>
         </div>
         <div id="path_maze-fields" class="fields" hidden>
-          <div class="panel-title"><h3 data-i18n="path_maze_title">パス・メイズ</h3><p data-i18n="path_maze_desc">有限の通常フォルダーに架空ファイルを配置します。</p></div>
-          <div class="form-grid"><div><label for="path-depth" data-i18n="path_depth">階層の深さ（1〜4）</label><input id="path-depth" type="number" min="1" max="4" value="3" required></div><div><label for="path-branches" data-i18n="path_branches">各フォルダーの分岐数（1〜3）</label><input id="path-branches" type="number" min="1" max="3" value="3" required></div><div><label for="path-files" data-i18n="path_files">各フォルダーのファイル数（1〜4）</label><input id="path-files" type="number" min="1" max="4" value="2" required></div></div>
+          <div class="panel-title"><h3 data-i18n="path_maze_title">パス・メイズ</h3><p data-i18n="path_maze_desc">既定で13階層、最大20階層のフォルダーと多数の分岐・交差リンクを生成します。</p></div>
+          <div class="form-grid"><div><label for="path-depth" data-i18n="path_depth">最大階層（1〜20）</label><input id="path-depth" type="number" min="1" max="20" value="20" required></div><div><label for="path-branches" data-i18n="path_branches">各階層の横分岐数（1〜1,500）</label><input id="path-branches" type="number" min="1" max="1500" value="1000" required></div><div><label for="path-files" data-i18n="path_files">各フォルダーの架空ファイル数（1〜4）</label><input id="path-files" type="number" min="1" max="4" value="1" required></div></div>
+          <p id="path-maze-estimate" class="inline-note" aria-live="polite"></p>
           <p class="inline-note" data-i18n="path_note">通常のフォルダーと架空ファイルを有限個作ります。リンクや常駐プログラムは使いません。攻撃がデコイを処理する場合に追加の仕事が生じます。並列処理や対象の絞り込みでは実ファイルが先に処理されることがあります。バックアップや検索にもファイルが増えます。</p>
         </div>
         <div id="sparse_decoy-fields" class="fields" hidden>

@@ -341,6 +341,31 @@ def generate_encoding_maze(settings, language="ja"):
     return bundle(name, files, {"warning": translate("maze_operator_warning", language), "candidates": inventory, "summary": summary}, summary, language, "encoding_maze_size_limit")
 
 
+def _stream_preview(language):
+    ja = language == "ja"
+    words = ("インフィニット・ストリーム配信", "配信用トークン", "ダウンロードリンクを作成",
+             "ダウンロードを開始", "管理用トークン（停止時のみ）", "すべての配信を停止",
+             "配信は無期限です。ダウンロードをキャンセルするか、管理用トークンで停止してください。",
+             "トークンは保存されません。サーバー終了はコンソールで Ctrl+C を押してください。",
+             "待機中") if ja else (
+             "Infinite Stream delivery", "Access token", "Create download link", "Start download",
+             "Admin token (stop only)", "Stop all streams",
+             "The stream has no time or size limit. Cancel the download or stop delivery with the admin token.",
+             "Tokens are not stored. Press Ctrl+C in the server console to end the process.", "Ready")
+    title, access_label, create_label, download_label, admin_label, stop_label, warning, note, ready = words
+    html_doc = f'''<!doctype html><html lang="{language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><meta name="referrer" content="no-referrer"><title>{title}</title><style>
+*{{box-sizing:border-box}}body{{margin:0;background:#f3f6fa;color:#172b4d;font:16px/1.55 system-ui,sans-serif}}main{{max-width:720px;margin:8vh auto;padding:0 20px}}section{{background:white;border:1px solid #dfe4ec;border-radius:10px;padding:28px}}h1{{font-size:23px;margin:0}}p{{color:#44546a}}label{{display:block;font-size:14px;font-weight:600;margin:18px 0 6px}}input{{width:100%;padding:12px;border:1px solid #bdc7d6;border-radius:6px;font:inherit}}button,a{{display:inline-block;margin:14px 8px 0 0;padding:11px 16px;border:0;border-radius:6px;background:#1769aa;color:white;font:inherit;font-weight:650;text-decoration:none;cursor:pointer}}.stop{{background:#7f1d1d}}[hidden]{{display:none}}#status{{min-height:1.5em;font-size:14px}}
+</style><script src="/stream-preview.js" defer></script></head><body><main><section><h1>{title}</h1><p>{warning}</p><label for="access-token">{access_label}</label><input id="access-token" type="password" autocomplete="off"><button id="create-link">{create_label}</button><a id="download-link" href="#" hidden>{download_label}</a><label for="admin-token">{admin_label}</label><input id="admin-token" type="password" autocomplete="off"><button id="stop-streams" class="stop">{stop_label}</button><p id="status" role="status" aria-live="polite">{ready}</p><small>{note}</small></section></main></body></html>'''
+    js = '''"use strict";
+const access=document.getElementById("access-token"),admin=document.getElementById("admin-token"),create=document.getElementById("create-link"),link=document.getElementById("download-link"),stop=document.getElementById("stop-streams"),status=document.getElementById("status"),ja=document.documentElement.lang==="ja";
+async function post(path,token){return fetch(path,{method:"POST",headers:{Authorization:`Bearer ${token}`},cache:"no-store",credentials:"same-origin",redirect:"error"});}
+create.addEventListener("click",async()=>{link.hidden=true;if(!access.value){status.textContent=ja?"配信用トークンを入力してください。":"Enter the access token.";return;}create.disabled=true;try{const r=await post("/download-ticket",access.value);if(!r.ok)throw Error();const d=await r.json();link.href=d.download_url;link.hidden=false;status.textContent=ja?`リンクは${d.expires_in}秒で期限切れです。クリックすると配信を開始します。`:`Link expires in ${d.expires_in} seconds. Click it to start the stream.`;}catch(_){status.textContent=ja?"リンクを作成できません。トークンとサーバーを確認してください。":"Could not create link. Check token and server.";}finally{create.disabled=false;}});
+stop.addEventListener("click",async()=>{if(!admin.value){status.textContent=ja?"管理用トークンを入力してください。":"Enter the admin token.";return;}stop.disabled=true;try{const r=await post("/stop",admin.value);if(!r.ok)throw Error();status.textContent=ja?"配信を停止しました。プロセスは稼働中です。":"Delivery stopped. The process is still running.";}catch(_){status.textContent=ja?"停止できません。トークンとサーバーを確認してください。":"Could not stop delivery. Check token and server.";}finally{stop.disabled=false;}});
+link.addEventListener("click",()=>{link.hidden=true;status.textContent=ja?"配信中です。終了するにはダウンロードをキャンセルしてください。":"Streaming. Cancel the download to stop it.";});
+'''
+    return html_doc.encode("utf-8"), js.encode("utf-8")
+
+
 def generate_stream_sample(settings, language="ja"):
     rate = integer(settings.get("rate_kib", 8), "rate_kib", 1, 64, language)
     maximum = integer(settings.get("max_streams", 2), "max_streams", 1, 8, language)
@@ -360,11 +385,17 @@ def generate_stream_sample(settings, language="ja"):
     readme += "\n" + translate("stream_bundle_operator_permissions", language)
     readme += "\n" + translate("stream_bundle_config_note", language)
     readme += "\n" + translate("stream_bundle_end_reason", language)
+    readme += ("\nプレビュー: サーバー起動後に http://127.0.0.1:" + str(port) + "/ を開き、管理者用JSONの配信用トークンを入力します。リンクをクリックするとブラウザーのダウンロードとして無期限配信を開始します。停止はダウンロードのキャンセル、またはプレビュー画面で管理用トークンを使ってください。\n"
+               if language == "ja" else
+               "\nPreview: after starting the server, open http://127.0.0.1:" + str(port) + "/ and enter the access token from the operator JSON. Clicking the link starts an unbounded browser download. Cancel the download, or use the admin token in the preview to stop delivery.\n")
     license_path = Path(__file__).resolve().parents[1] / "LICENSE"
+    preview_html, preview_js = _stream_preview(language)
     files = [("LICENSE", license_path.read_bytes()),
              ("serve.py", Path(__file__).with_name("stream_runtime.py").read_bytes()),
              ("stream_config.json", json.dumps(config, indent=2, allow_nan=False).encode("utf-8")),
+             ("index.html", preview_html), ("stream-preview.js", preview_js),
              ("README.txt", readme.encode("utf-8"))]
-    summary = {"kind": "stream", "rate_kib": rate, "max_streams": maximum}
+    summary = {"kind": "stream", "rate_kib": rate, "max_streams": maximum,
+               "preview_url": f"http://127.0.0.1:{port}/"}
     return bundle(name, files, {"warning": translate("stream_operator_warning", language), "environment": environment,
                                "download_url": f"http://127.0.0.1:{port}{path}", "stop_url": f"http://127.0.0.1:{port}/stop"}, summary, language)

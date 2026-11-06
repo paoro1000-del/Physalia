@@ -2,6 +2,12 @@
 
 A canary landing page and logging server using only the Python standard library. No extra packages are required.
 
+## Customize for your environment
+
+The included page is a test sample that clearly identifies itself as a canary. For deployment, adapt its appearance, placement and recorded data to your organization, users and monitoring goals. An explicit canary notice can tell a visitor that access was detected and prompt reassessment or delay. A page that blends into ordinary workflows may support continued contact logging, but visitors may not contact it if they recognize it. Choose the approach based on your operational purpose, accidental-contact impact and privacy requirements.
+
+This sample does not send email or Teams notifications. If alerts are needed, design and test them with organization-approved email or Teams destinations, minimal event data, false-positive handling and a plan for notification failures.
+
 ## Run locally
 
 1. Install Python 3.10 or later.

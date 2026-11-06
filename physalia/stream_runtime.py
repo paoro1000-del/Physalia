@@ -24,6 +24,8 @@ MAX_OPERATOR_BYTES = 1024 * 1024
 HEADER_DEADLINE_SECONDS = 10
 STREAM_SOCKET_INACTIVITY_TIMEOUT_SECONDS = 5
 AUTH_FAILURE_SUMMARY_INTERVAL_SECONDS = 10
+DOWNLOAD_TICKET_TTL_SECONDS = 30
+MAX_DOWNLOAD_TICKETS = 32
 EVENT_LOCK = threading.Lock()
 
 
@@ -133,7 +135,8 @@ def validate_config(config, language="ja"):
         config[key] = value
     path = config.get("path", "/exports/archive.sql")
     if (not isinstance(path, str) or len(path) > 160 or not re.fullmatch(r"/(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_.-]+", path)
-            or ".." in path or path in ("/stop", "/health")
+            or ".." in path or path in ("/", "/stop", "/health", "/download-ticket")
+            or path.startswith("/download/")
             or any(part == "." or part.endswith(".") for part in path[1:].split("/"))):
         raise ValueError(message(language, "Invalid download path", "配信パスが不正です"))
     config["path"] = path
@@ -177,6 +180,8 @@ class StreamServer(ThreadingHTTPServer):
         self.auth_failure_counts = {}
         self.auth_failure_closing = False
         self.auth_failure_emissions = 0
+        self.ticket_lock = threading.Lock()
+        self.download_tickets = {}
         super().__init__(("127.0.0.1", self.config["port"]), StreamHandler)
 
     def get_request(self):
@@ -213,6 +218,23 @@ class StreamServer(ThreadingHTTPServer):
             scheduled = max(now, self.next_send)
             self.next_send = scheduled + size / (self.config["rate_kib"] * 1024)
         return not self.stop_event.wait(max(0, scheduled - now))
+
+    def issue_download_ticket(self):
+        now = time.monotonic()
+        with self.ticket_lock:
+            self.download_tickets = {ticket: expires for ticket, expires in self.download_tickets.items()
+                                     if expires > now}
+            if len(self.download_tickets) >= MAX_DOWNLOAD_TICKETS:
+                return None
+            ticket = secrets.token_urlsafe(32)
+            self.download_tickets[ticket] = now + DOWNLOAD_TICKET_TTL_SECONDS
+            return ticket
+
+    def consume_download_ticket(self, ticket):
+        now = time.monotonic()
+        with self.ticket_lock:
+            expires = self.download_tickets.pop(ticket, 0)
+            return expires > now
 
     def record_auth_failure(self, scope, method):
         """Emit an immediate count and flush suppressed failures after 10 seconds."""
@@ -399,6 +421,23 @@ class StreamHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.close_connection = True
 
+    def serve_preview_asset(self, filename, content_type):
+        try:
+            content = (Path(__file__).resolve().with_name(filename)).read_bytes()
+        except OSError:
+            return self.reply(404, {"error": "not found"})
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(content)))
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; script-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; frame-ancestors 'none'")
+        self.send_header("Connection", "close")
+        self.end_headers()
+        self.close_connection = True
+        self.wfile.write(content)
+
     def do_GET(self):
         if not self.valid_host():
             return self.reply(403, {"error": "host"})
@@ -411,9 +450,18 @@ class StreamHandler(BaseHTTPRequestHandler):
                                         "stopped": self.server.stop_event.is_set(), "active": self.server.active,
                                         "started": self.server.started,
                                         "payload_bytes_sent": self.server.payload_bytes_sent})
-        if self.path != self.server.config["path"]:
+        if self.path == "/":
+            return self.serve_preview_asset("index.html", "text/html; charset=utf-8")
+        if self.path == "/stream-preview.js":
+            return self.serve_preview_asset("stream-preview.js", "text/javascript; charset=utf-8")
+        ticket_stream = self.path.startswith("/download/")
+        if ticket_stream:
+            ticket = self.path.removeprefix("/download/")
+            if not re.fullmatch(r"[A-Za-z0-9_-]{40,50}", ticket) or not self.server.consume_download_ticket(ticket):
+                return self.reply(404, {"error": "not found"})
+        elif self.path != self.server.config["path"]:
             return self.reply(404, {"error": "not found"})
-        if not self.authorized():
+        if not ticket_stream and not self.authorized():
             self.server.record_auth_failure("stream", "GET")
             return self.reply(401, {"error": "authorization"})
         if self.server.stop_event.is_set() or not self.server.stream_slots.acquire(blocking=False):
@@ -519,6 +567,17 @@ class StreamHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self.valid_host():
             return self.reply(403, {"error": "host"})
+        if self.path == "/download-ticket":
+            if not self.authorized():
+                self.server.record_auth_failure("stream", "POST")
+                return self.reply(401, {"error": "authorization"})
+            ticket = self.server.issue_download_ticket()
+            if ticket is None:
+                return self.reply(503, {"error": "unavailable"})
+            emit_event("stream_download_ticket_issued", run_id=self.server.run_id,
+                       expires_in=DOWNLOAD_TICKET_TTL_SECONDS)
+            return self.reply(200, {"download_url": "/download/" + ticket,
+                                    "expires_in": DOWNLOAD_TICKET_TTL_SECONDS})
         if self.path != "/stop":
             return self.reply(404, {"error": "not found"})
         if not self.authorized(admin=True):

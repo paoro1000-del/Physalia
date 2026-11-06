@@ -8,6 +8,7 @@ import errno
 import html
 import json
 import io
+import logging
 import math
 import re
 import secrets
@@ -25,9 +26,11 @@ from pathlib import Path, PurePosixPath
 from physalia.generators import generate
 from physalia.i18n import translate
 from physalia.database import public_templates
+from physalia.app_logging import configure_logging
 
 STATIC = Path(__file__).parent / "web"
 APP_VERSION = (STATIC.parent / "VERSION").read_text(encoding="utf-8").strip()
+LOGGER = logging.getLogger("physalia")
 INTEGRATION_BUNDLE_FILES = (
     "LICENSE", "README.md", "README_en.md", "SECURITY.md",
     "docs/deployment_ja.md", "docs/deployment_en.md", "docs/legal_ja.md", "docs/legal_en.md",
@@ -233,15 +236,11 @@ class LocalThreadingHTTPServer(ThreadingHTTPServer):
         super().server_bind()
 
     def handle_error(self, request, client_address):
-        # The base implementation prints a traceback and peer address. Keep
-        # unexpected handler failures structured and avoid request details.
+        # Do not record request paths or peer addresses; they may contain tokens.
         error_type = sys.exc_info()[0]
-        record = {"event": "http_handler_error",
-                  "error_type": error_type.__name__ if error_type else "UnknownError"}
-        try:
-            print(json.dumps(record, separators=(",", ":"), allow_nan=False), flush=True)
-        except OSError:
-            pass
+        LOGGER.error("http_handler_error error_type=%s",
+                     error_type.__name__ if error_type else "UnknownError")
+        LOGGER.debug("http_handler_traceback", exc_info=True)
 
     def get_request(self):
         connection, address = super().get_request()
@@ -270,6 +269,21 @@ class LocalThreadingHTTPServer(ThreadingHTTPServer):
 class Handler(BaseHTTPRequestHandler):
     server_version = "Physalia"
     sys_version = ""
+
+    def _log_entry(self, handler_name):
+        LOGGER.info("handler_enter handler=%s", handler_name)
+        path = self.path.partition("?")[0]
+        if re.fullmatch(r"/canary/[A-Za-z0-9_-]{32,64}", path):
+            route = "canary_contact"
+        elif path == "/api/generate":
+            route = "api_generate"
+        elif path.startswith("/api/"):
+            route = "api"
+        elif path == "/" or path.startswith(("/images/", "/guide", "/quickstart/", "/log-guide/", "/legal/")):
+            route = "static_content"
+        else:
+            route = "other"
+        LOGGER.debug("http_request method=%s route=%s", self.command, route)
 
     def __getattr__(self, name):
         # Record custom HTTP methods on the canary path as contacts too.
@@ -452,6 +466,7 @@ class Handler(BaseHTTPRequestHandler):
         return event, nonce, location_nonce
 
     def do_GET(self):
+        self._log_entry("do_GET")
         language = self._language()
         if not self._valid_host():
             return self._json(403, {"error": translate("forbidden_host", language)})
@@ -719,6 +734,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(400, {"error": translate("invalid_input", language)})
 
     def do_POST(self):
+        self._log_entry("do_POST")
         # Some validation failures happen before the request body is consumed.
         # Never reuse that HTTP/1.1 connection and parse leftover body bytes as
         # a second request.
@@ -791,8 +807,14 @@ class Handler(BaseHTTPRequestHandler):
         except TimeoutError:
             self._json(408, {"error": translate("request_timeout", language)})
         except ValueError as exc:
+            LOGGER.info("generation_rejected error=%s",
+                        " ".join(str(exc).splitlines())[:300])
             self._json(400, {"error": str(exc)})
         except Exception:
+            error_type = sys.exc_info()[0]
+            LOGGER.error("generation_failed error_type=%s",
+                         error_type.__name__ if error_type else "UnknownError")
+            LOGGER.debug("generation_failure_traceback", exc_info=True)
             self._json(500, {"error": translate("generation_failed", language)})
 def main():
     language_parser = argparse.ArgumentParser(add_help=False)
@@ -804,13 +826,17 @@ def main():
     args = parser.parse_args()
     if not 0 <= args.port <= 65535:
         parser.error(translate("port_error", language))
+    configure_logging()
     try:
         server = LocalThreadingHTTPServer(("127.0.0.1", args.port), Handler)
     except OSError as exc:
+        LOGGER.error("server_bind_failed error_type=%s errno=%s",
+                     type(exc).__name__, exc.errno)
         if exc.errno == errno.EADDRINUSE:
             parser.exit(1, translate("port_in_use", language, port=args.port) + "\n")
         raise
     url = f"http://127.0.0.1:{server.server_port}/"
+    LOGGER.info("app_started port=%s", server.server_port)
     print(translate("server_started", language, url=url), flush=True)
     if args.open:
         webbrowser.open(url)
@@ -820,6 +846,7 @@ def main():
         pass
     finally:
         server.server_close()
+        LOGGER.info("app_stopped")
 
 
 if __name__ == "__main__":

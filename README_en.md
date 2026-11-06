@@ -41,6 +41,8 @@ On Linux, install Python 3.11–3.14 and ensure `venv` is available before start
 
 The launch script creates a virtual environment, installs the pinned dependencies on first launch, and starts the app in your browser. First-time installation requires internet access to download the packages.
 
+Application logs are written daily to `logs/YYYYMMDD_app.log` under the project folder. At startup, logs that are at least seven days old are deleted. Set `log_level` in the root `app_config.json` to `DEBUG`, `INFO`, `WARNING` or `ERROR`; the default is `INFO`. `DEBUG` also records route categories and exception details. Request bodies, URL paths and canary tokens are not logged.
+
 ## What you can do
 
 The tool explains the purpose, workings, and considerations for each security measure and generates sample files and code. Use these materials to decide whether a measure is suitable for your organization's environment and operations.

@@ -38,6 +38,7 @@ generated/
 # Common standalone canary output formats (may contain operator-issued URLs).
 # Use `git add -f` only when intentionally adding a reviewed source fixture.
 /*.json
+!/app_config.json
 /*.txt
 !/requirements.txt
 !/requirements-dev.txt

@@ -1,5 +1,6 @@
 """Configurable schemas and synthetic records; never import production data."""
 
+from calendar import monthrange
 import hashlib
 import math
 import re
@@ -1096,7 +1097,7 @@ DATABASE_COLUMN_LABELS_EN = {
 }
 DATABASE_COLUMN_LABEL_OVERRIDES = {
     "ja": {
-        "customers": {"postal_code": "郵便番号（地域対応）", "created_at": "会員登録日"},
+        "customers": {"postal_code": "郵便番号", "created_at": "会員登録日"},
         "passwords": {"username": "ログイン名", "last_rotated": "パスワード最終更新日"},
         "users": {"username": "ユーザー名", "role": "アクセス権限"},
         "employees": {"role": "役職", "started_at": "入社日"},
@@ -1105,7 +1106,7 @@ DATABASE_COLUMN_LABEL_OVERRIDES = {
         "assets": {"checked_at": "棚卸確認日"},
     },
     "en": {
-        "customers": {"postal_code": "Postal code (locality-matched)", "created_at": "Registration date"},
+        "customers": {"postal_code": "Postal code", "created_at": "Registration date"},
         "passwords": {
             "username": "Login name",
             "last_rotated": "Password last updated",
@@ -1341,6 +1342,14 @@ def records(columns, rows, language="en"):
     japanese = language == "ja"
     today = date.today()
     now = datetime.now().replace(microsecond=0)
+
+    def years_before(years):
+        year = today.year - years
+        day = min(today.day, monthrange(year, today.month)[1])
+        return date(year, today.month, day)
+
+    youngest_birth_date = years_before(20)
+    oldest_birth_date = years_before(70) + timedelta(days=1)
     total_name_combinations = len(GIVEN) * len(FAMILY)
     name_pair_count = min(rows, total_name_combinations)
     name_pairs = [
@@ -2225,7 +2234,13 @@ def records(columns, rows, language="en"):
                 else:
                     value = min(high, max(low, round(rng.uniform(low, high), 2)))
             elif kind == "date":
-                value = (today - timedelta(days=rng.randrange(731))).isoformat()
+                if column["name"].casefold() == "birth_date":
+                    span = (youngest_birth_date - oldest_birth_date).days
+                    value = (
+                        oldest_birth_date + timedelta(days=rng.randrange(span + 1))
+                    ).isoformat()
+                else:
+                    value = (today - timedelta(days=rng.randrange(731))).isoformat()
             elif kind == "datetime":
                 value = (
                     now - timedelta(seconds=rng.randrange(730 * 86400))

@@ -8,6 +8,7 @@ import os
 import secrets
 import zipfile
 from datetime import date, timedelta
+from urllib.parse import urlsplit
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
@@ -359,32 +360,150 @@ tbody tr:last-child td{{border-bottom:0}}
                     [deployment], summary)
 
 
-def generate_fake_trap(settings: dict, language: str = "ja") -> tuple[str, str, bytes]:
-    """Create a standalone, inert warning or waiting page; no telemetry is embedded."""
+def _generate_polished_fake_trap(settings: dict, language: str = "ja") -> Artifact:
+    """Build a convincing but entirely static access review portal."""
     variant = settings.get("variant", "warning")
-    if variant not in ("warning", "reported", "waiting"):
+    if variant not in ("warning", "reported", "waiting", "maintenance", "device_review", "access_request", "sync_status", "policy_update"):
         raise ValueError("Invalid fake trap variant")
-    messages = {
-        "ja": {"warning": ("異常なアクセスを検知しました", "この操作は監視対象です。"),
-               "reported": ("アクセスが通報されました", "この操作はセキュリティ担当者に通報されました。"),
-               "waiting": ("認証しています", "確認が完了するまでお待ちください。")},
-        "en": {"warning": ("Unusual access detected", "This activity is subject to monitoring."),
-               "reported": ("Access reported", "This activity has been reported to the security team."),
-               "waiting": ("Authenticating", "Please wait while verification is in progress.")},
+    lang = language if language in ("ja", "en") else "ja"
+    ja = lang == "ja"
+    copy = {
+        "brand": "社内ポータル" if ja else "Internal workspace", "product": "アカウント管理" if ja else "Account management",
+        "crumb": "セキュリティ" if ja else "Security",
+        "titles": {"warning": "追加の確認が必要です" if ja else "Additional verification required",
+                   "reported": "確認リクエストを受け付けました" if ja else "Review request received",
+                   "waiting": "セッションを確認しています" if ja else "Reviewing your session",
+                   "maintenance": "サービスのメンテナンス中です" if ja else "Scheduled service maintenance",
+                   "device_review": "新しいデバイスを確認してください" if ja else "Review your new device",
+                   "access_request": "アクセス申請を確認しています" if ja else "Access request under review",
+                   "sync_status": "アカウント情報を同期しています" if ja else "Account sync in progress",
+                   "policy_update": "セキュリティ設定が更新されました" if ja else "Security settings updated"},
+        "messages": {"warning": "通常と異なるサインインが検出されたため、このセッションを一時的に保留しています。" if ja else "We detected a sign-in that differs from your usual activity. This session is temporarily on hold.",
+                     "reported": "リクエストは確認キューに追加されました。確認が完了するまで、この画面を閉じずにお待ちください。" if ja else "Your request has been added to the review queue. Keep this page open until the review is complete.",
+                     "waiting": "セキュリティ情報を確認しています。通常、この処理には数秒かかります。" if ja else "We are checking your security information. This usually takes a few seconds.",
+                     "maintenance": "一部のアカウント機能を一時的に利用できません。しばらくしてから、もう一度ご確認ください。" if ja else "Some account features are temporarily unavailable. Please check again shortly.",
+                     "device_review": "このデバイスのサインイン情報がアカウントに反映されるまで、確認処理に数分かかる場合があります。" if ja else "It may take a few minutes for this device's sign-in details to appear in your account.",
+                     "access_request": "アクセス権限のリクエストを担当チームが確認しています。更新があるまで、このページを開いたままにしてください。" if ja else "The responsible team is reviewing this access request. Keep this page open for updates.",
+                     "sync_status": "最近のアカウント情報を読み込んでいます。同期が完了するまでこの画面を表示してください。" if ja else "Recent account information is being loaded. Keep this page open while sync completes.",
+                     "policy_update": "組織のセキュリティ ポリシーに基づき、アカウント設定を再確認してください。" if ja else "Review your account settings in line with your organization's security policy."},
+        "status": {"warning": "確認が必要" if ja else "Action required", "reported": "確認中" if ja else "In review", "waiting": "処理中" if ja else "Processing",
+                   "maintenance": "メンテナンス" if ja else "Maintenance", "device_review": "デバイス確認" if ja else "Device review",
+                   "access_request": "申請確認中" if ja else "Request review", "sync_status": "同期中" if ja else "Syncing",
+                   "policy_update": "設定の確認" if ja else "Review settings"},
+        "activity": "サインインの詳細" if ja else "Sign-in details", "when": "日時" if ja else "Date and time",
+        "location": "おおよその場所" if ja else "Approximate location", "device": "デバイス" if ja else "Device",
+        "browser": "ブラウザー" if ja else "Browser", "review": "確認の状況" if ja else "Review progress",
+        "help": "この操作に心当たりがない場合は、組織の IT 管理者にお問い合わせください。" if ja else "If you do not recognize this activity, contact your organization's IT administrator.",
     }
-    lang = language if language in messages else "ja"
-    title, message = messages[lang][variant]
-    spinner = '<div class="spinner" aria-hidden="true"></div>' if variant == "waiting" else ""
-    markup = f'''<!doctype html>
-<html lang="{lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
-{STATIC_HTML_SECURITY_META}<title>{html.escape(title)}</title>
-<style>body{{font-family:system-ui,sans-serif;background:#f3f6fa;color:#203047;margin:0;padding:12vh 1rem}}
-main{{max-width:580px;margin:auto;padding:2rem;background:white;border:1px solid #cbd5df;border-radius:12px}}
-.spinner{{width:36px;height:36px;border:4px solid #d9e3ee;border-top-color:#295d91;border-radius:50%;animation:spin 1s linear infinite}}
-@keyframes spin{{to{{transform:rotate(360deg)}}}}@media(prefers-reduced-motion:reduce){{.spinner{{animation:none}}}}</style>
-</head><body><main>{spinner}<h1>{html.escape(title)}</h1><p>{html.escape(message)}</p></main></body></html>'''
-    basename = plausible_filename("fake_trap")
-    return basename + ".html", "text/html; charset=utf-8", markup.encode("utf-8")
+    title, message = copy["titles"][variant], copy["messages"][variant]
+    now = date.today().strftime("%Y年%m月%d日" if ja else "%b %d, %Y")
+    ref = "IR-" + secrets.token_hex(5).upper()
+    embed_canary = settings.get("embed_canary", bool(settings.get("canary_url")))
+    url = _canary_url(settings.get("canary_url", ""), lang) if embed_canary else ""
+    if embed_canary and not url:
+        raise ValueError(translate("invalid_url", lang))
+    canary_beacon = (f'<img class="contact-marker" src="{html.escape(url, quote=True)}" '
+                     'width="1" height="1" alt="" aria-hidden="true" referrerpolicy="no-referrer">') if url else ""
+    canary_security_meta = STATIC_HTML_SECURITY_META
+    if url:
+        parsed_canary = urlsplit(url)
+        canary_origin = f"{parsed_canary.scheme}://{parsed_canary.netloc}"
+        canary_security_meta = canary_security_meta.replace(
+            "default-src 'none';",
+            f"default-src 'none'; img-src {html.escape(canary_origin, quote=True)};",
+        )
+    icon = '<span class="spin"></span>' if variant in ("waiting", "maintenance", "device_review", "access_request", "sync_status") else '<span class="check">✓</span>'
+    e = html.escape
+    eyebrow = "サインインの確認" if ja else "SIGN-IN REVIEW"
+    if variant == "maintenance":
+        eyebrow = "サービス状況" if ja else "SERVICE STATUS"
+        copy["activity"] = "サービス情報" if ja else "Service details"
+        details = [("対象" if ja else "Service", "アカウント ワークスペース" if ja else "Account workspace"),
+                   ("状態" if ja else "Status", "メンテナンス中" if ja else "Maintenance"),
+                   ("開始日" if ja else "Started", now), ("影響" if ja else "Impact", "一部機能" if ja else "Some features")]
+    elif variant == "device_review":
+        eyebrow = "デバイスの確認" if ja else "DEVICE REVIEW"
+        copy["activity"] = "デバイスの詳細" if ja else "Device details"
+        details = [("デバイス" if ja else "Device", "Windows デバイス" if ja else "Windows device"),
+                   ("ブラウザー" if ja else "Browser", "デスクトップ ブラウザー" if ja else "Desktop browser"),
+                   ("おおよその場所" if ja else "Approximate location", "東京都" if ja else "Tokyo, Japan"),
+                   ("最初のサインイン" if ja else "First sign-in", now)]
+    elif variant == "access_request":
+        eyebrow = "アクセス管理" if ja else "ACCESS MANAGEMENT"
+        copy["activity"] = "申請の詳細" if ja else "Request details"
+        details = [("対象" if ja else "Resource", "Workspace ドキュメント" if ja else "Workspace documents"),
+                   ("アクセス レベル" if ja else "Access level", "閲覧" if ja else "Read only"),
+                   ("申請日" if ja else "Requested", now), ("状態" if ja else "Status", "確認中" if ja else "Under review")]
+    elif variant == "sync_status":
+        eyebrow = "アカウント同期" if ja else "ACCOUNT SYNC"
+        copy["activity"] = "同期の詳細" if ja else "Sync details"
+        details = [("アカウント" if ja else "Account", "Workspace プロファイル" if ja else "Workspace profile"),
+                   ("最終同期" if ja else "Last sync", now), ("同期対象" if ja else "Items", "プロファイル情報" if ja else "Profile information"),
+                   ("状態" if ja else "Status", "処理中" if ja else "In progress")]
+    elif variant == "policy_update":
+        eyebrow = "セキュリティ設定" if ja else "SECURITY SETTINGS"
+        copy["activity"] = "更新の詳細" if ja else "Update details"
+        details = [("設定" if ja else "Setting", "サインイン ポリシー" if ja else "Sign-in policy"),
+                   ("適用範囲" if ja else "Scope", "組織アカウント" if ja else "Organization accounts"),
+                   ("更新日" if ja else "Updated", now), ("確認" if ja else "Review", "設定を確認してください" if ja else "Review your settings")]
+    else:
+        details = [(copy["when"], now), (copy["location"], "東京都" if ja else "Tokyo, Japan"),
+                   (copy["device"], "Windows デバイス" if ja else "Windows device"),
+                   (copy["browser"], "デスクトップ ブラウザー" if ja else "Desktop browser")]
+    details_html = "".join(f"<div><dt>{e(label)}</dt><dd>{e(value)}</dd></div>" for label, value in details)
+    panel_content = {
+        "warning": (("確認の状況" if ja else "Review progress"), [("完了" if ja else "Complete", "サインイン情報" if ja else "Sign-in details", True), ("処理中" if ja else "In progress", "追加確認" if ja else "Additional review", False), ("次の手順" if ja else "Next", "確認を完了" if ja else "Complete review", False)]),
+        "reported": (("受付状況" if ja else "Request status"), [("受付済み" if ja else "Received", "リクエスト" if ja else "Request", True), ("確認中" if ja else "In review", "担当チーム" if ja else "Review team", False), ("次の更新" if ja else "Next update", "確認後に表示" if ja else "After review", False)]),
+        "waiting": (("処理の状況" if ja else "Process status"), [("完了" if ja else "Complete", "セッション情報" if ja else "Session details", True), ("確認中" if ja else "Checking", "セキュリティ情報" if ja else "Security details", False), ("保留" if ja else "Pending", "結果の反映" if ja else "Apply result", False)]),
+        "maintenance": (("メンテナンス情報" if ja else "Maintenance information"), [("対象" if ja else "Affected", "一部機能" if ja else "Some features", True), ("現在の状態" if ja else "Current status", "作業中" if ja else "In progress", False), ("次回確認" if ja else "Next check", "時間をおいて再確認" if ja else "Check again later", False)]),
+        "device_review": (("デバイス確認" if ja else "Device review"), [("登録情報" if ja else "Device details", "受信済み" if ja else "Received", True), ("ポリシー確認" if ja else "Policy check", "確認中" if ja else "In review", False), ("アカウント反映" if ja else "Account update", "保留" if ja else "Pending", False)]),
+        "access_request": (("申請の状況" if ja else "Request progress"), [("申請内容" if ja else "Request details", "受付済み" if ja else "Received", True), ("権限確認" if ja else "Access review", "担当チームが確認中" if ja else "With review team", False), ("結果" if ja else "Decision", "確認後に表示" if ja else "After review", False)]),
+        "sync_status": (("同期の状況" if ja else "Sync status"), [("対象の確認" if ja else "Scope check", "完了" if ja else "Complete", True), ("プロファイル同期" if ja else "Profile sync", "処理中" if ja else "In progress", False), ("最終確認" if ja else "Final check", "保留" if ja else "Pending", False)]),
+        "policy_update": (("設定の更新" if ja else "Settings update"), [("ポリシー確認" if ja else "Policy review", "完了" if ja else "Complete", True), ("設定の適用" if ja else "Apply settings", "確認が必要" if ja else "Review required", False), ("反映状況" if ja else "Update status", "保留" if ja else "Pending", False)]),
+    }
+    panel_title, panel_steps = panel_content[variant]
+    steps_html = "".join(
+        f'<li class="step{" done" if complete else ""}"><span class="dot" aria-hidden="true">{"✓" if complete else index}</span><div><strong>{e(label)}</strong><small>{e(value)}</small></div></li>'
+        for index, (label, value, complete) in enumerate(panel_steps, 1))
+    side_html = f'''<aside class="card side" aria-labelledby="status-heading"><h2 id="status-heading">{panel_title}</h2><ol class="progress-list">{steps_html}</ol><p class="reference">{'参照 ID' if ja else 'Reference ID'} <code>{ref}</code></p></aside>'''
+    context_content = {
+        "warning": (("関連する確認項目" if ja else "Related checks"), ("項目" if ja else "Check", "状態" if ja else "Status", "更新" if ja else "Updated"), [("サインイン情報" if ja else "Sign-in details", "確認済み" if ja else "Reviewed", now), ("追加認証" if ja else "Additional verification", "対応が必要" if ja else "Action required", now), ("セッション状態" if ja else "Session status", "保留中" if ja else "On hold", now)]),
+        "reported": (("受付内容" if ja else "Request summary"), ("項目" if ja else "Item", "内容" if ja else "Details", "状態" if ja else "Status"), [("受付番号" if ja else "Reference", ref, "受付済み" if ja else "Received"), ("申請区分" if ja else "Request type", "アカウント確認" if ja else "Account review", "確認中" if ja else "In review"), ("担当窓口" if ja else "Review queue", "情報システム" if ja else "IT operations", "割当済み" if ja else "Assigned")]),
+        "waiting": (("処理の内訳" if ja else "Processing details"), ("処理" if ja else "Process", "結果" if ja else "Result", "所要時間" if ja else "Duration"), [("端末情報の照合" if ja else "Device check", "完了" if ja else "Complete", "1秒未満" if ja else "Under 1 sec"), ("ポリシー確認" if ja else "Policy review", "処理中" if ja else "In progress", "—"), ("セッション更新" if ja else "Session update", "待機中" if ja else "Queued", "—")]),
+        "maintenance": (("機能別の状況" if ja else "Service availability"), ("機能" if ja else "Service", "状態" if ja else "Status", "影響" if ja else "Impact"), [("プロフィール" if ja else "Profile", "一時停止" if ja else "Paused", "変更" if ja else "Updates"), ("監査ログ" if ja else "Audit log", "利用可能" if ja else "Available", "なし" if ja else "None"), ("アカウント設定" if ja else "Account settings", "遅延" if ja else "Delayed", "反映" if ja else "Changes")]),
+        "device_review": (("デバイス一覧" if ja else "Registered devices"), ("デバイス" if ja else "Device", "最終利用" if ja else "Last active", "状態" if ja else "Status"), [("Windows デスクトップ" if ja else "Windows desktop", now, "確認中" if ja else "Reviewing"), ("モバイル端末" if ja else "Mobile device", "前回の利用" if ja else "Previous session", "登録済み" if ja else "Registered"), ("ブラウザー セッション" if ja else "Browser session", "現在" if ja else "Current", "保留中" if ja else "Pending")]),
+        "access_request": (("アクセス申請の内訳" if ja else "Access request details"), ("リソース" if ja else "Resource", "権限" if ja else "Permission", "状態" if ja else "Status"), [("共有ドキュメント" if ja else "Shared documents", "閲覧" if ja else "Read", "申請済み" if ja else "Requested"), ("運用レポート" if ja else "Operations reports", "閲覧" if ja else "Read", "対象外" if ja else "Not requested"), ("アカウント設定" if ja else "Account settings", "変更" if ja else "Manage", "許可なし" if ja else "Not granted")]),
+        "sync_status": (("同期対象" if ja else "Sync scope"), ("データ" if ja else "Data", "状態" if ja else "Status", "最終更新" if ja else "Last update"), [("プロフィール" if ja else "Profile", "同期済み" if ja else "Synced", now), ("通知設定" if ja else "Preferences", "処理中" if ja else "Processing", now), ("デバイス一覧" if ja else "Devices", "待機中" if ja else "Queued", "—")]),
+        "policy_update": (("変更された設定" if ja else "Changed settings"), ("設定" if ja else "Setting", "適用値" if ja else "Value", "状態" if ja else "Status"), [("多要素認証" if ja else "Multi-factor authentication", "必須" if ja else "Required", "確認が必要" if ja else "Review required"), ("セッション有効期間" if ja else "Session duration", "標準" if ja else "Standard", "適用済み" if ja else "Applied"), ("信頼済みデバイス" if ja else "Trusted devices", "再確認" if ja else "Recheck", "保留中" if ja else "Pending")]),
+    }
+    context_title, context_columns, context_rows = context_content[variant]
+    table_head = "".join(f'<th scope="col">{e(column)}</th>' for column in context_columns)
+    table_rows = "".join("<tr>" + "".join(f"<td>{e(value)}</td>" for value in row) + "</tr>" for row in context_rows)
+    context_section = f'''<section class="card section records" id="related" aria-labelledby="related-heading"><h2 id="related-heading">{context_title}</h2><div class="table-scroll"><table><thead><tr>{table_head}</tr></thead><tbody>{table_rows}</tbody></table></div><p class="table-note">{'表示内容は現在の状態に基づくサマリーです。反映に時間がかかる場合があります。' if ja else 'This summary reflects the current status. Updates may take additional time to appear.'}</p></section>'''
+    markup = f'''<!doctype html><html lang="{lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+{canary_security_meta}<meta name="application-name" content="{e(copy['brand'])}"><meta name="theme-color" content="#f3f6fa"><meta name="description" content="{e(message)}"><title>{e(title)} | {e(copy['brand'])}</title><style>
+*{{box-sizing:border-box}}body{{margin:0;background:#f3f6fa;color:#172b4d;font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}}.skip-link{{position:absolute;left:-10000px;top:auto}}.skip-link:focus{{left:12px;top:12px;z-index:10;background:#fff;padding:8px 12px}}
+header{{height:66px;background:#fff;border-bottom:1px solid #dfe4ec;display:flex;align-items:center;padding:0 max(24px,calc((100vw - 1060px)/2));gap:12px}}
+.logo{{display:grid;place-items:center;width:34px;height:34px;border-radius:8px;background:#173e68;color:white;font-weight:700;font-size:19px}}header strong{{font-size:17px}}header small{{color:#5e6c84}}
+main{{max-width:920px;margin:30px auto;padding:0 20px}}nav{{color:#5e6c84;font-size:13px;margin:0 0 22px}}nav span{{padding:0 9px;color:#9aa5b5}}.layout{{display:grid;grid-template-columns:1.6fr 1fr;gap:18px;align-items:start}}
+.card{{background:white;border:1px solid #dfe4ec;border-radius:9px;box-shadow:0 2px 5px #172b4d08}}.hero{{padding:26px 29px;border-top:3px solid #d49b22}}.eyebrow{{font-size:11px;color:#5e6c84;font-weight:700;letter-spacing:.08em}}
+h1{{font-size:25px;line-height:1.35;margin:8px 0}}p{{color:#44546a}}.pill{{display:inline-flex;align-items:center;gap:8px;background:#fff7e0;color:#815b00;border-radius:18px;padding:5px 10px;font-size:12px;font-weight:650;margin-top:8px}}
+.check{{color:#18865b;background:#e9f5ef;border-radius:50%;width:20px;height:20px;text-align:center}}.spin{{width:16px;height:16px;border:2px solid #eadba9;border-top-color:#976d00;border-radius:50%;animation:rotate .9s linear infinite}}@keyframes rotate{{to{{transform:rotate(360deg)}}}}
+.section,.side{{padding:21px 23px;margin-top:14px}}h2{{font-size:15px;margin:0 0 15px}}.details{{display:grid;grid-template-columns:1fr 1fr;gap:16px}}dt{{color:#5e6c84;font-size:12px}}dd{{margin:2px 0 0;font-size:13px;font-weight:550}}
+.workspace-nav{{display:flex;gap:22px;overflow-x:auto;border-bottom:1px solid #dfe4ec;margin:0 0 8px;padding:0 2px}}.workspace-nav a{{padding:10px 2px;color:#344563;text-decoration:none;white-space:nowrap;font-size:13px}}.workspace-nav a:focus,.workspace-nav a:hover{{color:#1769aa;text-decoration:underline}}.records{{overflow:hidden}}.table-scroll{{overflow-x:auto}}table{{width:100%;border-collapse:collapse;text-align:left;font-size:12px}}th{{color:#5e6c84;font-weight:600;background:#f7f8fa}}th,td{{padding:10px 12px;border-bottom:1px solid #e8ebf0;white-space:nowrap}}tbody tr:last-child td{{border-bottom:0}}.table-note{{margin:13px 0 0;font-size:12px;color:#6b778c}}
+.progress-list{{list-style:none;margin:0;padding:0}}.step{{display:flex;gap:11px;position:relative;padding-bottom:19px}}.step:not(:last-child):before{{content:"";position:absolute;left:10px;top:22px;bottom:0;width:1px;background:#dfe4ec}}.dot{{z-index:1;display:grid;place-items:center;flex:none;width:21px;height:21px;border:1px solid #cbd3df;border-radius:50%;background:white;font-size:11px}}.done .dot{{background:#e9f5ef;color:#18865b}}.step strong{{font-size:12px}}.step small{{display:block;color:#5e6c84;font-size:11px}}.reference{{font-size:12px;border-top:1px solid #dfe4ec;padding-top:12px}}.reference code{{display:inline;border:0;padding:0;color:#344563;font-size:12px}}.action{{display:inline-block;margin-top:18px;background:#1769aa;color:#fff;text-decoration:none;border-radius:5px;padding:9px 15px;font-size:13px;font-weight:600}}.action:hover{{background:#12598f}}.help{{color:#6b778c;font-size:12px}}@media(max-width:680px){{.layout{{grid-template-columns:1fr}}main{{margin:20px auto;padding:0 14px}}.hero{{padding:22px}}h1{{font-size:22px}}}}@media(prefers-reduced-motion:reduce){{.spin{{animation:none}}}}
+</style></head><body><header><strong>{copy['brand']}</strong><small>{copy['product']}</small></header><main><nav aria-label="{'パンくずリスト' if ja else 'Breadcrumb'}">{copy['brand']}<span aria-hidden="true">›</span>{copy['product']}<span aria-hidden="true">›</span>{copy['crumb']}</nav><nav class="workspace-nav" aria-label="{'関連セクション' if ja else 'Related sections'}"><a href="#main-content">{'概要' if ja else 'Overview'}</a><a href="#activity-panel">{copy['activity']}</a><a href="#related">{context_title}</a><a href="#status-heading">{panel_title}</a></nav><div class="layout"><div>
+<a class="skip-link" href="#main-content">{'本文へ移動' if ja else 'Skip to content'}</a><section class="card hero" id="main-content" aria-labelledby="page-title"><div class="eyebrow">{eyebrow}</div><h1 id="page-title">{e(title)}</h1><p>{e(message)}</p><span class="pill" role="status">{icon}{e(copy['status'][variant])}</span></section>
+<section class="card section" id="activity-panel" aria-labelledby="activity-heading"><h2 id="activity-heading">{copy['activity']}</h2><dl class="details">{details_html}</dl></section>{context_section}<p class="help">{copy['help']}</p></div>
+{side_html}</div>{canary_beacon}</main></body></html>'''
+    basename = plausible_filename("fake_trap") + ".html"
+    summary = {"kind": "fake_trap"}
+    if url:
+        summary["canary_locations"] = [{"artifact": basename, "element": "img", "label": "page_open_contact"}]
+    return Artifact(basename, "text/html; charset=utf-8", markup.encode("utf-8"), summary=summary)
+
+
+generate_fake_trap = _generate_polished_fake_trap
 
 
 GENERATORS = {"env": generate_env, "database": generate_database, "web": generate_web, "nest": generate_nest, "fake_trap": generate_fake_trap,
@@ -400,8 +519,8 @@ SETTING_KEYS = {
             "env_layout", "env_suffix", "env_variable", "env_dev_url",
             "env_dev_url_authorized", "env_dev_comment", "env_prod_comment", "title", "rows"},
     "database": {"template", "rows", "table", "columns"},
-    "web": {"scenario", "title", "canary_url"},
-    "fake_trap": {"variant"},
+    "web": {"scenario", "canary_url"},
+    "fake_trap": {"variant", "embed_canary", "canary_url"},
     "ransomware_tripwire": {"files"},
     "path_maze": {"depth", "branches", "files"},
     "sparse_decoy": {"size_gib", "files"},
@@ -419,8 +538,20 @@ def generate(kind: object, settings: object, language: str = "ja") -> Artifact:
     if not isinstance(kind, str) or kind not in GENERATORS or not isinstance(settings, dict):
         raise ValueError(translate("select_method", language))
     language = language if language in ("ja", "en") else "ja"
+    if kind == "fake_trap":
+        # The fake-trap panel has evolved independently from older cached UI
+        # clients. Ignore stale fields from that panel (for example, a prior
+        # canary toggle flag) while retaining every setting this generator uses.
+        settings = {key: value for key, value in settings.items()
+                    if key in SETTING_KEYS[kind]}
     if any(not isinstance(key, str) for key in settings) or settings.keys() - SETTING_KEYS[kind]:
         raise ValueError(translate("unknown_settings", language))
+    if kind == "fake_trap":
+        embed_canary = settings.get("embed_canary", bool(settings.get("canary_url")))
+        if not isinstance(embed_canary, bool):
+            raise ValueError(translate("invalid_input", language))
+        if not embed_canary and "canary_url" in settings:
+            settings = {key: value for key, value in settings.items() if key != "canary_url"}
     reject_unsafe_text_tree(settings, language)
     # Dedicated owned-domain inputs are exempt from generic endpoint scanning
     # so canary values remain byte-for-byte intact. Validate them even when a

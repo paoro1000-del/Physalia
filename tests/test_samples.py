@@ -104,7 +104,7 @@ class MazeTests(unittest.TestCase):
         asset = generate("stream", {"path": "/private/archive.csv", "format": "csv"}, "en")
         operator = json.loads(asset.companions[0].content)
         with zipfile.ZipFile(io.BytesIO(asset.content)) as archive:
-            self.assertEqual(set(archive.namelist()), {"serve.py", "stream_config.json", "README.txt", "LICENSE"})
+            self.assertEqual(set(archive.namelist()), {"serve.py", "stream_config.json", "index.html", "stream-preview.js", "README.txt", "LICENSE"})
             for content in (archive.read(name) for name in archive.namelist()):
                 for token in operator["environment"].values():
                     self.assertNotIn(token.encode(), content)
