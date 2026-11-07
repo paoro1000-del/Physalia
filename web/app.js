@@ -1778,6 +1778,32 @@ $("#canary-format").addEventListener("change", () => {
   updateEnvTemplate();
   updateCsvSafetyNote();
 });
+async function loadSparseDestinationDefault() {
+  const input = $("#sparse-destination");
+  input.addEventListener("input", () => { input.dataset.userEdited = "true"; }, {once:true});
+  try {
+    const response = await fetch("/api/defaults", {
+      headers:{"X-ADG-Token": $('meta[name="adg-token"]').content}, cache:"no-store"
+    });
+    if (!response.ok) return;
+    const defaults = await response.json();
+    if (!input.value && !input.dataset.userEdited
+        && typeof defaults.sparse_destination === "string"
+        && defaults.sparse_destination.length <= 4096) {
+      input.value = defaults.sparse_destination;
+    }
+  } catch (_) {
+    // Keep the field editable when the local defaults endpoint is unavailable.
+  }
+}
+function updateSparseOutputMode() {
+  const tarSelected = $("#sparse-output-mode").value === "tar";
+  $("#sparse-destination-field").hidden = tarSelected;
+  $("#sparse-destination").disabled = tarSelected;
+  $("#sparse-tar-help").hidden = !tarSelected;
+}
+$("#sparse-output-mode").addEventListener("change", updateSparseOutputMode);
+
 async function loadDatabaseTemplates() {
   const requestedLanguage = language;
   try {
@@ -2142,7 +2168,7 @@ function renderDownloads(data) {
   const isWebPackage = data.summary?.kind === "web" && hasDeploymentPackage;
   const isEnvPackage = typeof data.name === "string" && data.name.endsWith(".env") && hasDeploymentPackage;
   const primary = data.savedPath ? document.createElement("p") : downloadLink(data, t(data.summary?.kind === "ransomware_tripwire" ? "tripwire_deployment_download"
-    : data.summary?.kind === "sparse_decoy" ? "sparse_direct_download"
+    : data.summary?.kind === "sparse_decoy" ? (data.summary.deployment_format ? "sparse_tar_download" : "sparse_direct_download")
     : isWebPackage ? "web_html_download" : hasDeploymentPackage ? "env_direct_download" : "download_again"),
     isEnvPackage ? document.createDocumentFragment() : $("#downloads"));
   if (data.savedPath) {
@@ -2456,17 +2482,25 @@ function renderDownloads(data) {
     const note = document.createElement("p");
     note.textContent = data.summary.kind === "path_maze"
       ? t("path_generated", data.summary)
-      : t("sparse_generated", {size: data.summary.size_gib, extension: data.summary.extension, filename: data.summary.filename});
+      : data.summary.deployment_format
+        ? t("sparse_tar_generated", {size: data.summary.size_gib, filename: data.summary.filename})
+        : t("sparse_generated", {size: data.summary.size_gib, extension: data.summary.extension, filename: data.summary.filename});
     $("#downloads").append(note);
   }
   data.downloadName = automatic.download || data.name;
   return automatic;
 }
 Object.assign(translations.ja, {
+  sparse_output_mode:"\u51fa\u529b\u5f62\u5f0f",
+  sparse_output_direct:"\u3053\u306e\u7aef\u672b\u306b\u30d5\u30a1\u30a4\u30eb\u3092\u4f5c\u6210",
+  sparse_output_tar:"Unix\u5411\u3051\u30b9\u30d1\u30fc\u30b9TAR\u3092\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9",
+  sparse_tar_download:"Unix\u914d\u7f6e\u7528TAR\u3092\u4fdd\u5b58",
+  sparse_tar_generated:"\u8ad6\u7406\u30b5\u30a4\u30ba{size} GiB\u306e{filename}\u3092\u30b9\u30d1\u30fc\u30b9TAR\u306b\u3057\u307e\u3057\u305f\u3002GNU tar\u307e\u305f\u306fbsdtar\u3067\u5c55\u958b\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
+  sparse_tar_help:"GNU PAX sparse 1.0\u5f62\u5f0f\u3067\u8ad6\u7406\u30b5\u30a4\u30ba\u3068\u5b9f\u30c7\u30fc\u30bf\u306e\u7bc4\u56f2\u3060\u3051\u3092\u8a18\u9332\u3057\u3001\u5927\u304d\u306a\u7a7a\u304d\u9818\u57df\u306f\u683c\u7d0d\u3057\u307e\u305b\u3093\u3002Unix\u7cfbOS\u3067\u306fGNU tar\u307e\u305f\u306fbsdtar\u3067\u5c55\u958b\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
   sparse_desc:"指定したフォルダーにスパースファイルを1件直接作成します。",
   sparse_size:"指定サイズの目安（GiB、1〜1,024）",
   sparse_destination:"保存先フォルダーの絶対パス",
-  sparse_destination_help:"アプリを実行している端末の既存フォルダーを指定してください。",
+  sparse_destination_help:"初期値はDownloadsフォルダーで、ない場合はユーザーフォルダーです。必要に応じて別の既存フォルダーに変更できます。",
   sparse_destination_required:"保存先フォルダーの絶対パスを入力してください。",
   sparse_backend_restart:"アプリ本体が古いまま動作しています。アプリを終了して再起動し、もう一度生成してください。",
   sparse_note:"実際の論理サイズは指定値から最大0.5%程度変動します。上限に近い指定では1 TiBを超えない範囲で変動します。スパースファイルなので実際の使用容量は通常小さくなりますが、コピー・同期・バックアップ・暗号化では最大1 TiBを使う場合があります。対応するファイルシステムが必要です。拡張子は見た目だけで、中身はその形式に準拠しません。",
@@ -2474,27 +2508,35 @@ Object.assign(translations.ja, {
   sparse_saved_path:"作成したファイル: {path}"
 });
 Object.assign(translations.en, {
+  sparse_output_mode:"Output format",
+  sparse_output_direct:"Create file on this computer",
+  sparse_output_tar:"Download sparse TAR for Unix",
+  sparse_tar_download:"Download TAR for Unix deployment",
+  sparse_tar_generated:"Created a sparse TAR containing {filename} with a logical size of {size} GiB. Extract it with GNU tar or bsdtar.",
+  sparse_tar_help:"GNU PAX sparse 1.0 records the logical size and populated ranges without storing the large holes. Extract on Unix-like systems with GNU tar or bsdtar to recreate the sparse file.",
   sparse_desc:"Create one sparse file directly in the selected folder.",
   sparse_size:"Nominal size (GiB, 1-1,024)",
   sparse_destination:"Absolute path to destination folder",
-  sparse_destination_help:"Enter an existing folder on the computer running the app.",
+  sparse_destination_help:"The default is the Downloads folder, or the user folder if Downloads is unavailable. You can change it to another existing folder.",
   sparse_destination_required:"Enter an absolute path to the destination folder.",
   sparse_backend_restart:"The application server is out of date. Stop and restart the app, then generate the file again.",
   sparse_note:"The actual logical size varies by up to about 0.5% from the selected value. Near the ceiling, it varies only downward so it stays within 1 TiB. Sparse allocation is usually small, but copies, sync, backups or encryption may consume up to 1 TiB. The extension is for appearance only; the content does not match that format.",
   sparse_generated:"Created {filename} with a logical size of {size} GiB in the selected folder. Save the operator-only file list.",
   sparse_saved_path:"Created file: {path}"
 });
-methodFlows.ja.sparse_decoy.context = "指定フォルダーにスパースファイルを1件作成します。";
-methodFlows.ja.sparse_decoy.steps[1] = ["2. 保存", "指定フォルダーに直接スパースファイルを作成します。"];
+methodFlows.ja.sparse_decoy.context = "同じ端末に直接作成するか、Unix系OS向けのスパースTARをダウンロードします。";
+methodFlows.ja.sparse_decoy.steps[1] = ["2. 保存", "直接作成またはPAX sparse形式のTARを選びます。TARは配置先でGNU tarかbsdtarを使って展開します。"];
 methodFlows.ja.sparse_decoy.note = "コピーやバックアップでは見かけのサイズ分の容量を使う場合があります。";
-methodFlows.en.sparse_decoy.context = "Create one sparse file in the selected folder.";
-methodFlows.en.sparse_decoy.steps[1] = ["2. Save", "The app creates the sparse file directly in the specified folder."];
+methodFlows.en.sparse_decoy.context = "Create the file on this computer or download a sparse TAR for a Unix-like host.";
+methodFlows.en.sparse_decoy.steps[1] = ["2. Save", "Choose direct creation or a PAX sparse TAR. Extract the TAR on the target with GNU tar or bsdtar."];
 methodFlows.en.sparse_decoy.note = "Copies or backups may consume the full logical size.";
 methodOutcomes.en.sparse_decoy.deception = "The chosen extension is for appearance; the content does not match the format and sparse allocation can be inspected.";
 applyLanguage();
 updateFields();
 showWorkspacePage(activeWorkspacePage, false);
 loadDatabaseTemplates();
+loadSparseDestinationDefault();
+updateSparseOutputMode();
 form.querySelectorAll('input[type="number"]').forEach(input => {
   input.addEventListener("input", () => {
     if (input.checkValidity()) clearInvalid(input);
@@ -2513,7 +2555,8 @@ form.addEventListener("submit", async event => {
   form.querySelectorAll('[aria-invalid="true"]').forEach(clearInvalid);
   if (generationInProgress) return;
   const kind = $('input[name="kind"]:checked').value;
-  if (kind === "sparse_decoy" && !$("#sparse-destination").value.trim()) {
+  const sparseMode = kind === "sparse_decoy" ? $("#sparse-output-mode").value : "direct";
+  if (kind === "sparse_decoy" && sparseMode === "direct" && !$("#sparse-destination").value.trim()) {
     result.textContent = t("sparse_destination_required");
     markInvalid($("#sparse-destination"));
     $("#sparse-destination").focus();
@@ -2576,7 +2619,8 @@ form.addEventListener("submit", async event => {
       directory_maze: () => ({scenario: $("#maze-scenario").value, ...($("#maze-scenario").value === "passwords" && $("#maze-format").value !== "env" ? vaultDomainSettings() : {}), title: $("#directory-title").value, depth: Number($("#maze-depth").value), branches: Number($("#maze-branches").value), files_per_directory: Number($("#maze-files").value), cross_links: $("#maze-cross-links").checked, canary_urls: $("#maze-url").value.split(/\r?\n/).filter(value => value.trim()), format: $("#maze-format").value}),
       encoding_maze: () => ({scenario: $("#encoding-scenario").value, ...($("#encoding-scenario").value === "passwords" && $("#encoding-format").value !== "env" ? vaultDomainSettings() : {}), format: $("#encoding-format").value, layers: Number($("#encoding-layers").value), candidates: Number($("#encoding-candidates").value), canary_urls: $("#encoding-url").value.split(/\r?\n/).filter(value => value.trim()), codecs: [...document.querySelectorAll("#encoding-codecs input:checked")].map(input => input.value)}),
     }[kind]();
-    requestBody = JSON.stringify({kind, settings, ...(kind === "sparse_decoy" ? {destination: $("#sparse-destination").value.trim()} : {})});
+    requestBody = JSON.stringify({kind, settings, ...(kind === "sparse_decoy" ? {sparse_mode: sparseMode,
+      ...(sparseMode === "direct" ? {destination: $("#sparse-destination").value.trim()} : {})} : {})});
     if (new Blob([requestBody]).size > MAX_GENERATION_REQUEST_BYTES) {
       result.textContent = t("request_too_large");
       result.focus();
@@ -2615,10 +2659,10 @@ form.addEventListener("submit", async event => {
     }
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || t("failed"));
-    if (kind === "sparse_decoy" && (typeof data.savedPath !== "string" || !data.savedPath)) {
+    if (kind === "sparse_decoy" && sparseMode === "direct" && (typeof data.savedPath !== "string" || !data.savedPath)) {
       throw new Error(t("sparse_backend_restart"));
     }
-    if (generationRevision !== settingsRevision && !data.savedPath) {
+    if (generationRevision !== settingsRevision && !(kind === "sparse_decoy" && sparseMode === "direct" && data.savedPath)) {
       clearDownloads();
       result.textContent = t("generation_settings_changed");
       return;

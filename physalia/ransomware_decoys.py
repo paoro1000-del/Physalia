@@ -23,6 +23,68 @@ SPARSE_SIZE_VARIATION_PER_MILLE = 5  # +/-0.5% around the selected nominal size
 LOGGER = logging.getLogger("physalia")
 
 
+def _tar_number(value, width):
+    """Encode a nonnegative ustar octal field."""
+    encoded = f"{value:0{width - 1}o}".encode("ascii") + b"\0"
+    if len(encoded) > width:
+        raise ValueError("TAR numeric field is too large")
+    return encoded.rjust(width, b"0")
+
+
+def _tar_header(name, size, typeflag):
+    encoded_name = name.encode("utf-8")
+    if len(encoded_name) > 100:
+        raise ValueError("TAR member name is too long")
+    block = bytearray(512)
+    block[0:len(encoded_name)] = encoded_name
+    block[100:108] = _tar_number(0o644, 8)
+    block[108:116] = _tar_number(0, 8)
+    block[116:124] = _tar_number(0, 8)
+    block[124:136] = _tar_number(size, 12)
+    block[136:148] = _tar_number(int(time.time()), 12)
+    block[148:156] = b"        "
+    block[156:157] = typeflag
+    block[257:263] = b"ustar\0"
+    block[263:265] = b"00"
+    checksum = sum(block)
+    block[148:156] = f"{checksum:06o}\0 ".encode("ascii")
+    return bytes(block)
+
+
+def _pax_record(key, value):
+    body = f" {key}={value}\n".encode("utf-8")
+    length = len(body) + 1
+    while True:
+        encoded = str(length).encode("ascii") + body
+        if len(encoded) == length:
+            return encoded
+        length = len(encoded)
+
+
+def create_sparse_tar(filename, logical_size, prefix):
+    """Write an uncompressed PAX 1.0 sparse TAR containing one sparse member."""
+    if (not isinstance(filename, str) or not filename or "/" in filename or "\\" in filename
+            or filename in (".", "..") or logical_size < len(prefix)):
+        raise ValueError("Invalid sparse TAR member")
+    sparse_map = f"1\n0\n{len(prefix)}\n".encode("ascii")
+    map_area = sparse_map + b"\0" * (-len(sparse_map) % 512)
+    payload = map_area + prefix + b"\0" * (-len(prefix) % 512)
+    pax = b"".join((
+        _pax_record("GNU.sparse.major", "1"),
+        _pax_record("GNU.sparse.minor", "0"),
+        _pax_record("GNU.sparse.name", filename),
+        _pax_record("GNU.sparse.realsize", str(logical_size)),
+    ))
+    header_name = "PaxHeaders.0/sparse"
+    member_name = "GNUSparseFile.0/" + filename
+    return b"".join((
+        _tar_header(header_name, len(pax), b"x"), pax,
+        b"\0" * (-len(pax) % 512),
+        _tar_header(member_name, len(payload), b"0"), payload,
+        b"\0" * 1024,
+    ))
+
+
 def _probe_posix_sparse_support(directory):
     """Check hole allocation on the destination filesystem before creating the requested file.
 

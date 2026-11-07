@@ -24,7 +24,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path, PurePosixPath
 
 from physalia.generators import GENERATORS, generate
-from physalia.ransomware_decoys import create_sparse_file
+from physalia.ransomware_decoys import create_sparse_file, create_sparse_tar
 from physalia.i18n import translate
 from physalia.database import public_templates
 from physalia.app_logging import configure_logging
@@ -268,6 +268,47 @@ class LocalThreadingHTTPServer(ThreadingHTTPServer):
         finally:
             self.worker_slots.release()
             LOGGER.debug("http_worker_slot_released")
+
+
+def default_sparse_destination():
+    """Return the existing per-user Downloads folder, falling back to home."""
+    try:
+        home = Path.home().resolve(strict=True)
+    except (OSError, RuntimeError):
+        return ""
+    downloads = home / "Downloads"
+    if os.name == "nt":
+        # Resolve the Windows known folder so localized or redirected Downloads
+        # locations are honored instead of assuming USERPROFILE\Downloads.
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            class GUID(ctypes.Structure):
+                _fields_ = [("Data1", wintypes.DWORD), ("Data2", wintypes.WORD),
+                            ("Data3", wintypes.WORD), ("Data4", ctypes.c_ubyte * 8)]
+
+            downloads_id = GUID(0x374DE290, 0x123F, 0x4565,
+                                (ctypes.c_ubyte * 8)(0x91, 0x64, 0x39, 0xC4, 0x92, 0x5E, 0x46, 0x7B))
+            known_path = wintypes.LPWSTR()
+            shell32 = ctypes.WinDLL("shell32", use_last_error=True)
+            get_known_folder = shell32.SHGetKnownFolderPath
+            get_known_folder.argtypes = [ctypes.POINTER(GUID), wintypes.DWORD, wintypes.HANDLE,
+                                         ctypes.POINTER(wintypes.LPWSTR)]
+            get_known_folder.restype = ctypes.c_long
+            if get_known_folder(ctypes.byref(downloads_id), 0, None, ctypes.byref(known_path)) == 0:
+                try:
+                    downloads = Path(known_path.value)
+                finally:
+                    ctypes.WinDLL("ole32").CoTaskMemFree(ctypes.cast(known_path, ctypes.c_void_p))
+        except (AttributeError, OSError, TypeError, ValueError):
+            pass
+    try:
+        if downloads.is_dir():
+            return str(downloads.resolve(strict=True))
+        return str(home)
+    except OSError:
+        return str(home)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -521,6 +562,11 @@ class Handler(BaseHTTPRequestHandler):
             with self.server.canary_lock:
                 events = [dict(event) for event in reversed(self.server.canary_events)]
             return self._json(200, {"events": events})
+        if self.path == "/api/defaults":
+            session_token = self._single_header("X-ADG-Token") or ""
+            if not session_token.isascii() or not secrets.compare_digest(session_token, SESSION_TOKEN):
+                return self._json(403, {"error": translate("forbidden", language)})
+            return self._json(200, {"sparse_destination": default_sparse_destination()})
         if self.path == "/api/database-templates":
             return self._json(200, {"templates": public_templates(language)})
         if self.path == "/license":
@@ -826,6 +872,23 @@ class Handler(BaseHTTPRequestHandler):
                     return {"name": item.name, "mime": item.mime, "role": item.role,
                             "content": base64.b64encode(item.content).decode("ascii")}
                 if asset.summary.get("kind") == "sparse_decoy":
+                    sparse_mode = data.get("sparse_mode", "direct")
+                    if sparse_mode not in ("direct", "tar"):
+                        raise ValueError("Invalid sparse output mode")
+                    if sparse_mode == "tar":
+                        archive = create_sparse_tar(asset.name, asset.summary["size_bytes"], asset.content)
+                        response = {"name": asset.name + ".tar", "mime": "application/x-tar",
+                                    "role": "deployment", "content": base64.b64encode(archive).decode("ascii"),
+                                    "companions": [encode(item) for item in asset.companions],
+                                    "summary": {**asset.summary, "deployment_format": "pax_sparse_1.0"}}
+                        LOGGER.info("sparse_tar_created logical_bytes=%d archive_bytes=%d format=pax_sparse_1.0",
+                                    asset.summary["size_bytes"], len(archive))
+                        self._json(200, response)
+                        LOGGER.info("generation_response_complete id=%s kind=%s primary_memory_bytes=%d logical_gib=%s companions=%d elapsed_ms=%d",
+                                    self.request_id, asset.summary.get("kind", "unknown"), len(archive),
+                                    asset.summary.get("size_gib", "not_applicable"), len(asset.companions),
+                                    max(0, round((time.monotonic() - started) * 1000)))
+                        return
                     destination = data.get("destination")
                     if (not isinstance(destination, str) or not destination.strip()
                             or len(destination) > 4096 or any(ord(c) < 32 for c in destination)):
