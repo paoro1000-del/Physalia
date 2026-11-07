@@ -5,12 +5,16 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import logging
 import secrets
+import time
 import zipfile
 
 from physalia.archive_metadata import write_archive_member
 from physalia.nesting import Artifact
 from physalia.validation import integer
+
+LOGGER = logging.getLogger("physalia")
 
 
 def _tripwire_files(language: str, count: int) -> list[tuple[str, bytes]]:
@@ -184,8 +188,10 @@ if __name__ == "__main__":
 
 
 def generate_ransomware_tripwire(settings: dict, language: str = "ja") -> Artifact:
+    started = time.monotonic()
     language = language if language in ("ja", "en") else "ja"
     count = integer(settings.get("files", 6), "files", 4, 8, language)
+    LOGGER.debug("tripwire_generation_started requested_files=%d language=%s", count, language)
     files = _tripwire_files(language, count)
     output = io.BytesIO()
     hashes = {}
@@ -199,4 +205,8 @@ def generate_ransomware_tripwire(settings: dict, language: str = "ja") -> Artifa
                "monitor": monitor_name, "detection": "content_change_delete_replace"}
     monitor = Artifact(monitor_name, "text/x-python; charset=utf-8",
                        _monitor_script(hashes, language), role="operator")
-    return Artifact(deployment_name, "application/zip", output.getvalue(), [monitor], summary=summary)
+    deployment = output.getvalue()
+    LOGGER.info("tripwire_generation_complete files=%d deployment_bytes=%d monitor_bytes=%d elapsed_ms=%d",
+                len(files), len(deployment), len(monitor.content),
+                max(0, round((time.monotonic() - started) * 1000)))
+    return Artifact(deployment_name, "application/zip", deployment, [monitor], summary=summary)

@@ -23,7 +23,8 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path, PurePosixPath
 
-from physalia.generators import generate
+from physalia.generators import GENERATORS, generate
+from physalia.ransomware_decoys import create_sparse_file
 from physalia.i18n import translate
 from physalia.database import public_templates
 from physalia.app_logging import configure_logging
@@ -251,9 +252,11 @@ class LocalThreadingHTTPServer(ThreadingHTTPServer):
 
     def process_request(self, request, client_address):
         if not self.worker_slots.acquire(blocking=False):
+            LOGGER.warning("http_worker_rejected reason=capacity_limit active_limit=%d", MAX_HTTP_WORKERS)
             request.close()
             return
         try:
+            LOGGER.debug("http_worker_slot_acquired")
             super().process_request(request, client_address)
         except Exception:
             self.worker_slots.release()
@@ -264,6 +267,7 @@ class LocalThreadingHTTPServer(ThreadingHTTPServer):
             super().process_request_thread(request, client_address)
         finally:
             self.worker_slots.release()
+            LOGGER.debug("http_worker_slot_released")
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -271,7 +275,8 @@ class Handler(BaseHTTPRequestHandler):
     sys_version = ""
 
     def _log_entry(self, handler_name):
-        LOGGER.info("handler_enter handler=%s", handler_name)
+        self.request_id = secrets.token_hex(4)
+        LOGGER.info("request_started id=%s handler=%s", self.request_id, handler_name)
         path = self.path.partition("?")[0]
         if re.fullmatch(r"/canary/[A-Za-z0-9_-]{32,64}", path):
             route = "canary_contact"
@@ -283,7 +288,8 @@ class Handler(BaseHTTPRequestHandler):
             route = "static_content"
         else:
             route = "other"
-        LOGGER.debug("http_request method=%s route=%s", self.command, route)
+        LOGGER.debug("request_classified id=%s method=%s route=%s", self.request_id,
+                     self.command, route)
 
     def __getattr__(self, name):
         # Record custom HTTP methods on the canary path as contacts too.
@@ -304,6 +310,8 @@ class Handler(BaseHTTPRequestHandler):
         try:
             super().handle()
         except (OSError, socket.timeout):
+            LOGGER.debug("request_connection_ended id=%s reason=transport_error",
+                         getattr(self, "request_id", "unclassified"), exc_info=True)
             self.close_connection = True
         finally:
             self._header_deadline_timer.cancel()
@@ -356,16 +364,23 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("Connection", "close")
         self.end_headers()
         self.wfile.write(body)
+        LOGGER.debug("response_sent id=%s status=%d mime=%s bytes=%d",
+                     getattr(self, "request_id", "unclassified"), status, mime, len(body))
 
     def _json(self, status: int, payload: dict):
-        self._headers(status, "application/json; charset=utf-8",
-                      json.dumps(payload, ensure_ascii=False, allow_nan=False).encode("utf-8"))
+        body = json.dumps(payload, ensure_ascii=False, allow_nan=False).encode("utf-8")
+        LOGGER.debug("json_response id=%s status=%d bytes=%d error=%s",
+                     getattr(self, "request_id", "unclassified"), status, len(body),
+                     isinstance(payload.get("error"), str))
+        self._headers(status, "application/json; charset=utf-8", body)
 
     def _single_header(self, name):
         values = self.headers.get_all(name, [])
         return values[0] if len(values) == 1 else None
 
     def _read_body(self, size):
+        LOGGER.debug("request_body_read_started id=%s expected_bytes=%d",
+                     getattr(self, "request_id", "unclassified"), size)
         deadline = time.monotonic() + REQUEST_BODY_TIMEOUT_SECONDS
         body = bytearray()
         while len(body) < size:
@@ -378,6 +393,8 @@ class Handler(BaseHTTPRequestHandler):
                 break
             body.extend(chunk)
         self.connection.settimeout(REQUEST_TIMEOUT_SECONDS)
+        LOGGER.debug("request_body_read_finished id=%s received_bytes=%d",
+                     getattr(self, "request_id", "unclassified"), len(body))
         return body
 
     @staticmethod
@@ -469,13 +486,17 @@ class Handler(BaseHTTPRequestHandler):
         self._log_entry("do_GET")
         language = self._language()
         if not self._valid_host():
+            LOGGER.warning("request_rejected id=%s reason=invalid_host_header", self.request_id)
             return self._json(403, {"error": translate("forbidden_host", language)})
         token_match = re.fullmatch(r"/canary/([A-Za-z0-9_-]{32,64})", self.path.partition("?")[0])
         if token_match:
             recorded = self._record_canary_contact(token_match.group(1), "GET")
             if recorded is None:
+                LOGGER.info("canary_contact_rejected id=%s reason=unknown_token", self.request_id)
                 return self._json(404, {"error": translate("not_found", language)})
             event, nonce, location_nonce = recorded
+            LOGGER.info("canary_contact_recorded request_id=%s event_id=%d method=GET",
+                        self.request_id, event["event_id"])
             title = "ローカルカナリアへの接触を記録しました" if language == "ja" else "Local canary contact recorded"
             notice = ("このページはセキュリティ調査のため、ブラウザーが提供する環境情報と、許可された場合の位置情報を記録します。" if language == "ja"
                       else "For security investigation, this page records browser-provided environment information and, if permitted, your location.")
@@ -531,7 +552,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._headers(200, "application/zip", integration_bundle())
         if self.path == "/canary-homepage-kit.zip":
             return self._headers(200, "application/zip", canary_homepage_bundle())
-        image_match = re.fullmatch(r"/images/(00-0001_Main\.jpg|01-000[1-9]_[a-z0-9_]+_(?:ja|en)\.jpg|01-001[1-3]_[a-z0-9_]+_(?:ja|en)\.jpg)", self.path)
+        image_match = re.fullmatch(r"/images/(00-0001_Main\.jpg|01-000[1-9]_[a-z0-9_]+_(?:ja|en)\.jpg|01-001[0-3]_[a-z0-9_]+_(?:ja|en)\.jpg)", self.path)
         if image_match:
             image_path = STATIC.parent / "images" / image_match.group(1)
             if image_path.is_file():
@@ -751,6 +772,8 @@ class Handler(BaseHTTPRequestHandler):
         token_valid = session_token.isascii() and secrets.compare_digest(session_token, SESSION_TOKEN)
         if (not self._valid_host() or self._single_header("Origin") != origin
                 or not token_valid):
+            LOGGER.warning("generation_request_rejected id=%s reason=origin_or_session_validation",
+                           getattr(self, "request_id", "unclassified"))
             return self._json(403, {"error": translate("forbidden", language)})
         if self.path != "/api/generate":
             return self._json(404, {"error": translate("not_found", language)})
@@ -781,40 +804,86 @@ class Handler(BaseHTTPRequestHandler):
                               parse_float=lambda value: _parse_finite_json_float(value, language))
             if not isinstance(data, dict):
                 raise ValueError(translate("invalid_input", language))
+            kind = data.get("kind")
+            settings = data.get("settings")
+            LOGGER.debug("generation_payload_parsed id=%s kind=%s setting_count=%d has_destination=%s",
+                         self.request_id, kind if isinstance(kind, str) and kind in GENERATORS else "invalid",
+                         len(settings) if isinstance(settings, dict) else -1,
+                         isinstance(data.get("destination"), str))
             if not self._local_canaries_authorized(data.get("settings")):
+                LOGGER.warning("generation_request_rejected id=%s reason=unregistered_local_canary",
+                               self.request_id)
                 raise ValueError(translate("invalid_url", language))
             if not GENERATION_SLOT.acquire(blocking=False):
+                LOGGER.warning("generation_request_rejected id=%s reason=generation_slot_busy", self.request_id)
                 return self._json(429, {"error": translate("generation_in_progress", language)})
             try:
+                started = time.monotonic()
+                LOGGER.info("generation_started id=%s kind=%s", self.request_id,
+                            kind if isinstance(kind, str) and kind in GENERATORS else "invalid")
                 asset = generate(data.get("kind"), data.get("settings"), language)
                 def encode(item):
                     return {"name": item.name, "mime": item.mime, "role": item.role,
                             "content": base64.b64encode(item.content).decode("ascii")}
-                response = {**encode(asset),
-                            "companions": [encode(item) for item in asset.companions],
-                            "summary": asset.summary}
+                if asset.summary.get("kind") == "sparse_decoy":
+                    destination = data.get("destination")
+                    if (not isinstance(destination, str) or not destination.strip()
+                            or len(destination) > 4096 or any(ord(c) < 32 for c in destination)):
+                        raise ValueError("Specify an existing absolute destination directory" if language == "en"
+                                         else "\u5b58\u5728\u3059\u308b\u4fdd\u5b58\u5148\u30d5\u30a9\u30eb\u30c0\u30fc\u3092\u7d76\u5bfe\u30d1\u30b9\u3067\u6307\u5b9a\u3057\u3066\u304f\u3060\u3055\u3044\u3002")
+                    try:
+                        saved_path = create_sparse_file(destination.strip(), asset.name,
+                                                        asset.summary["size_gib"] * 1024 ** 3, asset.content)
+                    except (OSError, ValueError) as exc:
+                        LOGGER.info("sparse_creation_failed error_type=%s", type(exc).__name__)
+                        raise ValueError("Could not create a sparse file. Check the destination, permissions, and filesystem support; existing files are not overwritten." if language == "en" else "\u30b9\u30d1\u30fc\u30b9\u30d5\u30a1\u30a4\u30eb\u3092\u4f5c\u6210\u3067\u304d\u307e\u305b\u3093\u3002\u4fdd\u5b58\u5148\u3001\u66f8\u304d\u8fbc\u307f\u6a29\u9650\u3001\u5bfe\u5fdc\u30d5\u30a1\u30a4\u30eb\u30b7\u30b9\u30c6\u30e0\u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\u3002\u65e2\u5b58\u30d5\u30a1\u30a4\u30eb\u306f\u4e0a\u66f8\u304d\u3057\u307e\u305b\u3093\u3002") from exc
+                    LOGGER.info("sparse_created logical_gib=%d extension=%s",
+                                asset.summary["size_gib"], asset.summary["extension"])
+                    response = {"name": asset.name, "mime": asset.mime, "role": asset.role,
+                                "savedPath": saved_path,
+                                "companions": [encode(item) for item in asset.companions],
+                                "summary": asset.summary}
+                else:
+                    response = {**encode(asset),
+                                "companions": [encode(item) for item in asset.companions],
+                                "summary": asset.summary}
                 # Keep the generation slot until the encoded response is sent;
                 # otherwise another large artifact can multiply peak memory.
                 self._json(200, response)
+                LOGGER.info("generation_response_complete id=%s kind=%s primary_memory_bytes=%d logical_gib=%s companions=%d elapsed_ms=%d",
+                            self.request_id, asset.summary.get("kind", "unknown"), len(asset.content),
+                            asset.summary.get("size_gib", "not_applicable"),
+                            len(asset.companions), max(0, round((time.monotonic() - started) * 1000)))
             finally:
                 GENERATION_SLOT.release()
+                LOGGER.debug("generation_slot_released id=%s", self.request_id)
         except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
             # The client may close while a large artifact response is being
             # written. Do not attempt to send a second error response.
             self.close_connection = True
+            LOGGER.info("generation_response_interrupted id=%s reason=client_disconnected",
+                        getattr(self, "request_id", "unclassified"))
         except (UnicodeDecodeError, json.JSONDecodeError, RecursionError):
+            LOGGER.warning("generation_request_rejected id=%s reason=invalid_json",
+                           getattr(self, "request_id", "unclassified"))
             self._json(400, {"error": translate("invalid_input", language)})
         except TimeoutError:
+            LOGGER.warning("generation_request_rejected id=%s reason=request_timeout",
+                           getattr(self, "request_id", "unclassified"))
             self._json(408, {"error": translate("request_timeout", language)})
         except ValueError as exc:
-            LOGGER.info("generation_rejected error=%s",
-                        " ".join(str(exc).splitlines())[:300])
+            LOGGER.warning("generation_rejected id=%s error_type=%s",
+                           getattr(self, "request_id", "unclassified"), type(exc).__name__)
+            LOGGER.debug("generation_rejection_detail id=%s",
+                         getattr(self, "request_id", "unclassified"))
             self._json(400, {"error": str(exc)})
         except Exception:
             error_type = sys.exc_info()[0]
-            LOGGER.error("generation_failed error_type=%s",
+            LOGGER.error("generation_failed id=%s error_type=%s",
+                         getattr(self, "request_id", "unclassified"),
                          error_type.__name__ if error_type else "UnknownError")
-            LOGGER.debug("generation_failure_traceback", exc_info=True)
+            LOGGER.debug("generation_failure_traceback id=%s",
+                         getattr(self, "request_id", "unclassified"), exc_info=True)
             self._json(500, {"error": translate("generation_failed", language)})
 def main():
     language_parser = argparse.ArgumentParser(add_help=False)

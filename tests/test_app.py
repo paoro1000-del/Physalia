@@ -103,15 +103,15 @@ class GeneratorTests(unittest.TestCase):
         url = "https://canary.example.invalid:8443/token?ref=example"
         self.assertIn(url.encode(), generate("web", {"canary_url": url}).content)
 
-    def test_html_escapes_title_and_rejects_unsafe_url(self):
-        _, _, content = generate("web", {"title": '<script>alert(1)</script>', "canary_url": ""})
-        self.assertNotIn("<script>", content.decode())
+    def test_web_rejects_retired_title_and_unsafe_url(self):
         with self.assertRaises(ValueError):
-            generate("web", {"title": "x", "canary_url": "javascript:alert(1)"})
+            generate("web", {"title": '<script>alert(1)</script>', "canary_url": ""})
+        with self.assertRaises(ValueError):
+            generate("web", {"canary_url": "javascript:alert(1)"})
 
     def test_generated_web_uses_selected_language(self):
         for language, expected in (("ja", "アーカイブの一覧"), ("en", "Archive list")):
-            _, _, content = generate("web", {"scenario": "archive", "title": "Portal", "canary_url": ""}, language)
+            _, _, content = generate("web", {"scenario": "archive", "canary_url": ""}, language)
             page = content.decode("utf-8")
             self.assertIn('<html lang="' + language + '">', page)
             self.assertIn("最近のファイル" if language == "ja" else "Archive index", page)

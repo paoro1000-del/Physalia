@@ -27,8 +27,8 @@ Each recorded header and string is limited to 512 characters. Authorization head
 - **Canary files:** choose a format such as HTML, PDF, TXT, JSON, CSV, Excel, PowerPoint, SQLite or `.env` and select a context. Download names use a method-specific `Physalia_*` pattern; document titles are also chosen automatically. Documents contain 25 fictional records. `.env` does not use a count. The result shows the placement: field and record number for record formats, or the setting key for `.env`. For composite artifacts, review the placement examples and operator inventory.
 - **Ransomware Decoy Flood:** creates 4–8 synthetic files and a separate operator-only script that replenishes changed or deleted decoys. The host needs Python 3.11 or later. Replenishment is unlimited by default. It does not stop encryption or restore data.
 - **Path Maze:** creates a finite ZIP of ordinary folders with synthetic files. Processing decoys adds work; parallel encryption may reach real files first.
-- **Sparse Decoy:** generates a script that creates synthetic files with a large logical size at the destination. Copies, backups and synchronization may consume the full logical size and substantial time.
-- **Static decoy portal:** set the context and title. The deployment ZIP contains HTML and fictional documents, with no login feature.
+- **Sparse Decoy:** The app creates a sparse file directly in the specified folder. Actual allocation is usually small. A supporting filesystem is required; creation stops if sparse allocation is unavailable. Copies, sync, backups or encrypted output may use the full logical size. The extension is for appearance only; the content does not match that format.
+- **Static decoy portal:** each purpose changes the palette, layout, information panel and page content. A supplied canary URL is placed in a file-list entry, a purpose-specific sidebar link and an information-panel link. Clicking may create a contact; opening the page alone does not. The deployment ZIP contains HTML and fictional documents, with no login feature.
 - **Decoy database:** create a fictional B2C customer table with the default name `customers`. Choose 1,000, 10,000 or 100,000 rows. Postal code, prefecture and city are selected as matching real localities; street numbers are generated randomly. Older registration dates have a higher chance of a sparse soft-delete flag. It never connects to an existing database and contains no canary URL.
 - **Encrypted Deep Nest, Directory Maze and Encoding Maze:** review the explanation and estimates, then adjust size, depth and counts. Keep operator-only files separate from deployment artifacts.
 - **Explanation-only methods:** these explain a technique but do not generate a sample or change production.
@@ -43,9 +43,9 @@ Extract ZIPs to inspect their contents. For the Static Decoy Portal or Directory
 
 Extract the Path Maze ZIP at the destination. Keep the separate operator-only JSON inventory to identify and remove its files. It contains ordinary folders and synthetic files, with no links or background service. Searches and backups can encounter the extra files.
 
-The Sparse Decoy ZIP contains a creation script and README. Extract it, then run `py -3 create_sparse_decoy.py <existing-destination>` on Windows or `python3 create_sparse_decoy.py <existing-destination>` on macOS/Linux with Python 3.11 or later. Generation does not run the script. The created names and logical sizes appear on stdout and in the separate operator JSON. Existing files are never overwritten, and creation stops when sparse allocation is unavailable.
+For Sparse Decoy, enter the absolute path of an existing folder on the computer running the app, then select a logical size (1–32 GiB) and extension. Generation creates one sparse file there without overwriting existing files. The app stops if the filesystem does not support sparse allocation. Save the separate operator-only file list. The extension is for appearance only; the content does not match that format. Copies, synchronization, backups and encrypted output may use the full logical size.
 
-Each file has a logical size of 1–32 GiB. Initial physical allocation is small, but copying, backup, synchronization or encrypted output can consume the logical size. Review available space and consider excluding decoys from normal backups. Partial encryption, size exclusions and parallel execution may reduce the delay.
+Partial encryption, size exclusions and parallel execution may reduce the delay.
 
 ### Using Ransomware Decoy Flood
 

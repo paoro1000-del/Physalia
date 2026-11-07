@@ -2,10 +2,14 @@
 from datetime import datetime, timedelta, timezone
 import hashlib
 import json
+import logging
+import time
 
 from physalia.nesting import Artifact
 from physalia.i18n import translate
 from physalia.validation import is_reserved_example_url
+
+LOGGER = logging.getLogger("physalia")
 
 
 def _physalia_download_name(name):
@@ -20,6 +24,9 @@ def _physalia_download_name(name):
 
 
 def attach_inventory(asset, kind, settings, language):
+    started = time.monotonic()
+    LOGGER.debug("inventory_attachment_started kind=%s companion_count=%d",
+                 kind, len(asset.companions))
     # Make generated downloads easy to find while retaining plausible names
     # inside the decoy content and deployment archives.
     renamed = {asset.name: _physalia_download_name(asset.name)}
@@ -34,6 +41,25 @@ def attach_inventory(asset, kind, settings, language):
                                               and artifact_name.startswith(old_name + "!/")):
                 location["artifact"] = new_name + artifact_name[len(old_name):]
                 break
+
+    if kind == "sparse_decoy":
+        # Only the prefix is held in memory; hashing it as the complete file
+        # would produce an invalid deployment inventory. Keep the filename and
+        # logical size in the dedicated operator-only companion instead.
+        asset.summary["filename"] = asset.name
+        for companion in asset.companions:
+            if companion.name == "Physalia_sparse_decoy.operator.json":
+                details = json.loads(companion.content.decode("utf-8"))
+                details["files"] = [asset.name]
+                companion.content = json.dumps(details, ensure_ascii=False, indent=2).encode("utf-8")
+        asset.summary.update({"has_monitoring_url": False, "canary_url_configured": False,
+                              "canary_placements": 0, "canary_urls_supplied": 0,
+                              "canary_urls_used": 0, "canary_urls_unused": 0,
+                              "reserved_canary_host": False})
+        LOGGER.info("inventory_attachment_complete kind=%s mode=sparse companion_count=%d elapsed_ms=%d",
+                    kind, len(asset.companions),
+                    max(0, round((time.monotonic() - started) * 1000)))
+        return asset
 
     if kind == "nest":
         # The sample needs only a private password list for authorized testing.
@@ -120,4 +146,7 @@ def attach_inventory(asset, kind, settings, language):
     asset.summary["canary_urls_unused"] = unused_urls
     asset.summary["has_monitoring_url"] = placements > 0
     asset.summary["reserved_canary_host"] = any(is_reserved_example_url(value) for value in active_urls)
+    LOGGER.info("inventory_attachment_complete kind=%s canary_configured=%s placements=%d companion_count=%d elapsed_ms=%d",
+                kind, configured, placements, len(asset.companions),
+                max(0, round((time.monotonic() - started) * 1000)))
     return asset

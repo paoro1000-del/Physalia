@@ -63,7 +63,7 @@ for (const root of [document, $("#column-template").content]) {
 const translations = {
   ja: {...japanese, intro: "手法を選び、仕組みや対象となる攻撃を確認してから生成します。", notice: "\u521d\u671f\u8a2d\u5b9a\u306e\u307e\u307e\u30b5\u30f3\u30d7\u30eb\u3092\u4f5c\u6210\u3067\u304d\u307e\u3059\u3002\u751f\u6210\u30c7\u30fc\u30bf\u306f\u67b6\u7a7a\u3067\u3001\u4f7f\u3048\u308b\u8a8d\u8a3c\u60c5\u5831\u306f\u542b\u307f\u307e\u305b\u3093\u3002\u30d5\u30a1\u30a4\u30eb\u306f\u81ea\u52d5\u914d\u7f6e\u3055\u308c\u307e\u305b\u3093\u3002\u4e0a\u90e8\u3068\u8a73\u7d30\u8a2d\u5b9a\u306eURL\u6b04\u304c\u3069\u3061\u3089\u3082\u7a7a\u306a\u3089\u901a\u77e5\u306f\u767a\u751f\u3057\u307e\u305b\u3093\u3002", database_template: "用途別テンプレート", database_help: "\u9867\u5ba2\u30fb\u30ab\u30fc\u30c9\u53f0\u5e33\u30fb\u4f1a\u793e\u30fb\u30d1\u30b9\u30ef\u30fc\u30c9\u4fdd\u7ba1\u30fb\u6ce8\u6587\u30fb\u8acb\u6c42\u30fb\u30e6\u30fc\u30b6\u30fc\u7ba1\u7406\u30fbAPI\u8a8d\u8a3c\u60c5\u5831\u30fb\u5f93\u696d\u54e1\u30fb\u53d6\u5f15\u5148\u30fb\u30b5\u30dd\u30fc\u30c8\u30fb\u8cc7\u7523\u30fb\u30af\u30e9\u30a6\u30c9\u306e\u96db\u5f62\u304c\u3042\u308a\u307e\u3059\u3002\u9805\u76ee\u306f\u6700\u592730\u500b\u307e\u3067\u7de8\u96c6\u3067\u304d\u307e\u3059\u3002\u5408\u6210\u306e\u8a8d\u8a3c\u60c5\u5831\u898b\u672c\u306f\u5b9f\u30b5\u30fc\u30d3\u30b9\u3067\u4f7f\u3048\u307e\u305b\u3093\u3002\u5b9f\u5728\u306e\u500b\u4eba\u60c5\u5831\u3084\u5b9f\u63a5\u7d9a\u5148\u306f\u4f7f\u308f\u306a\u3044\u3067\u304f\u3060\u3055\u3044\u3002\u30e1\u30fc\u30eb\u30fb\u30c9\u30e1\u30a4\u30f3\u578b\u306fexample.invalid\u3092\u4f7f\u3044\u307e\u3059\u3002", template_loading: "読込中…", template_custom: "カスタム（項目を自由に編集）", context_title_auto: "選択した用途に合わせて自動設定", context_title_generic: "空欄時の既定タイトル：Operations archive", template_help: "テンプレート選択後に項目を編集できます。実在の個人情報や実接続先は使わないでください。", kind_phone: "\u5317\u7c73\u306e\u67b6\u7a7a\u4e88\u7d04\u96fb\u8a71\u756a\u53f7\uff08\u975e\u7a3c\u50cd\uff09", kind_domain: "example.invalid ドメイン", kind_card_reference: "無効カード参照値", kind_card_expiry: "カード期限", kind_test_postal: "テスト用郵便番号", kind_credential_preview: "\u8a8d\u8a3c\u306b\u4f7f\u3048\u306a\u3044\u5408\u6210\u8a8d\u8a3c\u60c5\u5831\u306e\u898b\u672c", kind_currency: "通貨", kind_documentation_ip: "文書用IPアドレス", method_explainer: "この手法を知る", explain_how: "どういう対策か", explain_target: "どの攻撃を想定するか", explain_limit: "できないこと・限界", generating: "\u751f\u6210\u3057\u3066\u3044\u307e\u3059\u3002\u5927\u304d\u306a\u30d5\u30a1\u30a4\u30eb\u306f\u5c11\u3057\u6642\u9593\u304c\u304b\u304b\u308b\u3053\u3068\u304c\u3042\u308a\u307e\u3059\u3002\u3053\u306e\u753b\u9762\u3092\u9589\u3058\u305a\u306b\u304a\u5f85\u3061\u304f\u3060\u3055\u3044\u3002", generated: "{name} を生成しました。", failed: "生成に失敗しました。",
     estimate: "暗号化ZIP {archives}個 / ダミーファイル {documents}個（上限40 ZIP・生成内容32MiB・暗号化ZIP累積64MiB）", over_limit: "分岐・階層を減らしてください。暗号化ZIPの上限は40個です。", number_input_invalid: "数値欄に、表示された範囲内の整数を入力してください。",
-    download_again: "生成ファイルを保存", operator_download: "運用情報を保存（配置しない）", nest_password_download: "ZIPパスワードを取得（サンプル検証用・配置しない）", inventory_download: "運用台帳を保存（生成ファイルと分けて保管）", summary: "生成結果：ZIP {archives}個 / デコイファイル {documents}個 / カナリア入り {canaries}個", nest_summary: "生成結果：ZIP {archives}個 / デコイファイル {documents}個", format_breakdown: "形式内訳",
+    download_again: "生成ファイルを保存", sparse_direct_download: "選択サイズのファイルを直接保存",  nest_password_download: "ZIPパスワードを取得（サンプル検証用・配置しない）", path_maze_inventory_download: "パス・メイズの配置一覧を保存（配置・撤去用）", sparse_inventory_download: "スパース・デコイの配置一覧を保存（配置先確認用）", directory_maze_inventory_download: "ディレクトリ・メイズの配置台帳を保存（運用者専用）", encoding_maze_inventory_download: "エンコーディング・メイズの復号台帳を保存（運用者専用）", stream_operator_download: "配信設定とトークンを保存（運用者専用）", summary: "生成結果：ZIP {archives}個 / デコイファイル {documents}個 / カナリア入り {canaries}個", nest_summary: "生成結果：ZIP {archives}個 / デコイファイル {documents}個", format_breakdown: "形式内訳",
     monitoring_not_placed: "カナリアページURLは今回の生成ファイルに入りませんでした。設定を確認して再生成してください。",
     monitoring_placeholder: "例示用URLは監視通知に使えません。運用時は監視サービスが発行したURLを指定してください。",
     schema_limit: "項目は1〜30個にしてください。", invalid_options: "数値範囲は最小,最大（例: 0,100000）で、最小値は最大値以下にしてください。整数項目では小数を使えません。"},
@@ -126,13 +126,13 @@ const translations = {
     column_name: "Column name", data_kind: "Data generator", data_options: "Candidate values / numeric range", remove_column: "Remove",
     kind_id: "Sequence (INTEGER)", kind_name: "Full name (TEXT)", kind_username: "Login name (TEXT)", kind_invoice_reference: "Invoice number (TEXT)", kind_order_reference: "Order number (TEXT)", kind_sale_reference: "Sales reference (TEXT)", kind_email: "Email (TEXT)", kind_company: "Company (TEXT)", kind_department: "Department (TEXT)",
     kind_integer: "Integer (INTEGER)", kind_decimal: "Decimal (REAL)", kind_date: "Date (TEXT)", kind_datetime: "Date and time (TEXT)", kind_status: "Status (TEXT)", kind_uuid: "UUID (TEXT)", kind_text: "Text (TEXT)",
-    web_desc: "Generate a static archive page.", page_title: "Page title",
-    web_help: "The results include an HTML preview and a deployment ZIP. The ZIP contains index.html and six fictional files. Without a monitoring URL, all six open from the page. With one, a list entry links to the monitor instead of opening its matching document; the other five open locally. Opening the page alone does not request the monitoring URL; its link must be clicked.",
+    web_desc: "Generate a purpose-specific static portal page.", page_title: "Page title",
+    web_help: "The HTML preview and deployment ZIP use a purpose-specific layout and content for operations, shared documents, archives or records. The ZIP contains index.html and six fictional files. If you provide a canary URL, it appears in a file-list entry, a purpose-specific sidebar link and a contextual action. Clicking any of them can contact the monitor; opening the page alone does not. The linked file-list entry leads to the monitor instead of its matching document; the other five open locally.",
     web_note: "This is static HTML. Login, configuration changes, access monitoring, and infinite streaming require a separate server.",
     generate: "Generate file",
     generating: "Generating. Larger files may take a little while. Keep this page open until generation finishes.", generated: "Generated {name}.", failed: "Generation failed.", generation_settings_changed: "Settings changed during generation, so the result was discarded. Generate again with the current settings.", number_input_invalid: "Enter a whole number within the range shown for the selected method.",
     estimate: "{archives} encrypted ZIPs / {documents} decoy files (limit: 40 ZIPs, 32 MiB of source content, and 64 MiB cumulative encrypted archives)", over_limit: "Reduce depth or branching. The limit is 40 encrypted ZIPs.",
-    download_again: "Save generated file", operator_download: "Save operator information (do not deploy)", nest_password_download: "Get ZIP passwords (sample verification only; do not deploy)", inventory_download: "Save operations inventory separately from generated files", summary: "Generated: {archives} ZIPs / {documents} decoy files / {canaries} with canary URLs", nest_summary: "Generated: {archives} ZIPs / {documents} decoy files", format_breakdown: "Formats",
+    download_again: "Save generated file", sparse_direct_download: "Download selected-size file directly",  nest_password_download: "Save ZIP passwords (sample verification only; do not deploy)", path_maze_inventory_download: "Save Path Maze map (for placement and removal)", sparse_inventory_download: "Save Sparse Decoy file list (operator-only)", directory_maze_inventory_download: "Save Directory Maze inventory (operator-only)", encoding_maze_inventory_download: "Save Encoding Maze decode map (operator-only)", stream_operator_download: "Save stream settings and tokens (operator-only)", summary: "Generated: {archives} ZIPs / {documents} decoy files / {canaries} with canary URLs", nest_summary: "Generated: {archives} ZIPs / {documents} decoy files", format_breakdown: "Formats",
     schema_limit: "Use 1–30 columns.", invalid_options: "Enter the numeric range as min,max (for example 0,100000), with minimum no greater than maximum. Integer fields do not accept decimals.",
   },
 };
@@ -144,7 +144,9 @@ Object.assign(translations.ja, {
   quick_db_failed_fallback: "プリセット一覧を読み込めません。既定の顧客DBは作成できます。他のプリセットは再読込後に選べます。",
   quick_db_failed_custom: "プリセット一覧を読み込めません。編集した項目はこのボタンか「ファイルを生成」から作成できます。他の用途別テンプレートは再読込後に選べます。",
   quick_db_customer_fallback_help: "既定の顧客テーブルを作成します。項目は詳細設定で確認・編集できます。",
-  quick_html_scenario_help: "一覧の見出しとファイル例を用途に合わせます。",
+  quick_html_scenario_help: "用途ごとに配色・構成・情報パネル・リンク位置を変えます。",
+  web_desc: "用途に合わせた静的ポータル画面を生成します。",
+  web_help: "HTMLプレビューと配置用ZIPは、運用・共有・アーカイブ・記録の用途ごとに配色、構成、内容が変わります。ZIPにはindex.htmlと架空文書6件が入ります。カナリアURLを設定すると、ファイル一覧の項目、用途別のサイドバーリンク、情報パネルの操作リンクに配置します。クリックすると監視先へ接続する場合がありますが、ページを開いただけでは接続しません。カナリアリンクになった一覧項目は対応する文書を開かず、残り5件はZIP内で開きます。",
   web_scenario_label: "サイトの用途",
   web_scenario_operations: "運用ポータル",
   web_scenario_shared: "共有ドキュメント",
@@ -157,7 +159,9 @@ Object.assign(translations.en, {
   quick_db_failed_fallback: "Could not load presets. You can still create the default customer database; retry to choose other presets.",
     quick_db_failed_custom: "Could not load presets. You can create the edited schema with this button or Generate file; retry to load the other templates.",
   quick_db_customer_fallback_help: "Creates the default customer table. Review or edit its fields in the detailed settings below.",
-  quick_html_scenario_help: "Matches the portal heading and sample files to this purpose.",
+  quick_html_scenario_help: "Changes the palette, layout, information panel and link placement for each purpose.",
+  web_desc: "Generate a purpose-specific static portal page.",
+  web_help: "The HTML preview and deployment ZIP use a purpose-specific layout and content for operations, shared documents, archives or records. The ZIP contains index.html and six fictional files. If you provide a canary URL, it appears in a file-list entry, a purpose-specific sidebar link and a contextual action. Clicking any of them can contact the monitor; opening the page alone does not. The linked file-list entry leads to the monitor instead of its matching document; the other five open locally.",
   quick_db_purpose: "No database server is needed. This creates one SQLite file with fictional data and never connects to or changes an existing database. It contains no payment card numbers or usable passwords. Phone fields use the reserved fictional +1-202-555-0100–0199 range, including in Japanese-language samples. Files are limited to 32 MiB; if generation exceeds the limit, reduce the row count. A supplied canary URL is included in the file.",
   web_scenario_label: "Portal purpose",
   web_scenario_operations: "Operations portal",
@@ -488,8 +492,13 @@ Object.assign(translations.ja, {fake_desc:"AIエージェントによるHTML解�
 Object.assign(translations.en, {fake_desc:"Generate one of eight polished business portal pages designed for review by AI agents and page crawlers.",fake_warning:"Sign-in review",fake_reported:"Review request received",fake_waiting:"Session review in progress",fake_maintenance:"Service maintenance",fake_device_review:"New device review",fake_access_request:"Access request review",fake_sync_status:"Account sync status",fake_policy_update:"Security settings updated",fake_embed_canary:"Contact the canary URL when the page opens",fake_canary_help:"Enter an HTTPS URL issued by your monitoring service. Opening the generated page sends a GET request; scanners may also trigger it. The URL is included in the generated file, so do not put that file in a public repository.",fake_note:"When configured, the page contacts the monitoring endpoint as soon as it loads. The service may log ordinary HTTP request data such as source IP and User-Agent. Mail scanners and previews may also create contacts. No external request is made without a URL. The page does not authenticate or request location. Low-level HTML inspection and automation that does not render the page are less affected."});
 translations.ja.fake_canary_default_note = "初期状態はOFFです。意図しない外部通信や監視先への接触を避け、明示的に有効化した場合だけ監視要求を含めます。";
 translations.en.fake_canary_default_note = "Off by default to avoid unintended external requests. The generated page includes a monitoring request only when you explicitly enable it.";
-Object.assign(translations.ja, {path_maze_title:"パス・メイズ", path_maze_card:"架空ファイルを通常のフォルダーに分散", path_maze_desc:"有限の通常フォルダーに架空ファイルを配置します。", path_depth:"階層の深さ（1〜4）", path_branches:"各フォルダーの分岐数（1〜3）", path_files:"各フォルダーのファイル数（1〜4）", path_note:"通常のフォルダーと架空ファイルを有限個作ります。リンクや常駐プログラムは使いません。攻撃がデコイを処理する場合に追加の仕事が生じます。並列処理や対象の絞り込みでは実ファイルが先に処理されることがあります。バックアップや検索にもファイルが増えます。", sparse_title:"スパース・デコイ", sparse_card:"見かけ上大きな架空ファイルを作成", sparse_desc:"配置先で見かけ上大きな架空ファイルを作るスクリプトを生成します。", sparse_size:"1ファイルの見かけのサイズ（GiB、1〜32）", sparse_files:"ファイル数（1〜4）", sparse_note:"生成ZIPには作成スクリプトと説明書が入り、配置先で手動実行するまで大きなファイルは作りません。Python 3.11以降と対応ファイルシステムが必要です。コピー・バックアップ・同期時には見かけのサイズ分の容量や時間を使う場合があり、ディスクを圧迫することがあります。暗号化結果の書き込みでも容量を消費します。部分暗号化やサイズによる除外では遅延が小さくなります。", path_generated:"{directories}フォルダーに架空ファイル{documents}件を作成しました。運用者用の配置一覧も保存してください。", sparse_generated:"見かけ上{size} GiBの架空ファイルを{count}件作るスクリプトをZIPに入れました。ZIPを展開し、説明書を読んでから配置先で手動実行してください。運用者用の一覧も保存してください。"});
-Object.assign(translations.en, {path_maze_title:"Path Maze", path_maze_card:"Distribute synthetic files across ordinary folders", path_maze_desc:"Create a six-level folder tree with cross-folder shortcuts and synthetic file listings.", path_depth:"Maximum depth (1–6)", path_branches:"Branches per folder (1–3)", path_files:"Synthetic files per folder (1–4)", path_note:"Every folder gets a browsable HTML index with child folders, local files and 1–3 shortcuts into other branches. At maximum settings this creates up to 1,093 folders, 4,372 synthetic files and 1,093 index pages. The archive has no scripts or external links. Keep the separate operator inventory to map and remove the tree. Searches and backups also include the added files; parallel or offline mapping can still enumerate the full structure.", sparse_title:"Sparse Decoy", sparse_card:"Create a synthetic file with a large logical size", sparse_desc:"Generate a script to create synthetic sparse files at the chosen destination.", sparse_size:"Logical size per file (GiB, 1–32)", sparse_files:"Number of files (1–4)", sparse_note:"The ZIP contains a creation script and instructions. Large files are created only when you run the script manually at the destination. Python 3.11+ and a supporting filesystem are required. Copying, backup or sync may consume the full logical size and time, filling storage; encrypted output can also consume space. Partial encryption or size-based exclusions can reduce delay.", path_generated:"Created {directories} folders, {documents} synthetic files, {index_pages} navigation pages and {shortcuts} cross-folder shortcuts. Save the separate operator inventory.", sparse_generated:"The ZIP contains a script to create {count} synthetic files of {size} GiB logical size each. Extract it, read the instructions and run it manually at the destination. Save the separate operator inventory."});
+Object.assign(translations.ja, {path_maze_title:"パス・メイズ", path_maze_card:"架空ファイルを通常のフォルダーに分散", path_maze_desc:"有限の通常フォルダーに架空ファイルを配置します。", path_depth:"階層の深さ（1〜4）", path_branches:"各フォルダーの分岐数（1〜3）", path_files:"各フォルダーのファイル数（1〜4）", path_note:"通常のフォルダーと架空ファイルを有限個作ります。リンクや常駐プログラムは使いません。攻撃がデコイを処理する場合に追加の仕事が生じます。並列処理や対象の絞り込みでは実ファイルが先に処理されることがあります。バックアップや検索にもファイルが増えます。", sparse_title:"スパース・デコイ", sparse_card:"見かけ上大きな架空ファイルを作成", sparse_desc:"配置先で見かけ上大きな架空ファイルを作るスクリプトを生成します。", sparse_size:"1ファイルの見かけのサイズ（GiB、1〜32）", sparse_extension:"ファイル名の見た目の拡張子", sparse_extension_help:"拡張子は名前の見た目だけに使います。ファイルの中身は選んだ形式に準拠しません。", sparse_note:"生成物は配置先で実行する作成キットZIPです。ZIPには作成スクリプトと説明書が入り、対象ファイル自体は含みません。実行時に配置先のファイルシステム上に1件作成し、スパース属性を利用します。Python 3.11以降と対応ファイルシステムが必要です。拡張子は見た目だけで、中身はその形式に準拠しません。コピー・バックアップ・同期や暗号化結果の書き込みは、見かけのサイズ分の容量や時間を使う場合があります。部分暗号化やサイズによる除外では追加の仕事が小さくなります.", path_generated:"{directories}フォルダーに架空ファイル{documents}件を作成しました。運用者用の配置一覧も保存してください。", sparse_generated:"作成キットZIPを生成しました。配置先で実行すると、拡張子 .{extension} の架空ファイル1件「{filename}」（論理サイズ{size} GiB）を作ります。ZIPには対象ファイルではなく作成スクリプトと説明書が入っています。配置先のスパース属性を使うため、ZIPを展開して配置先で手動実行してください。拡張子は見た目だけで、中身はその形式に準拠しません。運用者用の一覧も保存してください."});
+Object.assign(translations.en, {path_maze_title:"Path Maze", path_maze_card:"Distribute synthetic files across ordinary folders", path_maze_desc:"Create a six-level folder tree with cross-folder shortcuts and synthetic file listings.", path_depth:"Maximum depth (1–6)", path_branches:"Branches per folder (1–3)", path_files:"Synthetic files per folder (1–4)", path_note:"Every folder gets a browsable HTML index with child folders, local files and 1–3 shortcuts into other branches. At maximum settings this creates up to 1,093 folders, 4,372 synthetic files and 1,093 index pages. The archive has no scripts or external links. Keep the separate operator inventory to map and remove the tree. Searches and backups also include the added files; parallel or offline mapping can still enumerate the full structure.", sparse_title:"Sparse Decoy", sparse_card:"Create a synthetic file with a large logical size", sparse_desc:"Download one synthetic file directly at the chosen size and extension.", sparse_size:"Logical size (GiB, 1–32)", sparse_extension:"Filename extension (appearance only)", sparse_extension_help:"The extension changes only the filename. The file content does not match the selected format.", sparse_note:"Download one file (1-32 GiB) directly with the selected extension. Sparse allocation is not preserved: the download transfers and saves the full size. The extension is for appearance only; the content is not valid in that format. Copies, backups and sync may also use the full size. Partial encryption or size-based exclusions can reduce delay.", path_generated:"Created {directories} folders, {documents} synthetic files, {index_pages} navigation pages and {shortcuts} cross-folder shortcuts. Save the separate operator inventory.", sparse_generated:"Download the {size} GiB synthetic .{extension} file, {filename}, directly. Sparse allocation is not preserved, so the full size is transferred and saved. The extension is for appearance only; the content is not valid in that format. Save the separate operator inventory."});
+Object.assign(translations.ja, {
+  sparse_desc:"\u9078\u629e\u3057\u305f\u30b5\u30a4\u30ba\u3068\u62e1\u5f35\u5b50\u306e\u67b6\u7a7a\u30d5\u30a1\u30a4\u30eb\u3092\u76f4\u63a5\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u3057\u307e\u3059\u3002",
+  sparse_note:"\u9078\u629e\u30b5\u30a4\u30ba\uff081\u301c32 GiB\uff09\u306e\u30d5\u30a1\u30a4\u30eb\u30921\u4ef6\u3001\u6307\u5b9a\u62e1\u5f35\u5b50\u3067\u76f4\u63a5\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u3057\u307e\u3059\u3002\u30b9\u30d1\u30fc\u30b9\u5c5e\u6027\u306f\u4fdd\u6301\u3055\u308c\u305a\u3001\u30d5\u30a1\u30a4\u30eb\u5168\u4f53\u306e\u901a\u4fe1\u91cf\u3068\u4fdd\u5b58\u5bb9\u91cf\u304c\u5fc5\u8981\u3067\u3059\u3002\u62e1\u5f35\u5b50\u306f\u540d\u524d\u306e\u898b\u305f\u76ee\u3060\u3051\u3067\u3001\u4e2d\u8eab\u306f\u9078\u629e\u3057\u305f\u5f62\u5f0f\u306b\u6e96\u62e0\u3057\u307e\u305b\u3093\u3002",
+  sparse_generated:"\u62e1\u5f35\u5b50 .{extension}\u306e\u67b6\u7a7a\u30d5\u30a1\u30a4\u30eb\u300c{filename}\u300d\uff08{size} GiB\uff09\u3092\u76f4\u63a5\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u3067\u304d\u307e\u3059\u3002\u30b9\u30d1\u30fc\u30b9\u5c5e\u6027\u306f\u4fdd\u6301\u3055\u308c\u306a\u3044\u305f\u3081\u3001\u30b5\u30a4\u30ba\u5206\u3092\u8ee2\u9001\u30fb\u4fdd\u5b58\u3057\u307e\u3059\u3002\u904b\u7528\u8005\u7528\u306e\u4e00\u89a7\u3082\u4fdd\u5b58\u3057\u3066\u304f\u3060\u3055\u3044."
+});
 Object.assign(translations.ja, {path_maze_desc:"最大6階層のフォルダーと、複数の交差リンクを含む架空ファイル一覧を生成します。", path_depth:"最大階層（1〜6）", path_files:"各フォルダーの架空ファイル数（1〜4）", path_note:"各フォルダーに子フォルダー・ローカルファイル・別枝への1〜3個のショートカットを持つHTML一覧を作ります。最大設定では最大1,093フォルダー、架空ファイル4,372件、一覧ページ1,093件になります。ZIPにスクリプトや外部リンクは含みません。全体図の確認と撤去には別添の運用者用一覧を使ってください。検索やバックアップにも追加ファイルが含まれます。並列・オフライン解析なら全体を列挙できます。", path_generated:"{directories}フォルダー、架空ファイル{documents}件、一覧ページ{index_pages}件、別枝へのショートカット{shortcuts}件を作成しました。運用者用の一覧も保存してください。"});
 translations.ja.path_note = "各フォルダーに子フォルダー・ローカルファイル・別枝へのショートカットを含むHTML一覧を作ります。最大設定では最大1,093フォルダー、架空ファイル4,372件、入口を含む一覧ページ1,094件になります。ZIPにスクリプトや外部リンクは含みません。全体図の確認と撤去には別添の運用者用一覧を使ってください。検索やバックアップにも追加ファイルが含まれます。並列・オフライン解析なら全体を列挙できます。";
 translations.en.path_note = "Each folder gets a browsable HTML index with child folders, local files and cross-branch shortcuts. Maximum settings create up to 1,093 folders, 4,372 synthetic files and 1,094 index pages including the entry page. The ZIP has no scripts or external links. Use the separate operator inventory to map and remove it. Searches and backups also include the added files; parallel or offline analysis can enumerate the structure.";
@@ -501,12 +510,12 @@ methodFlows.ja.path_maze = {context:"例：架空の業務フォルダーに、�
 methodFlows.en.path_maze = {context:"Example: place linked indexes and synthetic files across an ordinary-looking folder tree.", steps:[["1. Generate the graph","Choose depth, branches and file count; each directory gets an HTML index."],["2. Review deployment and inventory","Extract the ZIP and keep the operator-only tree and shortcut map."],["3. Attacker traverses","The crawler follows child folders and cross-branch references while inspecting candidate files."],["4. Reconcile paths","Multiple routes and repeated references require mapping to understand the complete layout."]], ifCase:"Sequential review of the indexes and file contents may add traversal and reconciliation work.", elseCase:"Automated filesystem enumeration, parallel traversal or offline analysis can map the tree quickly.", response:"Use the operator inventory to manage placement and removal, and check backup and search impact.", note:"All links stay within the archive; it contains no resident program or external request."};
 methodExplanations.ja.path_maze = {title:translations.ja.path_maze_title, how:"通常の有限フォルダーに、架空の業務ファイルを分散して配置します。", target:"複数のディレクトリを探索してファイルを暗号化する攻撃。", limit:"探索対象が絞られる場合や並列処理では実ファイルが先に処理されます。検索・バックアップの対象も増えます。"};
 methodExplanations.en.path_maze = {title:translations.en.path_maze_title, how:"Distributes synthetic business files across a finite tree of ordinary folders.", target:"An encryptor that traverses directories and processes files.", limit:"Selective targeting or parallel processing can reach real files first. Searches and backups also encounter the additional files."};
-methodExplanations.ja.sparse_decoy = {title:translations.ja.sparse_title, how:"配置先で見かけのサイズが大きい架空ファイルを作り、全体を読む暗号化処理の仕事を増やします。", target:"サイズの大きいファイルを全体読み取りして暗号化する攻撃。", limit:"部分暗号化や大きなファイルの除外では効果が弱まります。バックアップや同期で見かけのサイズ分の容量を消費する場合があります。"};
-methodExplanations.en.sparse_decoy = {title:translations.en.sparse_title, how:"Creates synthetic files with a large logical size to add work for an encryptor that reads the whole file.", target:"Encryption that reads and processes large files in full.", limit:"Partial encryption or size-based exclusions reduce the effect. Backups and synchronization can consume the entire logical size."};
+methodExplanations.ja.sparse_decoy = {title:translations.ja.sparse_title, how:"配置先で見かけのサイズが大きい架空ファイルを1件作り、全体を読む暗号化処理の仕事を増やします。拡張子は名前の見た目だけで、中身は形式に準拠しません。", target:"サイズの大きいファイルを全体読み取りして暗号化する攻撃。", limit:"部分暗号化や大きなファイルの除外では効果が弱まります。バックアップや同期で見かけのサイズ分の容量を消費する場合があります。"};
+methodExplanations.en.sparse_decoy = {title:translations.en.sparse_title, how:"Creates one synthetic file with a large logical size to add work for an encryptor that reads the whole file. Its extension is for appearance only; the content does not match the format.", target:"Encryption that reads and processes large files in full.", limit:"Partial encryption or size-based exclusions reduce the effect. Backups and synchronization can consume the entire logical size."};
 methodFlows.ja.path_maze = {context:"例：架空の業務フォルダーを配置し、ファイル探索の対象を増やします。", steps:[["1. 階層を作成","有限のフォルダーと架空ファイルをZIPにします。"],["2. 配置","展開先と運用者用の一覧を確認します。"],["3. 攻撃者が探索","階層とデコイを処理します。"],["4. 仕事が増える","デコイの処理分だけ追加の仕事が生じます。"]], ifCase:"攻撃側が対象に含めて処理する場合に仕事が増えます。", elseCase:"並列処理や対象の絞り込みでは、実ファイルが先に処理される場合があります。", response:"運用者専用の一覧を使って配置と撤去を管理します。", note:"通常の検索やバックアップも対象にする場合があります。"};
 methodFlows.en.path_maze = {context:"Example: place a tree of fictional business files in an authorized location.", steps:[["1. Create a tree","Generate a finite ZIP of ordinary folders and synthetic files."],["2. Place it","Extract the ZIP and keep the operator inventory."],["3. Attacker traverses","The encryptor discovers and processes decoys."],["4. Work increases","Processing extra files requires additional work."]], ifCase:"Work increases when the attack selects and processes decoys.", elseCase:"Parallel processing or selective targeting can reach real files first.", response:"Use the operator inventory to manage placement and removal.", note:"Ordinary searches and backups may also process these files."};
-methodFlows.ja.sparse_decoy = {context:"例：見かけ上1 GiBの架空ファイルを対応ファイルシステムに置きます。", steps:[["1. スクリプトを生成","サイズと個数を指定してZIPを保存します。"],["2. 配置先で作成","説明書を読み、スクリプトを手動で実行します。"],["3. 攻撃側が読み取り","対象に選ばれたデコイが処理されます。"],["4. 仕事が増える","全体を読んで暗号化すれば処理量が増えます。"]], ifCase:"ファイル全体を処理する攻撃に追加の読み取り・暗号化を行わせます。", elseCase:"部分暗号化やサイズによる除外では、追加の仕事が小さくなります。", response:"配置ファイル名の運用者用一覧を保管し、バックアップと同期への影響を確認します。", note:"コピーや暗号化結果は見かけのサイズ分の領域を消費することがあります。"};
-methodFlows.en.sparse_decoy = {context:"Example: place a 1 GiB logical-size synthetic file on a filesystem that supports sparse files.", steps:[["1. Generate script","Choose the size and count and save the ZIP."],["2. Create at destination","Read the instructions and run the script manually."],["3. Attacker reads","The encryptor selects and processes a decoy."],["4. Work increases","Reading and encrypting the whole file adds work."]], ifCase:"Full-file encryption must read and process the larger logical file.", elseCase:"Partial encryption or size exclusions can reduce the additional work.", response:"Keep the operator filename inventory and review effects on backup and synchronization.", note:"Copies or encrypted output may consume the full logical size."};
+methodFlows.ja.sparse_decoy = {context:"例：見かけ上1 GiBの架空ファイルを対応ファイルシステムに置きます。拡張子は選べますが、中身はその形式に準拠しません。", steps:[["1. 生成設定","サイズと見た目の拡張子を選び、ZIPを保存します。"],["2. 配置先で作成","説明書を読み、スクリプトを手動で実行します。"],["3. 攻撃側が読み取り","対象に選ばれたデコイが処理されます。"],["4. 仕事が増える","全体を読んで暗号化すれば処理量が増えます。"]], ifCase:"ファイル全体を処理する攻撃に追加の読み取り・暗号化を行わせます。", elseCase:"部分暗号化やサイズによる除外では、追加の仕事が小さくなります。", response:"配置ファイル名の運用者用一覧を保管し、バックアップと同期への影響を確認します。", note:"コピーや暗号化結果は見かけのサイズ分の領域を消費することがあります。"};
+methodFlows.en.sparse_decoy = {context:"Example: download one 1 GiB synthetic file. Choose an extension for appearance; the content does not match that format.", steps:[["1. Configure","Choose a size and display extension."],["2. Download","Save the file directly at the selected size."],["3. Attacker reads","The encryptor selects and processes a decoy."],["4. Work increases","Reading and encrypting the whole file adds work."]], ifCase:"Full-file encryption must read and process the larger logical file.", elseCase:"Partial encryption or size exclusions can reduce the additional work.", response:"Keep the operator filename inventory and review effects on backup and synchronization.", note:"Copies or encrypted output may consume the full logical size."};
 
 // Keep the three decision fields comparable across every method and language.
 // Arrays are rendered as bullets by renderFlowPoints.
@@ -575,7 +584,7 @@ const methodGuidance = {
     sparse_decoy: {
       ifCase:["ファイル全体を読み取って暗号化する攻撃が大きな論理サイズのデコイを処理すれば、読み取り・暗号化の作業が増える可能性があります。"],
       elseCase:["部分暗号化、サイズによる除外、ファイル先頭だけの処理では追加作業が小さくなります。","バックアップ、同期、コピーや暗号化後の保存先が見かけ上の全サイズを扱うと、運用側の容量・時間も消費します。"],
-      response:["疎ファイルに対応するファイルシステムで、容量とバックアップ挙動を管理できる端末向けです。","小規模で検証してからサイズ・個数を制限し、空き容量を監視します。運用者用ファイル名一覧は配置先と分けて保管します。"]
+      response:["疎ファイルに対応するファイルシステムで、容量とバックアップ挙動を管理できる端末向けです。","小さなサイズで検証し、空き容量を監視します。運用者用ファイル名一覧は配置先と分けて保管します。"]
     }
   },
   en: {
@@ -642,7 +651,7 @@ const methodGuidance = {
     sparse_decoy: {
       ifCase:["If an attack reads and encrypts whole files, processing a decoy with a large logical size may add read and encryption work."],
       elseCase:["Partial encryption, size exclusions or processing only file headers reduce the extra work.","Backups, sync, copies and encrypted output may consume the full apparent size and storage."],
-      response:["Suitable for endpoints with sparse-file support and managed storage and backup behavior.","Start with a small deployment, cap file size and count, monitor free space, and keep the operator filename list separately."]
+      response:["Suitable for endpoints with sparse-file support and managed storage and backup behavior.","Start with a small file size, monitor free space, and keep the operator filename list separately."]
     }
   }
 };
@@ -686,8 +695,11 @@ flowScenarios.ja.sparse_decoy = "想定：大きなファイルを全体暗号�
 flowScenarios.en.sparse_decoy = "Scenario: a full-file encryptor processes a large logical-size synthetic file.";
 methodOutcomes.ja.path_maze = {deception:"業務の保存場所に見える名前と架空の文書を組み合わせます。", delay:"攻撃がデコイを処理する場合、追加の探索と暗号化が必要になります。"};
 methodOutcomes.en.path_maze = {deception:"Use business-like folder names and synthetic documents.", delay:"An attack that processes the decoys performs additional traversal and encryption."};
-methodOutcomes.ja.sparse_decoy = {deception:"業務ファイルらしい名前と架空の内容を持たせます。スパース属性は確認できます。", delay:"攻撃がファイル全体を読む場合、見かけのサイズに応じた処理が発生します。"};
-methodOutcomes.en.sparse_decoy = {deception:"Use a business-like filename and fictional content; sparse attributes remain inspectable.", delay:"A full-file reader must process the logical file size."};
+methodOutcomes.ja.sparse_decoy = {deception:"業務で使われる拡張子を選べます。拡張子と内容形式は一致せず、スパース属性は確認できます。", delay:"攻撃がファイル全体を読む場合、見かけのサイズに応じた処理が発生します。"};
+methodOutcomes.en.sparse_decoy = {deception:"Choose a business-like filename extension. The content does not match the extension; the downloaded file uses its full selected size.", delay:"A full-file reader must process the selected file size."};
+methodOutcomes.ja.sparse_decoy = {deception:"\u696d\u52d9\u3067\u4f7f\u308f\u308c\u308b\u62e1\u5f35\u5b50\u3092\u9078\u3079\u307e\u3059\u3002\u4e2d\u8eab\u306f\u305d\u306e\u5f62\u5f0f\u306b\u4e00\u81f4\u3057\u307e\u305b\u3093\u304c\u3001\u9078\u629e\u30b5\u30a4\u30ba\u306e\u30d5\u30a1\u30a4\u30eb\u3092\u4f5c\u308c\u307e\u3059\u3002",delay:"\u5168\u4f53\u3092\u8aad\u307f\u8fbc\u3080\u653b\u6483\u3067\u306f\u3001\u9078\u629e\u3057\u305f\u30b5\u30a4\u30ba\u5206\u306e\u51e6\u7406\u304c\u5fc5\u8981\u3067\u3059\u3002"};
+Object.assign(translations.ja,{sparse_size:"\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u30b5\u30a4\u30ba\uff08GiB\u30011\u301c32\uff09"});
+methodFlows.ja.sparse_decoy = {context:"\u9078\u629e\u3057\u305f\u30b5\u30a4\u30ba\u306e\u67b6\u7a7a\u30d5\u30a1\u30a4\u30eb\u3092\u76f4\u63a5\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u3057\u307e\u3059\u3002",steps:[["1. \u8a2d\u5b9a","\u30b5\u30a4\u30ba\u3068\u62e1\u5f35\u5b50\u3092\u9078\u3073\u307e\u3059\u3002"],["2. \u4fdd\u5b58","\u30d5\u30a1\u30a4\u30eb\u3092\u76f4\u63a5\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u3057\u307e\u3059\u3002"],["3. \u653b\u6483\u5074","\u30c7\u30b3\u30a4\u304c\u51e6\u7406\u3055\u308c\u307e\u3059\u3002"],["4. \u51e6\u7406\u91cf","\u5168\u4f53\u3092\u8aad\u3080\u653b\u6483\u3067\u306f\u4ed5\u4e8b\u304c\u5897\u3048\u307e\u3059\u3002"]],ifCase:"\u30d5\u30a1\u30a4\u30eb\u5168\u4f53\u3092\u51e6\u7406\u3059\u308b\u653b\u6483\u3067\u306f\u3001\u9078\u629e\u30b5\u30a4\u30ba\u306b\u5fdc\u3058\u305f\u51e6\u7406\u304c\u767a\u751f\u3057\u307e\u3059\u3002",elseCase:"\u90e8\u5206\u6697\u53f7\u5316\u3084\u30b5\u30a4\u30ba\u9664\u5916\u3067\u306f\u8ffd\u52a0\u306e\u4ed5\u4e8b\u304c\u6e1b\u308a\u307e\u3059\u3002",response:"\u904b\u7528\u8005\u5c02\u7528\u306e\u30d5\u30a1\u30a4\u30eb\u4e00\u89a7\u3092\u4fdd\u7ba1\u3057\u307e\u3059\u3002",note:"\u30b9\u30d1\u30fc\u30b9\u5c5e\u6027\u306f\u4fdd\u6301\u3055\u308c\u305a\u3001\u30d5\u30a1\u30a4\u30eb\u5168\u4f53\u3092\u8ee2\u9001\u3057\u307e\u3059\u3002"};
 for (const lang of ["ja", "en"]) for (const kind of ["path_maze", "sparse_decoy"]) {
   methodLegal[lang][kind] = methodLegal[lang].directory_maze;
   usLegal[lang][kind] = usLegal[lang].directory_maze;
@@ -2084,6 +2096,14 @@ function clearDownloads() {
   generatedAsset = null;
 }
 function downloadLink(data, label, parent = $("#downloads")) {
+  if (data.downloadUrl) {
+    const link = document.createElement("a");
+    link.href = data.downloadUrl;
+    link.download = data.name;
+    link.textContent = label + " 窶・" + data.name;
+    parent.append(link);
+    return link;
+  }
   let blob = data.blob;
   if (!blob) {
     const encoded = data.content;
@@ -2121,9 +2141,15 @@ function renderDownloads(data) {
   const hasDeploymentPackage = (data.companions || []).some(item => item.role === "deployment");
   const isWebPackage = data.summary?.kind === "web" && hasDeploymentPackage;
   const isEnvPackage = typeof data.name === "string" && data.name.endsWith(".env") && hasDeploymentPackage;
-  const primary = downloadLink(data, t(data.summary?.kind === "ransomware_tripwire" ? "tripwire_deployment_download"
+  const primary = data.savedPath ? document.createElement("p") : downloadLink(data, t(data.summary?.kind === "ransomware_tripwire" ? "tripwire_deployment_download"
+    : data.summary?.kind === "sparse_decoy" ? "sparse_direct_download"
     : isWebPackage ? "web_html_download" : hasDeploymentPackage ? "env_direct_download" : "download_again"),
     isEnvPackage ? document.createDocumentFragment() : $("#downloads"));
+  if (data.savedPath) {
+    primary.textContent = t("sparse_saved_path", {path: data.savedPath});
+    primary.tabIndex = -1;
+    $("#downloads").append(primary);
+  }
   let automatic = primary;
   const isHtmlPreview = typeof data.mime === "string" && data.mime.startsWith("text/html");
   const isPdfPreview = data.mime === "application/pdf";
@@ -2182,9 +2208,21 @@ function renderDownloads(data) {
     automatic = downloadLink(companion, t(isWebPackage ? "web_package_download" : "env_zip_download"));
   }
   const operatorFiles = companions.filter(item => item.role !== "deployment" && !item.name.endsWith(".inventory.json"));
+  const operatorDownloadLabels = {
+    "path_maze.operator.json": "path_maze_inventory_download",
+    "sparse_decoy.operator.json": "sparse_inventory_download",
+    "Physalia_sparse_decoy.operator.json": "sparse_inventory_download",
+    "ransomware_tripwire_monitor.py": "tripwire_monitor_download",
+  };
+  const operatorKindDownloadLabels = {
+    directory_maze: "directory_maze_inventory_download",
+    encoding_maze: "encoding_maze_inventory_download",
+    stream: "stream_operator_download",
+  };
   for (const companion of operatorFiles) {
-    const label = companion.role === "verification" ? t("nest_password_download") : companion.name === "ransomware_tripwire_monitor.py" ? t("tripwire_monitor_download") : t("operator_download");
-    downloadLink(companion, label);
+    const labelKey = companion.role === "verification" ? "nest_password_download"
+      : operatorDownloadLabels[companion.name] || operatorKindDownloadLabels[data.summary?.kind];
+    if (labelKey) downloadLink(companion, t(labelKey));
   }
   if (hasDeploymentPackage) {
     const note = document.createElement("p"); note.textContent = t(isWebPackage ? "web_package_note" : "env_zip_note"); $("#downloads").append(note);
@@ -2418,12 +2456,41 @@ function renderDownloads(data) {
     const note = document.createElement("p");
     note.textContent = data.summary.kind === "path_maze"
       ? t("path_generated", data.summary)
-      : t("sparse_generated", {size: data.summary.size_gib, count: data.summary.files});
+      : t("sparse_generated", {size: data.summary.size_gib, extension: data.summary.extension, filename: data.summary.filename});
     $("#downloads").append(note);
   }
   data.downloadName = automatic.download || data.name;
   return automatic;
 }
+Object.assign(translations.ja, {
+  sparse_desc:"指定したフォルダーに、見かけのサイズが大きいスパースファイルを1件作成します。",
+  sparse_size:"見かけのサイズ（GiB、1〜32）",
+  sparse_destination:"保存先フォルダーの絶対パス",
+  sparse_destination_help:"アプリを実行している端末の既存フォルダーを指定してください。",
+  sparse_destination_required:"保存先フォルダーの絶対パスを入力してください。",
+  sparse_backend_restart:"アプリ本体が古いまま動作しています。アプリを終了して再起動し、もう一度生成してください。",
+  sparse_note:"指定フォルダーにスパースファイルを直接作成します。実際の使用容量は通常小さくなります。対応するファイルシステムが必要で、非対応の場合は作成を中止します。コピー・同期・バックアップや暗号化後は見かけのサイズ分の容量を使う場合があります。拡張子は見た目だけで、中身はその形式に準拠しません。",
+  sparse_generated:"架空ファイル「{filename}」を見かけのサイズ {size} GiB で作成しました。運用者用の一覧も保存してください。",
+  sparse_saved_path:"作成したファイル: {path}"
+});
+Object.assign(translations.en, {
+  sparse_desc:"Create one sparse file with a large logical size in the selected folder.",
+  sparse_size:"Logical size (GiB, 1–32)",
+  sparse_destination:"Absolute path to destination folder",
+  sparse_destination_help:"Enter an existing folder on the computer running the app.",
+  sparse_destination_required:"Enter an absolute path to the destination folder.",
+  sparse_backend_restart:"The application server is out of date. Stop and restart the app, then generate the file again.",
+  sparse_note:"The app creates a sparse file directly in the specified folder. Actual allocation is usually small. A supporting filesystem is required; creation stops if sparse allocation is unavailable. Copies, sync, backups or encrypted output may use the full logical size. The extension is for appearance only; the content does not match that format.",
+  sparse_generated:"Created {filename} with a logical size of {size} GiB. Save the operator-only file list.",
+  sparse_saved_path:"Created file: {path}"
+});
+methodFlows.ja.sparse_decoy.context = "指定フォルダーにスパースファイルを1件作成します。";
+methodFlows.ja.sparse_decoy.steps[1] = ["2. 保存", "指定フォルダーに直接スパースファイルを作成します。"];
+methodFlows.ja.sparse_decoy.note = "コピーやバックアップでは見かけのサイズ分の容量を使う場合があります。";
+methodFlows.en.sparse_decoy.context = "Create one sparse file in the selected folder.";
+methodFlows.en.sparse_decoy.steps[1] = ["2. Save", "The app creates the sparse file directly in the specified folder."];
+methodFlows.en.sparse_decoy.note = "Copies or backups may consume the full logical size.";
+methodOutcomes.en.sparse_decoy.deception = "The chosen extension is for appearance; the content does not match the format and sparse allocation can be inspected.";
 applyLanguage();
 updateFields();
 showWorkspacePage(activeWorkspacePage, false);
@@ -2446,6 +2513,12 @@ form.addEventListener("submit", async event => {
   form.querySelectorAll('[aria-invalid="true"]').forEach(clearInvalid);
   if (generationInProgress) return;
   const kind = $('input[name="kind"]:checked').value;
+  if (kind === "sparse_decoy" && !$("#sparse-destination").value.trim()) {
+    result.textContent = t("sparse_destination_required");
+    markInvalid($("#sparse-destination"));
+    $("#sparse-destination").focus();
+    return;
+  }
   if (kind === "nest") randomizeNestSettings();
   if (["data_dilution", "honeyword"].includes(kind)) return;
   if (kind === "database" && !document.querySelector(".column-row")) {
@@ -2498,12 +2571,12 @@ form.addEventListener("submit", async event => {
         ...($("#fake-embed-canary").checked ? {canary_url: $("#fake-canary-url").value} : {})}),
       ransomware_tripwire: () => ({files: Number($("#tripwire-files").value)}),
       path_maze: () => ({depth: Number($("#path-depth").value), branches: Number($("#path-branches").value), files: Number($("#path-files").value)}),
-      sparse_decoy: () => ({size_gib: Number($("#sparse-size").value), files: Number($("#sparse-files").value)}),
+      sparse_decoy: () => ({size_gib: Number($("#sparse-size").value), extension: $("#sparse-extension").value}),
       stream: () => ({path: $("#stream-path").value, format: $("#stream-format").value, port: Number($("#stream-port").value), rate_kib: Number($("#stream-rate").value), max_streams: Number($("#stream-concurrency").value)}),
       directory_maze: () => ({scenario: $("#maze-scenario").value, ...($("#maze-scenario").value === "passwords" && $("#maze-format").value !== "env" ? vaultDomainSettings() : {}), title: $("#directory-title").value, depth: Number($("#maze-depth").value), branches: Number($("#maze-branches").value), files_per_directory: Number($("#maze-files").value), cross_links: $("#maze-cross-links").checked, canary_urls: $("#maze-url").value.split(/\r?\n/).filter(value => value.trim()), format: $("#maze-format").value}),
       encoding_maze: () => ({scenario: $("#encoding-scenario").value, ...($("#encoding-scenario").value === "passwords" && $("#encoding-format").value !== "env" ? vaultDomainSettings() : {}), format: $("#encoding-format").value, layers: Number($("#encoding-layers").value), candidates: Number($("#encoding-candidates").value), canary_urls: $("#encoding-url").value.split(/\r?\n/).filter(value => value.trim()), codecs: [...document.querySelectorAll("#encoding-codecs input:checked")].map(input => input.value)}),
     }[kind]();
-    requestBody = JSON.stringify({kind, settings});
+    requestBody = JSON.stringify({kind, settings, ...(kind === "sparse_decoy" ? {destination: $("#sparse-destination").value.trim()} : {})});
     if (new Blob([requestBody]).size > MAX_GENERATION_REQUEST_BYTES) {
       result.textContent = t("request_too_large");
       result.focus();
@@ -2542,7 +2615,10 @@ form.addEventListener("submit", async event => {
     }
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || t("failed"));
-    if (generationRevision !== settingsRevision) {
+    if (kind === "sparse_decoy" && (typeof data.savedPath !== "string" || !data.savedPath)) {
+      throw new Error(t("sparse_backend_restart"));
+    }
+    if (generationRevision !== settingsRevision && !data.savedPath) {
       clearDownloads();
       result.textContent = t("generation_settings_changed");
       return;
@@ -2550,6 +2626,7 @@ form.addEventListener("submit", async event => {
     data.formKind = kind;
     previewUrlRedactions.set(data, requestPreviewUrls);
     const primary = renderDownloads(data);
+    if (data.savedPath) result.textContent = t("sparse_generated", {size: data.summary.size_gib, filename: data.name});
     primary.focus();
   } catch (error) {
     result.textContent = error.message || t("failed");
@@ -2572,7 +2649,7 @@ function configControls() {
   const controls = [...form.querySelectorAll(".fields input, .fields select, .fields textarea")]
     .filter(el => el.type !== "url" && el.type !== "file" && !el.hasAttribute("data-secret-url")
       && !el.hasAttribute("data-operator-attestation") && !el.closest("#columns")
-      && el.id !== "canary-link-style");
+      && el.id !== "canary-link-style" && el.id !== "sparse-destination");
   controls.push($("#canary-link-style"));
   // Preserve the pre-layout-change settings order for existing saved configs.
   const purposeIndex = controls.findIndex(el => el.id === "canary-context");

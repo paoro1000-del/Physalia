@@ -41,7 +41,7 @@ On Linux, install Python 3.11–3.14 and ensure `venv` is available before start
 
 The launch script creates a virtual environment, installs the pinned dependencies on first launch, and starts the app in your browser. First-time installation requires internet access to download the packages.
 
-Application logs are written daily to `logs/YYYYMMDD_app.log` under the project folder. At startup, logs that are at least seven days old are deleted. Set `log_level` in the root `app_config.json` to `DEBUG`, `INFO`, `WARNING` or `ERROR`; the default is `INFO`. `DEBUG` also records route categories and exception details. Request bodies, URL paths and canary tokens are not logged.
+Application logs are written daily to `logs/YYYYMMDD_app.log` under the project folder. At startup, logs that are at least seven days old are deleted. Set `log_level` in the root `app_config.json` to `DEBUG`, `INFO`, `WARNING` or `ERROR`; the checked-in development setting is `DEBUG`; missing or invalid configuration falls back to `INFO`. `DEBUG` records route categories, generation stages, sizes, durations and stack traces without request bodies, URL paths or canary tokens. Request bodies, URL paths and canary tokens are not logged.
 
 ## What you can do
 
@@ -49,9 +49,9 @@ The tool explains the purpose, workings, and considerations for each security me
 
 Ransomware Decoy Flood includes a standard-library-only script that replenishes changed synthetic files. The host needs Python 3.11 or later. Replenishment count and bytes are unlimited by default, with optional startup limits. A full disk can disrupt work and recovery and may not stop encryption.
 
-Path Maze creates a finite tree of ordinary folders and synthetic files. Sparse Decoy generates a script to create large logical-size synthetic files manually at the destination. Copies, backups, synchronization and encrypted output may consume their full logical size. Both aim to add work when an attack selects and processes decoys.
+Path Maze creates a finite tree of ordinary folders and synthetic files. Sparse Decoy: The app creates a sparse file directly in the specified folder. Actual allocation is usually small. A supporting filesystem is required; creation stops if sparse allocation is unavailable. Copies, sync, backups or encrypted output may use the full logical size. The extension is for appearance only; the content does not match that format. Both aim to add work when an attack selects and processes decoys.
 
-Path Maze creates a finite tree of ordinary folders and synthetic files. Sparse Decoy generates a script to create large logical-size synthetic files manually at the destination. Copies, backups, synchronization and encrypted output may consume their full logical size. Both aim to add work when an attack selects and processes decoys.
+Path Maze creates a finite tree of ordinary folders and synthetic files. Sparse Decoy: The app creates a sparse file directly in the specified folder. Actual allocation is usually small. A supporting filesystem is required; creation stops if sparse allocation is unavailable. Copies, sync, backups or encrypted output may use the full logical size. The extension is for appearance only; the content does not match that format. Both aim to add work when an attack selects and processes decoys.
 
 The generated samples support evaluation and adoption decisions. You arrange deployment and monitoring service integration in your own environment.
 

@@ -1,11 +1,14 @@
 """Metadata helpers for plausible, locally generated ZIP artifacts."""
 from datetime import datetime, timedelta
+import logging
 import re
 import secrets
 import unicodedata
 import zipfile
 
 from physalia.i18n import translate
+
+LOGGER = logging.getLogger("physalia")
 
 _WINDOWS_DEVICE_NAME = re.compile(
     r"(?i)(?:CON|PRN|AUX|NUL|COM[1-9\u00b9\u00b2\u00b3]|LPT[1-9\u00b9\u00b2\u00b3])(?:\..*)?\Z")
@@ -36,9 +39,11 @@ def write_archive_member(archive, name, content, info_type=zipfile.ZipInfo, lang
     intentionally set in the future.
     """
     name = _validate_member_name(name, language)
+    LOGGER.debug("archive_member_write_started bytes=%d", len(content))
     now = datetime.now().astimezone().replace(tzinfo=None)
     modified = now - timedelta(seconds=secrets.randbelow(180 * 24 * 60 * 60 + 1))
     modified = modified.replace(second=(modified.second // 2) * 2, microsecond=0)
     info = info_type(name, date_time=modified.timetuple()[:6])
     info.compress_type = zipfile.ZIP_DEFLATED
     archive.writestr(info, content)
+    LOGGER.debug("archive_member_write_complete bytes=%d", len(content))

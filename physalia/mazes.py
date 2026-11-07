@@ -5,6 +5,7 @@ import hashlib
 import html
 import io
 import json
+import logging
 from pathlib import Path
 import posixpath
 import re
@@ -22,6 +23,8 @@ from physalia.naming import FORMAT_NAMES, plausible_filename
 from physalia.stream_runtime import validate_config
 from physalia.scenarios import place_canary, scenario_for
 from physalia.validation import CanaryURLCycle, canary_url_list, filename, integer, text
+
+LOGGER = logging.getLogger("physalia")
 
 CODECS = ("base64", "base64url", "hex", "percent", "gzip_base64")
 MAX_MAZE_BYTES = 16 * 1024 * 1024
@@ -101,6 +104,8 @@ def bundle(name, files, inventory, summary, language="ja", size_error_key="maze_
 
 
 def generate_directory_maze(settings, language="ja"):
+    started = time.monotonic()
+    LOGGER.info("directory_maze_started language=%s", language)
     depth = integer(settings.get("depth", 3), "maze_depth", 1, 6, language)
     branches = integer(settings.get("branches", 3), "branches", 1, 5, language)
     per_directory = integer(settings.get("files_per_directory", 1), "files_per_directory", 1, 3, language)
@@ -242,9 +247,13 @@ def generate_directory_maze(settings, language="ja"):
     ][:3]
     summary = {"kind": "directory_maze", "directories": total, "documents": total * per_directory,
                "canary_placements": canary_placements, "canary_location_examples": canary_examples}
-    return bundle(name, files, {"warning": translate("maze_operator_warning", language), "entrypoint": "index.html",
-                                "scenario": scenario_name, "schema": scenario["schema"],
-                                "nodes": inventory, "summary": summary}, summary, language, "directory_maze_size_limit")
+    artifact = bundle(name, files, {"warning": translate("maze_operator_warning", language), "entrypoint": "index.html",
+                                    "scenario": scenario_name, "schema": scenario["schema"],
+                                    "nodes": inventory, "summary": summary}, summary, language, "directory_maze_size_limit")
+    LOGGER.info("directory_maze_complete directories=%d documents=%d canary_placements=%d archive_bytes=%d elapsed_ms=%d",
+                total, total * per_directory, canary_placements, len(artifact.content),
+                max(0, round((time.monotonic() - started) * 1000)))
+    return artifact
 
 
 def encode_payload(data, codec):
@@ -258,6 +267,8 @@ def encode_payload(data, codec):
 
 
 def generate_encoding_maze(settings, language="ja"):
+    started = time.monotonic()
+    LOGGER.info("encoding_maze_started language=%s", language)
     layers = integer(settings.get("layers", 4), "layers", 1, 8, language)
     count = integer(settings.get("candidates", 5), "candidates", 1, 20, language)
     codecs = selection(settings.get("codecs", ["base64", "hex", "percent", "gzip_base64"]), CODECS, language)
@@ -338,7 +349,11 @@ def generate_encoding_maze(settings, language="ja"):
     summary = {"kind": "encoding_maze", "scenario": scenario_name, "candidates": count, "layers": layers,
                "canary_placements": sum(bool(item["canary"]) for item in inventory),
                "canary_location_examples": canary_examples}
-    return bundle(name, files, {"warning": translate("maze_operator_warning", language), "candidates": inventory, "summary": summary}, summary, language, "encoding_maze_size_limit")
+    artifact = bundle(name, files, {"warning": translate("maze_operator_warning", language), "candidates": inventory, "summary": summary}, summary, language, "encoding_maze_size_limit")
+    LOGGER.info("encoding_maze_complete candidates=%d layers=%d canary_placements=%d archive_bytes=%d elapsed_ms=%d",
+                count, layers, summary["canary_placements"], len(artifact.content),
+                max(0, round((time.monotonic() - started) * 1000)))
+    return artifact
 
 
 def _stream_preview(language):
@@ -367,6 +382,8 @@ link.addEventListener("click",()=>{link.hidden=true;status.textContent=ja?"ÈÖç‰ø
 
 
 def generate_stream_sample(settings, language="ja"):
+    started = time.monotonic()
+    LOGGER.info("stream_sample_started language=%s", language)
     rate = integer(settings.get("rate_kib", 8), "rate_kib", 1, 64, language)
     maximum = integer(settings.get("max_streams", 2), "max_streams", 1, 8, language)
     port = integer(settings.get("port", 9080), "stream_port", 1024, 65535, language)
@@ -397,5 +414,9 @@ def generate_stream_sample(settings, language="ja"):
              ("README.txt", readme.encode("utf-8"))]
     summary = {"kind": "stream", "rate_kib": rate, "max_streams": maximum,
                "preview_url": f"http://127.0.0.1:{port}/"}
-    return bundle(name, files, {"warning": translate("stream_operator_warning", language), "environment": environment,
-                               "download_url": f"http://127.0.0.1:{port}{path}", "stop_url": f"http://127.0.0.1:{port}/stop"}, summary, language)
+    artifact = bundle(name, files, {"warning": translate("stream_operator_warning", language), "environment": environment,
+                                   "download_url": f"http://127.0.0.1:{port}{path}", "stop_url": f"http://127.0.0.1:{port}/stop"}, summary, language)
+    LOGGER.info("stream_sample_complete rate_kib=%d max_streams=%d files=%d archive_bytes=%d elapsed_ms=%d",
+                rate, maximum, len(files), len(artifact.content),
+                max(0, round((time.monotonic() - started) * 1000)))
+    return artifact

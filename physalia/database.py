@@ -2,12 +2,14 @@
 
 from calendar import monthrange
 import hashlib
+import logging
 import math
 import re
 import secrets
 import sqlite3
 import string
 import uuid
+import time
 from copy import deepcopy
 from datetime import date, datetime, timedelta
 
@@ -28,6 +30,7 @@ from physalia.validation import (
 
 MAX_ROWS = 100000
 MAX_DATABASE_BYTES = 32 * 1024 * 1024
+LOGGER = logging.getLogger("physalia")
 VAULT_LOGIN_PATHS = {
     "mail-console": "/auth/login",
     "billing-workspace": "/account/signin",
@@ -2446,6 +2449,9 @@ def sqlite_bytes(
     connection_name="archive",
     language="ja",
 ):
+    started = time.monotonic()
+    LOGGER.debug("sqlite_build_started column_count=%d has_canary=%s",
+                 len(columns) if isinstance(columns, list) else -1, bool(url))
     table = identifier(table, language)
     url = canary_url(url, language)
     connection_name = identifier(connection_name, language)
@@ -2465,6 +2471,7 @@ def sqlite_bytes(
             raise ValueError(translate("columns_error", language))
         column_names.add(name.casefold())
     connection = sqlite3.connect(":memory:")
+    row_count = 0
     try:
         # Identifiers were allow-listed above; values are always parameters.
         definitions = ", ".join(
@@ -2489,10 +2496,13 @@ def sqlite_bytes(
 
         for row in data:
             batch.append(tuple(row))
+            row_count += 1
             if len(batch) >= 128:
                 connection.executemany(insert, batch)
                 batch.clear()
                 enforce_size_limit()
+                if row_count % 10000 < 128:
+                    LOGGER.debug("sqlite_rows_inserted rows=%d", row_count)
         if batch:
             connection.executemany(insert, batch)
         enforce_size_limit()
@@ -2536,12 +2546,21 @@ def sqlite_bytes(
             )
             enforce_size_limit()
         connection.commit()
+        LOGGER.debug("sqlite_transaction_committed rows=%d", row_count)
         result = connection.serialize()
         if len(result) > MAX_DATABASE_BYTES:
             raise ValueError(translate("database_size_limit", language))
+        LOGGER.info("sqlite_build_complete rows=%d columns=%d bytes=%d elapsed_ms=%d",
+                    row_count, len(columns), len(result),
+                    max(0, round((time.monotonic() - started) * 1000)))
         return result
+    except Exception as exc:
+        LOGGER.error("sqlite_build_failed rows=%d error_type=%s", row_count, type(exc).__name__)
+        LOGGER.debug("sqlite_build_traceback rows=%d", row_count, exc_info=True)
+        raise
     finally:
         connection.close()
+        LOGGER.debug("sqlite_connection_closed rows=%d", row_count)
 
 
 def database_settings(settings, language="ja"):

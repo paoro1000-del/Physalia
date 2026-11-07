@@ -3,8 +3,10 @@ import csv
 import html
 import io
 import json
+import logging
 import re
 import secrets
+import time
 import unicodedata
 from urllib.parse import urlsplit
 
@@ -24,6 +26,8 @@ from physalia.database import (
 from physalia.i18n import translate
 from physalia.naming import plausible_filename
 from physalia.validation import canary_url, identifier, integer, is_public_host, is_reserved_example_url, text
+
+LOGGER = logging.getLogger("physalia")
 
 FORMATS = {
     "env": ("env", "text/plain; charset=utf-8"), "txt": ("txt", "text/plain; charset=utf-8"),
@@ -643,11 +647,14 @@ def render(fmt, title, url, data, language="ja", reference=None, context=None, a
 
 
 def generate_canary(settings, language="ja", include_metadata=False):
+    started = time.monotonic()
     fmt = settings.get("format", "env")
     if not isinstance(fmt, str) or fmt not in FORMATS:
         raise ValueError(translate("invalid_format", language))
     count = integer(settings.get("rows", 25), "rows", 1, 500, language)
     url = canary_url(settings.get("canary_url", ""), language)
+    LOGGER.debug("canary_artifact_started format=%s rows=%s url_configured=%s",
+                 fmt, settings.get("rows", 25), bool(url))
     canary_link_style = settings.get("canary_link_style", "text")
     if not isinstance(canary_link_style, str) or canary_link_style not in ("text", "button", "image", "email", "next", "pagination", "fullpage"):
         raise ValueError(translate("invalid_input", language))
@@ -800,5 +807,9 @@ def generate_canary(settings, language="ja", include_metadata=False):
                              "preview_columns": [column["name"] for column in columns],
                              "preview_labels": [column.get("label", column["name"]) for column in columns],
                              "preview_rows": preview_rows})
+        LOGGER.info("canary_artifact_complete format=%s bytes=%d url_configured=%s elapsed_ms=%d",
+                    fmt, len(content), bool(url), max(0, round((time.monotonic() - started) * 1000)))
         return (*result, metadata)
+    LOGGER.info("canary_artifact_complete format=%s bytes=%d url_configured=%s elapsed_ms=%d",
+                fmt, len(content), bool(url), max(0, round((time.monotonic() - started) * 1000)))
     return result

@@ -1,8 +1,10 @@
 """Bounded trees of AES-encrypted ZIPs with varied synthetic documents."""
 
 import io
+import logging
 import posixpath
 import secrets
+import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
@@ -21,6 +23,7 @@ MAX_LAYERS = 8
 MAX_NODES = 40
 MAX_CONTENT_BYTES = 32 * 1024 * 1024
 MAX_ARCHIVE_BYTES = 64 * 1024 * 1024
+LOGGER = logging.getLogger("physalia")
 DIRECTORY_DIMENSIONS = {
     "crm": (
         (
@@ -197,6 +200,9 @@ class Artifact:
 
 
 def generate_nest(settings, language="ja"):
+    started = time.monotonic()
+    LOGGER.debug("deep_nest_started setting_keys=%s",
+                 ",".join(sorted(key for key in settings if isinstance(key, str))))
     layers = integer(settings.get("layers", 3), "layers", 1, MAX_LAYERS, language)
     branches = integer(settings.get("branches", 3), "branches", 1, 4, language)
     decoys = integer(settings.get("decoys", 4), "decoys", 0, 10, language)
@@ -261,6 +267,7 @@ def generate_nest(settings, language="ja"):
     period = datetime.now(UTC).strftime("%Y%m")
     basename = plausible_filename("nest")
     inventory, documents, consumed, archived = [], [], 0, 0
+    nodes_started = 0
     format_counts = {name: 0 for name in FORMATS}
     passwords = set()
 
@@ -281,6 +288,9 @@ def generate_nest(settings, language="ja"):
             raise ValueError(translate("archive_size_limit", language))
 
     def node(depth, location):
+        nonlocal nodes_started
+        nodes_started += 1
+        LOGGER.debug("deep_nest_node_started node=%d depth=%d", nodes_started, depth)
         password, hint = make_password(policy, depth, layers)
         password_mode = policy["mode"]
         if password in passwords:
@@ -502,4 +512,7 @@ def generate_nest(settings, language="ja"):
         role="verification",
     )
     # Deliver the first AES-encrypted archive itself, without a plaintext ZIP wrapper.
+    LOGGER.info("deep_nest_complete nodes=%d documents=%d archives=%d plaintext_bytes=%d encrypted_bytes=%d elapsed_ms=%d",
+                count, len(documents), archived, consumed, len(outer),
+                max(0, round((time.monotonic() - started) * 1000)))
     return Artifact(outer_name, "application/zip", outer, [companion], summary)

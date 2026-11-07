@@ -16,6 +16,7 @@ LOG_LEVELS = {"DEBUG": logging.DEBUG, "INFO": logging.INFO,
               "WARNING": logging.WARNING, "ERROR": logging.ERROR}
 LOG_NAME_RE = re.compile(r"^(\d{8})_app\.log$")
 RETENTION_DAYS = 7
+LOGGER = logging.getLogger("physalia")
 
 
 class DailyLogHandler(logging.Handler):
@@ -123,4 +124,8 @@ def configure_logging(config_path: Path | None = None,
         logger.warning("%s", config_warning)
     logger.info("logging_initialized level=%s removed_old_logs=%d",
                 level_name, len(handler.removed_files))
+    for removed in handler.removed_files:
+        logger.debug("old_log_removed log_date=%s", removed.stem[:8])
+    logger.debug("logging_configuration_loaded log_file=%s retention_days=%d",
+                 handler.current_path.name, RETENTION_DAYS)
     return logger

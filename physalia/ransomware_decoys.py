@@ -4,9 +4,12 @@ from __future__ import annotations
 import html
 import io
 import json
+import logging
+import os
 import posixpath
 import secrets
 import zipfile
+import time
 from datetime import date
 
 from physalia.archive_metadata import write_archive_member
@@ -15,6 +18,84 @@ from physalia.nesting import Artifact
 from physalia.validation import integer
 
 MAX_PATH_MAZE_MEMBERS = 500_000
+LOGGER = logging.getLogger("physalia")
+
+
+def create_sparse_file(directory, filename, logical_size, prefix):
+    """Create a sparse file exclusively and reject filesystems that allocate it densely."""
+    from pathlib import Path
+
+    started = time.monotonic()
+    LOGGER.debug("sparse_file_create_started logical_bytes=%d prefix_bytes=%d",
+                 logical_size, len(prefix))
+    folder = Path(directory)
+    if not folder.is_absolute():
+        raise ValueError("Destination must be an absolute directory path")
+    folder = folder.resolve(strict=True)
+    if not folder.is_dir() or Path(filename).name != filename:
+        raise ValueError("Invalid destination directory or filename")
+    target = folder / filename
+    created = False
+    try:
+        with target.open("xb") as file:
+            created = True
+            if os.name == "nt":
+                import ctypes
+                import msvcrt
+                from ctypes import wintypes
+
+                kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+                handle = wintypes.HANDLE(msvcrt.get_osfhandle(file.fileno()))
+                device_io = kernel.DeviceIoControl
+                device_io.argtypes = [wintypes.HANDLE, wintypes.DWORD, wintypes.LPVOID, wintypes.DWORD,
+                                      wintypes.LPVOID, wintypes.DWORD, ctypes.POINTER(wintypes.DWORD),
+                                      wintypes.LPVOID]
+                device_io.restype = wintypes.BOOL
+                returned = wintypes.DWORD()
+                if not device_io(handle, 0x000900C4, None, 0, None, 0, ctypes.byref(returned), None):
+                    raise OSError(ctypes.get_last_error(), "Filesystem does not support sparse files")
+            file.write(prefix)
+            # Writing the final byte leaves the intervening range sparse on
+            # NTFS; Windows' CRT truncate can physically zero the whole gap.
+            file.seek(logical_size - 1)
+            file.write(b"\0")
+            file.flush()
+            if os.name == "nt":
+                class FileStandardInfo(ctypes.Structure):
+                    _fields_ = [("allocation_size", ctypes.c_longlong), ("end_of_file", ctypes.c_longlong),
+                                ("number_of_links", wintypes.DWORD), ("delete_pending", wintypes.BOOLEAN),
+                                ("directory", wintypes.BOOLEAN)]
+
+                info = FileStandardInfo()
+                get_info = kernel.GetFileInformationByHandleEx
+                get_info.argtypes = [wintypes.HANDLE, ctypes.c_int, wintypes.LPVOID, wintypes.DWORD]
+                get_info.restype = wintypes.BOOL
+                if not get_info(handle, 1, ctypes.byref(info), ctypes.sizeof(info)):
+                    raise OSError(ctypes.get_last_error(), "Could not check sparse allocation")
+                allocated = info.allocation_size
+            else:
+                info = os.fstat(file.fileno())
+                if not hasattr(info, "st_blocks"):
+                    raise OSError("Filesystem does not report sparse allocation")
+                allocated = info.st_blocks * 512
+            if allocated >= logical_size // 2:
+                raise OSError("Filesystem did not create a sparse file")
+            LOGGER.debug("sparse_file_allocation_verified logical_bytes=%d allocated_bytes=%d",
+                         logical_size, allocated)
+        LOGGER.info("sparse_file_create_complete logical_bytes=%d elapsed_ms=%d",
+                    logical_size, max(0, round((time.monotonic() - started) * 1000)))
+        return str(target)
+    except Exception as exc:
+        LOGGER.warning("sparse_file_create_failed error_type=%s", type(exc).__name__)
+        LOGGER.debug("sparse_file_create_traceback", exc_info=True)
+        if created:
+            try:
+                target.unlink()
+                LOGGER.debug("sparse_partial_file_removed")
+            except OSError:
+                LOGGER.error("sparse_partial_file_removal_failed", exc_info=True)
+                pass
+        raise
 
 
 def _archive(files, language):
@@ -30,6 +111,9 @@ def _operator(name, data):
 
 
 def generate_path_maze(settings, language="ja"):
+    started = time.monotonic()
+    LOGGER.debug("path_maze_generation_started setting_keys=%s",
+                 ",".join(sorted(key for key in settings if isinstance(key, str))))
     ja = language == "ja"
     depth = integer(settings.get("depth", 20), "depth", 1, 20, language)
     branches = integer(settings.get("branches", 1000), "branches", 1, 1500, language)
@@ -184,102 +268,28 @@ def generate_path_maze(settings, language="ja"):
     companion = _operator("path_maze.operator.json", {"directories": paths, "files": documents,
                                                        "index_pages": index_files, "entry_page": "index.html",
                                                        "shortcuts": shortcuts})
-    return Artifact("path_maze_deployment.zip", "application/zip", output.getvalue(), [companion], summary)
-
-
-SPARSE_SCRIPT = r'''#!/usr/bin/env python3
-"""Create synthetic sparse decoys in a user-selected existing directory."""
-import argparse
-import json
-import os
-from pathlib import Path
-import sys
-
-NAMES = __NAMES__
-SIZE = __SIZE__
-
-def mark_sparse(file):
-    if os.name == "nt":
-        import ctypes
-        import msvcrt
-        from ctypes import wintypes
-        kernel = ctypes.WinDLL("kernel32", use_last_error=True)
-        call = kernel.DeviceIoControl
-        call.argtypes = [wintypes.HANDLE, wintypes.DWORD, wintypes.LPVOID, wintypes.DWORD,
-                         wintypes.LPVOID, wintypes.DWORD, ctypes.POINTER(wintypes.DWORD), wintypes.LPVOID]
-        call.restype = wintypes.BOOL
-        returned = wintypes.DWORD()
-        if not call(wintypes.HANDLE(msvcrt.get_osfhandle(file.fileno())), 0x000900C4,
-                    None, 0, None, 0, ctypes.byref(returned), None):
-            raise OSError(ctypes.get_last_error(), "filesystem did not enable sparse files")
-
-def check_posix(directory):
-    if os.name == "nt":
-        return
-    import secrets
-    probe = directory / (".sparse_probe_" + secrets.token_hex(12))
-    created = False
-    try:
-        with probe.open("xb") as f:
-            created = True
-            f.truncate(16 * 1024 * 1024)
-            info = os.fstat(f.fileno())
-            if not hasattr(info, "st_blocks") or info.st_blocks * 512 >= info.st_size // 2:
-                raise OSError("filesystem does not report sparse allocation")
-    finally:
-        if created:
-            probe.unlink(missing_ok=True)
-
-def main():
-    parser = argparse.ArgumentParser(description="Create synthetic sparse decoys; see README before running.")
-    parser.add_argument("directory", help="existing destination directory")
-    args = parser.parse_args()
-    directory = Path(args.directory).expanduser().resolve(strict=True)
-    if not directory.is_dir():
-        parser.error("destination must be an existing directory")
-    check_posix(directory)
-    for name in NAMES:
-        path = directory / name
-        created = False
-        try:
-            with path.open("xb") as file:
-                created = True
-                mark_sparse(file)
-                file.write(b"Reference,Team,Status\nSYNTHETIC-104,Planning,Draft\n")
-                file.truncate(SIZE)
-            print(json.dumps({"created": str(path), "logical_bytes": SIZE}), flush=True)
-        except OSError as exc:
-            if created:
-                try:
-                    path.unlink()
-                except OSError:
-                    pass
-            print("Could not create " + str(path) + ": " + str(exc), file=sys.stderr, flush=True)
-            return 1
-    return 0
-
-if __name__ == "__main__":
-    sys.exit(main())
-'''
+    package = output.getvalue()
+    LOGGER.info("path_maze_generation_complete directories=%d documents=%d indexes=%d shortcuts=%d archive_bytes=%d elapsed_ms=%d",
+                len(paths), len(documents), len(index_files), len(shortcuts), len(package),
+                max(0, round((time.monotonic() - started) * 1000)))
+    return Artifact("path_maze_deployment.zip", "application/zip", package, [companion], summary)
 
 
 def generate_sparse_decoy(settings, language="ja"):
+    LOGGER.debug("sparse_decoy_metadata_started setting_keys=%s",
+                 ",".join(sorted(key for key in settings if isinstance(key, str))))
     size_gib = integer(settings.get("size_gib", 1), "size_gib", 1, 32, language)
-    count = integer(settings.get("files", 1), "files", 1, 4, language)
-    names = [f"{stem}_{secrets.token_hex(5)}.csv" for stem in
-             ("financial_forecast", "vendor_ledger", "project_export", "operations_register")[:count]]
+    extension = settings.get("extension", "csv")
+    if not isinstance(extension, str) or extension not in (
+            "csv", "pdf", "xlsx", "docx", "zip", "bak", "db", "log", "txt", "xml"):
+        raise ValueError("Invalid sparse decoy extension")
+    stem = secrets.choice(("financial_forecast", "vendor_ledger", "project_export", "operations_register"))
+    filename = f"{stem}_{secrets.token_hex(5)}.{extension}"
     size = size_gib * 1024 ** 3
-    script = SPARSE_SCRIPT.replace("__NAMES__", repr(names)).replace("__SIZE__", str(size)).encode("utf-8")
-    readme = ("架空スパースファイルの作成\nPython 3.11以降で python create_sparse_decoy.py <既存の配置先> を手動実行します。\n"
-              "各ファイルは見かけ上のサイズが大きく、コピー・バックアップ・同期時に容量と時間を消費する場合があります。\n"
-              "ファイルシステムがスパース形式に対応しない場合は作成を中止します。正規のバックアップ対象からの除外を検討してください。\n"
-              "既存ファイルを上書きしません。実行後の一覧は標準出力と運用者専用JSONで確認できます。\n"
-              if language == "ja" else
-              "Create synthetic sparse files\nRun python create_sparse_decoy.py <existing-directory> manually with Python 3.11 or later.\n"
-              "Copies, backups and sync may consume the full logical size and take considerable time.\n"
-              "Creation stops if sparse files are not supported. Consider excluding decoys from normal backups.\n"
-              "Existing files are not overwritten. Review stdout and the separate operator JSON for the filenames.\n")
-    files = [("create_sparse_decoy.py", script), ("README.txt", readme.encode("utf-8"))]
-    companion = _operator("sparse_decoy.operator.json", {"files": names, "logical_bytes_each": size})
-    summary = {"kind": "sparse_decoy", "files": count, "size_gib": size_gib}
-    return Artifact("sparse_decoy_deployment.zip", "application/zip", _archive(files, language), [companion], summary)
+    companion = _operator("sparse_decoy.operator.json", {"files": [filename], "logical_bytes_each": size,
+                                                           "display_extension_only": extension})
+    summary = {"kind": "sparse_decoy", "files": 1, "size_gib": size_gib,
+               "extension": extension, "filename": filename}
+    # This prefix is written to the sparse file at the chosen destination.
+    content = b"Reference,Team,Status\nSYNTHETIC-104,Planning,Draft\n"
+    return Artifact(filename, "application/octet-stream", content, [companion], summary)

@@ -1,12 +1,35 @@
 """Shared validation for bounded, local asset generation."""
+import functools
 import ipaddress
+import logging
 import math
 import re
 import secrets
+import time
 import unicodedata
 from urllib.parse import urlsplit
 
 from physalia.i18n import translate
+
+LOGGER = logging.getLogger("physalia")
+
+def _logged_validation(function):
+    """Trace shared validation stages without recording supplied values."""
+    @functools.wraps(function)
+    def wrapped(*args, **kwargs):
+        started = time.monotonic()
+        LOGGER.debug("validation_started name=%s", function.__name__)
+        try:
+            result = function(*args, **kwargs)
+        except Exception as exc:
+            LOGGER.info("validation_rejected name=%s error_type=%s elapsed_ms=%d",
+                        function.__name__, type(exc).__name__,
+                        max(0, round((time.monotonic() - started) * 1000)))
+            raise
+        LOGGER.debug("validation_complete name=%s elapsed_ms=%d",
+                     function.__name__, max(0, round((time.monotonic() - started) * 1000)))
+        return result
+    return wrapped
 
 MAX_CANARY_URLS = 400
 MAX_CANARY_URL_LENGTH = 2048
@@ -64,6 +87,7 @@ def _unsafe_text_character(character):
             or 0xD800 <= ord(character) <= 0xDFFF)
 
 
+@_logged_validation
 def reject_unsafe_text_tree(value, language="ja"):
     """Reject unsafe text, recognizable secrets and unapproved endpoints."""
     pending = [(value, False, 0)]
@@ -274,6 +298,7 @@ def is_reserved_example_url(value):
     return host in _RESERVED_EXAMPLE_HOSTS or any(host.endswith(suffix) for suffix in _RESERVED_EXAMPLE_SUFFIXES)
 
 
+@_logged_validation
 def canary_url(value, language="ja"):
     original_value = value
     value = text(value, "canary_url", MAX_CANARY_URL_LENGTH, language)
@@ -307,6 +332,7 @@ def canary_url(value, language="ja"):
     return value
 
 
+@_logged_validation
 def canary_url_list(settings, language="ja"):
     """Validate a per-file URL list while retaining the legacy single-URL input."""
     raw = settings.get("canary_urls")
@@ -323,6 +349,7 @@ def canary_url_list(settings, language="ja"):
     return values
 
 
+@_logged_validation
 def vault_decoy_domain(value, authorized, language="ja"):
     """Validate an operator-owned domain for isolated synthetic login URLs.
 

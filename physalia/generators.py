@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import html
 import io
+import logging
 import os
 import secrets
 import zipfile
+import time
 from datetime import date, timedelta
 from urllib.parse import urlsplit
 
@@ -29,6 +31,7 @@ from physalia.tripwire import generate_ransomware_tripwire
 from physalia.ransomware_decoys import generate_path_maze, generate_sparse_decoy
 
 MAGIC = b"ADG1"
+LOGGER = logging.getLogger("physalia")
 def _derive_key(password: str, salt: bytes) -> bytes:
     return Scrypt(salt=salt, length=32, n=2**14, r=8, p=1).derive(password.encode("utf-8"))
 
@@ -163,6 +166,90 @@ def generate_web(settings: dict, language: str = "ja") -> Artifact:
     recent_records = secrets.SystemRandom().sample([records[index] for index in profile_record_ids], 6)
     recent_records.sort(key=lambda record: record[1])
     linked_record = secrets.choice(recent_records) if url else None
+    scenario_content = {
+        "operations": {
+            "nav": ("サービス状況", "Service health"), "nav_icon": "◉",
+            "panel_title": ("サービス運用状況", "Service operations"),
+            "panel_copy": ("各サービスの稼働状況と次回メンテナンス", "Current service health and the next maintenance window"),
+            "items": [("顧客API", "Customer API", "正常", "Operational"),
+                      ("請求処理", "Billing jobs", "正常", "Operational"),
+                      ("夜間エクスポート", "Nightly export", "確認予定", "Review scheduled")],
+            "action": ("運用手順書を開く", "Open operations runbook"),
+            "labels": {"workspace": ("サービス運用", "Service operations"), "folder": ("サービス記録", "Service records"),
+                       "storage": ("運用環境", "Environment"), "storage_value": ("検証ワークスペース", "Review workspace"),
+                       "people": ("担当チーム", "Owners"), "count": ("登録項目", "Items tracked"),
+                       "ready": ("稼働中", "Operational"), "updated": ("最終確認", "Last check"),
+                       "activity_added": ("運用項目を更新", "Operations item updated"), "activity_review": ("サービス確認を完了", "Service review completed")},
+            "color": "#176b68", "soft": "#e9f5f3", "canvas": "#f2f8f7",
+        },
+        "shared": {
+            "nav": ("メンバー", "Members"), "nav_icon": "♙",
+            "panel_title": ("最近の共同作業", "Recent collaboration"),
+            "panel_copy": ("共有フォルダーの担当とアクセス範囲", "Owners and access scope for shared folders"),
+            "items": [("プロジェクト · 編集者", "Project files · Editor", "編集可能", "Can edit"),
+                      ("部門資料 · 閲覧者", "Department files · Viewer", "閲覧のみ", "View only"),
+                      ("共有領域 · オーナー", "Shared workspace · Owner", "管理可能", "Can manage")],
+            "action": ("共有設定の記録", "Review sharing settings"),
+            "labels": {"workspace": ("共有ワークスペース", "Shared workspace"), "folder": ("共有ファイル", "Shared files"),
+                       "storage": ("共有領域", "Workspace"), "storage_value": ("部門ドキュメント", "Department documents"),
+                       "people": ("メンバー", "Members"), "count": ("共有ファイル", "Shared files"),
+                       "ready": ("利用可能", "Available"), "updated": ("最終更新", "Last activity"),
+                       "activity_added": ("共有ファイルを追加", "File shared with workspace"), "activity_review": ("アクセス範囲を確認", "Access scope reviewed")},
+            "color": "#4c58a6", "soft": "#eef0fb", "canvas": "#f5f6fc",
+        },
+        "archive": {
+            "nav": ("保管期限", "Retention"), "nav_icon": "▣",
+            "panel_title": ("保管ポリシー", "Retention policy"),
+            "panel_copy": ("アーカイブ区分ごとの確認サイクル", "Review cycle by archive collection"),
+            "items": [("契約・調達", "Contracts & procurement", "7年保管", "7-year retention"),
+                      ("サービス運用", "Service operations", "年次確認", "Annual review"),
+                      ("旧システム", "Legacy systems", "移行済み", "Migration complete")],
+            "action": ("保管期限一覧を確認", "Review retention schedule"),
+            "labels": {"workspace": ("業務アーカイブ", "Business archive"), "folder": ("保管コレクション", "Archive collections"),
+                       "storage": ("保管区分", "Collection"), "storage_value": ("部門記録", "Department records"),
+                       "people": ("管理担当", "Stewards"), "count": ("保管文書", "Documents archived"),
+                       "ready": ("保管対象", "In retention scope"), "updated": ("最終収録", "Last archived"),
+                       "activity_added": ("記録をアーカイブへ追加", "Record added to archive"), "activity_review": ("保管期限を確認", "Retention review completed")},
+            "color": "#8a5a2f", "soft": "#f7efe6", "canvas": "#faf7f2",
+        },
+        "records": {
+            "nav": ("確認キュー", "Review queue"), "nav_icon": "☷",
+            "panel_title": ("確認待ちの記録", "Records awaiting review"),
+            "panel_copy": ("監査証跡と承認状況の未処理項目", "Open items in the audit and approval trail"),
+            "items": [("変更申請 CR-2841", "Change request CR-2841", "承認待ち", "Pending approval"),
+                      ("アクセス審査 AR-1908", "Access review AR-1908", "担当確認", "Owner review"),
+                      ("移行記録 MR-0732", "Migration record MR-0732", "照合済み", "Reconciled")],
+            "action": ("承認履歴を確認", "Review approval history"),
+            "labels": {"workspace": ("記録センター", "Records center"), "folder": ("監査・承認記録", "Audit and approval records"),
+                       "storage": ("記録区分", "Record class"), "storage_value": ("変更・アクセス審査", "Change and access reviews"),
+                       "people": ("確認担当", "Reviewers"), "count": ("管理記録", "Records indexed"),
+                       "ready": ("確認可能", "Ready for review"), "updated": ("最終審査", "Last reviewed"),
+                       "activity_added": ("記録を登録", "Record indexed"), "activity_review": ("承認履歴を照合", "Approval history reconciled")},
+            "color": "#8b4054", "soft": "#f8edf0", "canvas": "#faf5f6",
+        },
+    }[scenario]
+    labels = scenario_content["labels"]
+    sidebar_href = html.escape(url, quote=True) if url else "#members"
+    purpose_action_href = html.escape(url, quote=True) if url else "#files"
+    sidebar_target_label = localized(scenario_content["nav"])
+    context_rows = "".join(
+        f'<div class="context-row"><span class="context-mark" aria-hidden="true"></span>'
+        f'<span class="context-name">{html.escape(localized((ja_name, en_name)))}</span>'
+        f'<span class="context-state">{html.escape(localized((ja_state, en_state)))}</span></div>'
+        for ja_name, en_name, ja_state, en_state in scenario_content["items"]
+    )
+    action_rel = ' rel="noreferrer"' if url else ""
+    context_panel = (
+        f'<section class="purpose-card" aria-labelledby="purpose-heading">'
+        f'<div class="purpose-heading"><div><p class="purpose-kicker">{html.escape(localized(profile_section))}</p>'
+        f'<h2 id="purpose-heading">{html.escape(localized(scenario_content["panel_title"]))}</h2>'
+        f'<p>{html.escape(localized(scenario_content["panel_copy"]))}</p></div>'
+        f'<a class="purpose-action" href="{purpose_action_href}"{action_rel}>'
+        f'{html.escape(localized(scenario_content["action"]))}</a></div>'
+        f'<div class="context-list">{context_rows}</div></section>'
+    )
+    theme_style = (f' style="--accent:{scenario_content["color"]};'
+                   f'--accent-soft:{scenario_content["soft"]};--canvas:{scenario_content["canvas"]}"')
     preview_rows, deployment_rows = [], []
     for names, days_ago, statuses in recent_records:
         name = localized(names)
@@ -193,22 +280,22 @@ def generate_web(settings: dict, language: str = "ja") -> Artifact:
                      else f"Showing 6 of {count_value} files")
     updated_label = "更新日時" if language == "ja" else "Last modified"
     status_label = "状態" if language == "ja" else "Status"
-    count_label = "登録ファイル" if language == "ja" else "Files indexed"
+    count_label = localized(labels["count"])
     type_label = "種類" if language == "ja" else "Type"
-    workspace_label = "共有ワークスペース" if language == "ja" else "Shared workspace"
-    folder_label = "すべてのファイル" if language == "ja" else "All files"
+    workspace_label = localized(labels["workspace"])
+    folder_label = localized(labels["folder"])
     overview_label = "概要" if language == "ja" else "Overview"
     files_label = "ファイル" if language == "ja" else "Files"
     activity_label = "アクティビティ" if language == "ja" else "Activity"
-    people_label = "メンバー" if language == "ja" else "Members"
+    people_label = localized(labels["people"])
     available_label = "利用可能" if language == "ja" else "Available"
-    ready_label = "利用可能なファイル" if language == "ja" else "Available files"
-    activity_added_label = "ファイルを登録" if language == "ja" else "Files added to workspace"
-    activity_review_label = "ワークスペースを確認" if language == "ja" else "Workspace review completed"
-    storage_label = "ストレージ" if language == "ja" else "Storage"
-    storage_value = "共有ドキュメント" if language == "ja" else "Shared documents"
-    filter_label = "すべてのファイル" if language == "ja" else "All files"
-    modified_label = "最終更新" if language == "ja" else "Last updated"
+    ready_label = localized(labels["ready"])
+    activity_added_label = localized(labels["activity_added"])
+    activity_review_label = localized(labels["activity_review"])
+    storage_label = localized(labels["storage"])
+    storage_value = localized(labels["storage_value"])
+    filter_label = folder_label
+    modified_label = localized(labels["updated"])
     scroll_hint = "表は左右にスクロールできます。" if language == "ja" else "Scroll horizontally to see all columns."
     def make_page(rows):
         return f"""<!doctype html>
@@ -306,21 +393,41 @@ tbody tr:last-child td{{border-bottom:0}}
 .info-line+.info-line{{border-top:1px solid #f0f2f5}}
 .info-line strong{{color:#465666;font-size:.73rem;font-weight:560;text-align:right}}
 .footer{{display:flex;justify-content:space-between;gap:1rem;margin-top:1.3rem;color:#8b97a3;font-size:.68rem}}
+.portal-archive{{font-family:Georgia,"Yu Mincho",serif}}
+.purpose-card{{margin:0 0 1.1rem;padding:1.1rem 1.25rem;border:1px solid var(--line);border-top:3px solid var(--accent);border-radius:10px;background:var(--surface);box-shadow:var(--shadow)}}
+.purpose-heading{{display:flex;align-items:center;justify-content:space-between;gap:1.2rem}}
+.purpose-kicker{{margin:0 0 .25rem;color:var(--accent);font-size:.66rem;font-weight:720;letter-spacing:.09em;text-transform:uppercase}}
+.purpose-heading h2{{margin:0;font-size:1rem;font-weight:660}}
+.purpose-heading p:not(.purpose-kicker){{margin:.25rem 0 0;color:var(--muted);font-size:.76rem}}
+.purpose-action{{flex:0 0 auto;padding:.55rem .75rem;border:1px solid var(--accent);border-radius:7px;color:var(--accent);font-size:.73rem;font-weight:620}}
+.purpose-action:hover{{background:var(--accent-soft)}}
+.context-list{{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.6rem;margin-top:.9rem}}
+.context-row{{display:flex;align-items:center;gap:.55rem;min-width:0;padding:.62rem .7rem;border:1px solid var(--line);border-radius:7px;background:var(--canvas);font-size:.72rem}}
+.context-mark{{width:7px;height:7px;flex:0 0 auto;border-radius:50%;background:var(--accent)}}
+.context-name{{overflow:hidden;color:#435365;text-overflow:ellipsis;white-space:nowrap}}
+.context-state{{margin-left:auto;color:var(--accent);font-size:.65rem;white-space:nowrap}}
+.portal-shared .context-mark{{width:25px;height:25px;border-radius:50%;background:var(--accent-soft);color:var(--accent)}}
+.portal-shared .context-mark::after{{display:block;content:"•";text-align:center;line-height:25px}}
+.portal-archive .purpose-card{{border-top:0;border-left:4px solid var(--accent);border-radius:3px 10px 10px 3px}}
+.portal-archive .context-row{{border-style:dashed;background:#fffdf9}}
+.portal-records .context-row{{border-left:3px solid var(--accent);border-radius:4px}}
+@media(max-width:640px){{.purpose-heading{{align-items:flex-start;flex-direction:column}}.context-list{{grid-template-columns:1fr}}.purpose-action{{align-self:flex-start}}}}
 @media(max-width:920px){{.topbar{{padding:0 1.3rem}}.brand{{min-width:auto}}.topnav{{gap:1rem}}.app-layout{{grid-template-columns:190px minmax(0,1fr)}}.sidebar{{padding-inline:.7rem}}.main{{padding-inline:1.3rem}}.heading-row{{align-items:flex-start;flex-direction:column}}.heading-actions{{align-self:flex-end}}}}
 @media(max-width:640px){{.topbar{{height:58px;gap:1rem;padding:0 1rem}}.topnav{{display:none}}.top-right{{gap:.6rem}}.workspace-status{{display:none}}.app-layout{{display:block;min-height:calc(100vh - 58px)}}.sidebar{{display:none}}.main{{padding:1.2rem .85rem 2rem}}.breadcrumbs{{margin-bottom:1.1rem}}.heading-row{{gap:1rem;margin-bottom:1.2rem}}.heading-actions{{width:100%;justify-content:space-between}}.metrics{{gap:.55rem}}.metric{{align-items:flex-start;flex-direction:column;gap:.45rem;padding:.75rem}}.metric-icon{{width:30px;height:30px}}.metric strong{{font-size:1rem}}.panel-head{{align-items:flex-start;flex-direction:column;padding:.9rem}}.panel-tools{{width:100%}}th,td{{padding:.7rem .8rem}}.table-scroll-hint{{display:block}}.file-cell{{min-width:205px}}.file-link{{max-width:240px}}.detail-grid{{grid-template-columns:1fr}}.footer{{flex-direction:column}}}}
 @media(prefers-reduced-motion:reduce){{*,*::before,*::after{{scroll-behavior:auto!important;transition:none!important}}}}
  </style>
-</head><body>
+</head><body class="portal-{scenario}"{theme_style}>
 <header class="topbar"><a class="brand" href="#overview"><span class="brand-mark" aria-hidden="true">{html.escape(title[:1].upper())}</span><span>{html.escape(title)}</span></a>
 <nav class="topnav" aria-label="{localized(("ワークスペース", "Workspace"))}"><a href="#overview">{overview_label}</a><a class="active" href="#files">{files_label}</a><a href="#activity">{activity_label}</a></nav>
 <div class="top-right"><span class="workspace-status">{workspace_label}</span><span class="avatar" aria-label="{people_label}">OP</span></div></header>
 <div class="app-layout"><aside class="sidebar" aria-label="{localized(("ナビゲーション", "Navigation"))}">
-<div class="workspace-switch"><span class="workspace-symbol" aria-hidden="true">W</span><span><span class="workspace-name">{html.escape(title)}</span><span class="workspace-subtitle">{workspace_label}</span></span></div>
-<p class="side-label">{localized(("ワークスペース", "Workspace"))}</p><nav class="side-nav"><a href="#overview"><span class="nav-icon" aria-hidden="true">⌂</span>{overview_label}</a><a class="active" href="#files"><span class="nav-icon" aria-hidden="true">▤</span>{files_label}<span class="nav-count">{count_value}</span></a><a href="#activity"><span class="nav-icon" aria-hidden="true">◷</span>{activity_label}</a><a href="#members"><span class="nav-icon" aria-hidden="true">♙</span>{people_label}</a></nav>
+<div class="workspace-switch"><span class="workspace-symbol" aria-hidden="true">{scenario_content["nav_icon"]}</span><span><span class="workspace-name">{html.escape(title)}</span><span class="workspace-subtitle">{workspace_label}</span></span></div>
+<p class="side-label">{localized(("ワークスペース", "Workspace"))}</p><nav class="side-nav"><a href="#overview"><span class="nav-icon" aria-hidden="true">⌂</span>{overview_label}</a><a class="active" href="#files"><span class="nav-icon" aria-hidden="true">▤</span>{files_label}<span class="nav-count">{count_value}</span></a><a href="#activity"><span class="nav-icon" aria-hidden="true">◷</span>{activity_label}</a><a href="{sidebar_href}"{action_rel}><span class="nav-icon" aria-hidden="true">{scenario_content["nav_icon"]}</span>{sidebar_target_label}</a></nav>
 <div class="sidebar-note"><strong>{storage_label}</strong>{storage_value}</div></aside>
 <main class="main" id="overview"><div class="breadcrumbs"><span>{localized(("ワークスペース", "Workspace"))}</span><span class="separator">/</span><strong>{folder_label}</strong></div>
 <div class="heading-row"><div><span class="eyebrow">{html.escape(title)}</span><h1>{heading}</h1><p class="intro">{section}</p></div><div class="heading-actions"><span class="sync-state"><span class="sync-dot" aria-hidden="true"></span>{available_label}</span><span class="updated-pill">{modified_label}: {date.today().strftime("%Y/%m/%d" if language == "ja" else "%b %d, %Y")}</span></div></div>
 <div class="metrics" aria-label="{workspace_label}"><div class="metric"><span class="metric-icon" aria-hidden="true">▤</span><span><small>{count_label}</small><strong>{count_value}</strong></span></div><div class="metric"><span class="metric-icon" aria-hidden="true">✓</span><span><small>{ready_label}</small><strong>{available_count} / 6</strong></span></div><div class="metric"><span class="metric-icon" aria-hidden="true">◷</span><span><small>{modified_label}</small><strong>{date.today().strftime("%Y/%m/%d" if language == "ja" else "%b %d")}</strong></span></div></div>
+{context_panel}
 <section class="panel" id="files"><div class="panel-head"><div><h2>{recent_label}</h2><p class="panel-subtitle">{folder_label} · {showing_label}</p></div><div class="panel-tools"><span class="filter-pill active">{filter_label}</span><span class="filter-pill">{section}</span></div></div>
 <p id="scroll-hint" class="table-scroll-hint">{html.escape(scroll_hint)}</p><div class="table-scroll" role="region" tabindex="0" aria-label="{recent_label}" aria-describedby="table-summary scroll-hint"><table><caption>{recent_label}</caption><thead><tr><th scope="col">{file_label}</th><th scope="col">{updated_label}</th><th scope="col">{status_label}</th><th scope="col">{type_label}</th></tr></thead><tbody>{"".join(rows)}</tbody></table></div><div id="table-summary" class="table-meta"><span>{showing_label}</span><span>{available_label}</span></div></section>
 <div class="detail-grid"><section class="detail-card" id="activity"><h2 class="detail-title">{activity_label}</h2><div class="activity-row"><span class="activity-mark" aria-hidden="true"></span><span>{activity_added_label}</span><time>{date.today().strftime("%b %d" if language == "en" else "%m/%d")}</time></div><div class="activity-row"><span class="activity-mark" aria-hidden="true"></span><span>{activity_review_label}</span><time>{date.today().strftime("%b %d" if language == "en" else "%m/%d")}</time></div></section><section class="detail-card" id="members"><h2 class="detail-title">{workspace_label}</h2><div class="info-line"><span>{storage_label}</span><strong>{storage_value}</strong></div><div class="info-line"><span>{people_label}</span><strong>12</strong></div><div class="info-line"><span>{status_label}</span><strong>{available_label}</strong></div></section></div>
@@ -355,6 +462,13 @@ tbody tr:last-child td{{border-bottom:0}}
             {"artifact": artifact_name, "element": "file_list_entry", "label": canary_label},
             {"artifact": package_name + "!/index.html", "element": "file_list_entry", "label": canary_label},
         ]
+    if url:
+        summary.setdefault("canary_locations", []).extend([
+            {"artifact": artifact_name, "element": "purpose_sidebar_link", "label": sidebar_target_label},
+            {"artifact": package_name + "!/index.html", "element": "purpose_sidebar_link", "label": sidebar_target_label},
+            {"artifact": artifact_name, "element": "purpose_panel_action", "label": localized(scenario_content["action"])},
+            {"artifact": package_name + "!/index.html", "element": "purpose_panel_action", "label": localized(scenario_content["action"])},
+        ])
     deployment = Artifact(package_name, "application/zip", package.getvalue(), role="deployment")
     return Artifact(artifact_name, "text/html; charset=utf-8", markup.encode("utf-8"),
                     [deployment], summary)
@@ -523,7 +637,7 @@ SETTING_KEYS = {
     "fake_trap": {"variant", "embed_canary", "canary_url"},
     "ransomware_tripwire": {"files"},
     "path_maze": {"depth", "branches", "files"},
-    "sparse_decoy": {"size_gib", "files"},
+    "sparse_decoy": {"size_gib", "extension"},
     "nest": {"scenario", "layers", "branches", "decoys",
              "directory_depth", "rows", "directories", "password_policy"},
     "directory_maze": {"scenario", "vault_domain", "vault_domain_authorized", "title", "depth", "branches",
@@ -545,6 +659,7 @@ def generate(kind: object, settings: object, language: str = "ja") -> Artifact:
         settings = {key: value for key, value in settings.items()
                     if key in SETTING_KEYS[kind]}
     if any(not isinstance(key, str) for key in settings) or settings.keys() - SETTING_KEYS[kind]:
+        LOGGER.warning("generator_rejected kind=%s reason=unknown_setting_keys", kind)
         raise ValueError(translate("unknown_settings", language))
     if kind == "fake_trap":
         embed_canary = settings.get("embed_canary", bool(settings.get("canary_url")))
@@ -552,7 +667,12 @@ def generate(kind: object, settings: object, language: str = "ja") -> Artifact:
             raise ValueError(translate("invalid_input", language))
         if not embed_canary and "canary_url" in settings:
             settings = {key: value for key, value in settings.items() if key != "canary_url"}
+    LOGGER.debug("generator_validation_started kind=%s setting_keys=%s",
+                 kind, ",".join(sorted(settings)))
+    validation_started = time.monotonic()
     reject_unsafe_text_tree(settings, language)
+    LOGGER.debug("generator_text_validation_complete kind=%s elapsed_ms=%d",
+                 kind, max(0, round((time.monotonic() - validation_started) * 1000)))
     # Dedicated owned-domain inputs are exempt from generic endpoint scanning
     # so canary values remain byte-for-byte intact. Validate them even when a
     # caller supplies an otherwise unused optional field.
@@ -563,9 +683,22 @@ def generate(kind: object, settings: object, language: str = "ja") -> Artifact:
                                             if domain_key == "vault_domain"
                                             else "email_domain_authorized", False),
                                language)
-    result = GENERATORS[kind](settings, language)
+    generation_started = time.monotonic()
+    LOGGER.debug("generator_function_started kind=%s language=%s", kind, language)
+    try:
+        result = GENERATORS[kind](settings, language)
+    except Exception as exc:
+        LOGGER.error("generator_function_failed kind=%s error_type=%s", kind, type(exc).__name__)
+        LOGGER.debug("generator_function_traceback kind=%s", kind, exc_info=True)
+        raise
     asset = result if isinstance(result, Artifact) else Artifact(*result)
     # The top-level artifact is the deployable decoy. Companion artifacts keep
     # their own roles (operator-only by default, or deployment when applicable).
     asset.role = "deployment"
-    return attach_inventory(asset, kind, settings, language)
+    inventory_started = time.monotonic()
+    asset = attach_inventory(asset, kind, settings, language)
+    LOGGER.debug("generator_complete kind=%s name=%s mime=%s in_memory_bytes=%d companions=%d elapsed_ms=%d inventory_ms=%d",
+                 kind, asset.name, asset.mime, len(asset.content), len(asset.companions),
+                 max(0, round((time.monotonic() - generation_started) * 1000)),
+                 max(0, round((time.monotonic() - inventory_started) * 1000)))
+    return asset
