@@ -213,6 +213,42 @@ def generate_path_maze(settings, language="ja"):
     LOGGER.debug("path_maze_generation_started setting_keys=%s",
                  ",".join(sorted(key for key in settings if isinstance(key, str))))
     ja = language == "ja"
+    os_type = settings.get("os_type", "windows")
+    profiles = {
+        "windows": {
+            "folders": ("AppData", "Documents", "Downloads", "ProgramData", "Program Files", "Public",
+                        "Services", "Logs", "Backups", "Shared", "Packages", "Profiles"),
+            "spine": ("Users", "Data", "Prog", "Share", "Config", "Logs", "Svc", "Ops", "Docs", "Cache", "Pkg", "Common"),
+            "files": ("BudgetReview", "VendorSchedule", "ProjectHandoff", "MaintenancePlan", "QuarterlyReport",
+                      "RecordsIndex", "ServiceSummary", "CostAllocation", "DeliveryStatus", "ApprovalLog",
+                      "AssetRegister", "RenewalSchedule", "AccessMatrix", "WorkPlan", "AccountSummary", "ChangeHistory"),
+            "branch_style": "windows",
+            "path_limit": 220,
+        },
+        "unix": {
+            "folders": ("etc", "usr", "var", "opt", "srv", "home", "lib", "share", "local", "spool", "cache", "data"),
+            "spine": ("var", "usr", "opt", "srv", "home", "etc", "share", "local", "lib", "spool", "cache", "data"),
+            "files": ("budget_review", "vendor_schedule", "project_handoff", "maintenance_plan", "quarterly_report",
+                      "records_index", "service_summary", "cost_allocation", "delivery_status", "approval_log",
+                      "asset_register", "renewal_schedule", "access_matrix", "work_plan", "account_summary", "change_history"),
+            "branch_style": "unix",
+            "path_limit": 3000,
+        },
+        "macos": {
+            "folders": ("Library", "Application Support", "Group Containers", "Containers", "Preferences", "Caches",
+                        "Shared", "Documents", "Frameworks", "Resources", "LaunchAgents", "Logs"),
+            "spine": ("Users", "Library", "Application Support", "Group Containers", "Containers", "Shared",
+                      "Documents", "Preferences", "Caches", "Logs", "Resources", "Frameworks"),
+            "files": ("Budget Review", "Vendor Schedule", "Project Handoff", "Maintenance Plan", "Quarterly Report",
+                      "Records Index", "Service Summary", "Cost Allocation", "Delivery Status", "Approval Log",
+                      "Asset Register", "Renewal Schedule", "Access Matrix", "Work Plan", "Account Summary", "Change History"),
+            "branch_style": "macos",
+            "path_limit": 900,
+        },
+    }
+    if not isinstance(os_type, str) or os_type not in profiles:
+        raise ValueError("対象OSはwindows、unix、macosから選択してください。"
+                         if ja else "Choose a supported path profile: windows, unix or macos.")
     depth = integer(settings.get("depth", 20), "depth", 1, 20, language)
     branches = integer(settings.get("branches", 1000), "branches", 1, 1500, language)
     per_dir = integer(settings.get("files", 1), "files", 1, 4, language)
@@ -230,18 +266,42 @@ def generate_path_maze(settings, language="ja"):
     fiscal_year = current_date.year if current_date.month >= 4 else current_date.year - 1
     fiscal_quarter = ((current_date.month - 4) % 12) // 3 + 1
     reporting_period = f"FY{fiscal_year}-Q{fiscal_quarter}"
-    folders = ("finance", "operations", "planning", "archive", "reports", "projects", "procurement", "regional", "records", "contracts", "delivery", "support")
-    spine_folders = ("fin", "ops", "plan", "arch", "rpt", "proj", "proc", "reg", "rec", "ctr", "del", "sup")
-    names = ("budget_review", "vendor_schedule", "project_handoff", "maintenance_plan", "quarterly_report", "records_index", "service_summary", "cost_allocation", "delivery_status", "approval_log", "asset_register", "renewal_schedule", "access_matrix", "work_plan", "account_summary", "change_history")
-    paths = ["workspace_" + secrets.token_hex(3)]
+    profile = profiles[os_type]
+    folders = profile["folders"]
+    spine_folders = profile["spine"]
+    names = profile["files"]
+    root_name = {"windows": "Workspace_", "unix": "workspace_", "macos": "Workspace "}[os_type]
+    paths = [root_name + secrets.token_hex(3)]
     parent_by_path = {paths[0]: None}
     children_by_path = {paths[0]: []}
     current = paths[0]
     output = io.BytesIO()
     archive = zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED)
 
+    def write_member(name, content):
+        components = name.split("/")
+        if any(not part or len(part.encode("utf-8")) > 240 for part in components):
+            raise ValueError("パス構成要素が共通ファイル名の安全な長さを超えます。"
+                             if ja else "A path component exceeds the portable filename budget.")
+        if os_type == "windows":
+            forbidden = set('<>:"\\|?*')
+            reserved = {"CON", "PRN", "AUX", "NUL", *(f"COM{i}" for i in range(1, 10)),
+                        *(f"LPT{i}" for i in range(1, 10))}
+            if any(any(char in forbidden for char in part) or part.endswith((" ", "."))
+                   or part.split(".", 1)[0].upper() in reserved for part in components):
+                raise ValueError("Windowsで使えないファイル名が含まれています。"
+                                 if ja else "The generated path contains a name disallowed by Windows.")
+        if len(name.encode("utf-8")) > profile["path_limit"]:
+            raise ValueError("選択したOSプロファイルの相対パス長の上限を超えます。"
+                             if ja else "A path exceeds the selected OS profile's relative path budget.")
+        write_archive_member(archive, name, content, language=language)
+
     def add_folder(parent, name):
         path = f"{parent}/{name}"
+        if (not name or len(name.encode("utf-8")) > 240
+                or len(path.encode("utf-8")) > profile["path_limit"]):
+            raise ValueError("フォルダー名またはパスが選択したOSプロファイルの上限を超えます。"
+                             if ja else "A folder exceeds the selected OS profile's path limits.")
         paths.append(path)
         parent_by_path[path] = parent
         children_by_path[path] = []
@@ -250,7 +310,7 @@ def generate_path_maze(settings, language="ja"):
 
     for _ in range(depth):
         continuation_name = rng.choice(spine_folders)
-        child_names = set()
+        child_names = {}
         while len(child_names) < branches - 1:
             stem = rng.choice(folders)
             year = rng.randrange(current_date.year - 8, current_date.year + 5)
@@ -258,8 +318,16 @@ def generate_path_maze(settings, language="ja"):
             region = rng.choice(("north", "south", "east", "west", "central", "domestic",
                                  "overseas", "na", "eu", "apac", "online", "retail"))
             batch = rng.randrange(1000)
-            child_names.add(f"{stem}_{year}_q{quarter}_{region}_{batch:03d}")
-        child_names = list(child_names)
+            style = profile["branch_style"]
+            if style == "windows":
+                candidate = f"{stem[:5]}_{year % 100:02d}q{quarter}_{region[:2]}_{batch:03d}"
+            elif style == "macos":
+                candidate = f"{stem.replace(' ', '')[:10]} {year} Q{quarter} {region.title()} {batch:03d}"
+            else:
+                candidate = f"{stem}_{year}_q{quarter}_{region}_{batch:03d}"
+            key = candidate if os_type == "unix" else candidate.casefold()
+            child_names.setdefault(key, candidate)
+        child_names = list(child_names.values())
         child_names.append(continuation_name)
         rng.shuffle(child_names)
         for child in child_names:
@@ -299,7 +367,7 @@ def generate_path_maze(settings, language="ja"):
                            "Owner team: Planning\nReview state: Pending\n").encode()
             name = f"{directory}/{stem}_{reference.lower()}.{kind}"
             files_by_path[directory].append((name, stem.replace("_", " ")))
-            write_archive_member(archive, name, content, language=language)
+            write_member(name, content)
 
     # Each folder gets a local index with child-folder navigation and cross-branch
     # references. The links form a bounded graph; they never leave the archive.
@@ -349,7 +417,7 @@ def generate_path_maze(settings, language="ja"):
         page = f'''<!doctype html><html lang="{'ja' if ja else 'en'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">{STATIC_HTML_SECURITY_META}<meta name="description" content="{page_title}"><title>{directory_label} · {page_title}</title><style>
 *{{box-sizing:border-box}}body{{margin:0;background:#f5f7fa;color:#26364b;font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}}main{{max-width:980px;margin:32px auto;padding:0 20px}}header{{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #dbe2ea;padding:0 0 16px}}header strong{{font-size:17px}}header small,nav,.meta,li span,footer{{color:#65758b;font-size:12px}}nav{{margin:18px 0}}nav a{{color:#52667e;text-decoration:none}}h1{{font-size:24px;margin:8px 0}}.summary{{display:flex;gap:18px;flex-wrap:wrap;color:#65758b;font-size:12px;margin:14px 0 22px}}.grid{{display:grid;grid-template-columns:1fr 1fr;gap:16px}}section{{background:#fff;border:1px solid #dbe2ea;border-radius:8px;padding:18px 20px}}h2{{font-size:15px;margin:0 0 12px}}ul{{list-style:none;margin:0;padding:0}}li{{display:flex;justify-content:space-between;gap:14px;padding:9px 0;border-top:1px solid #edf0f4}}li:first-child{{border-top:0}}li a{{color:#1769aa;text-decoration:none}}li a:hover{{text-decoration:underline}}footer{{margin:22px 0}}@media(max-width:680px){{main{{margin:20px auto;padding:0 14px}}.grid{{grid-template-columns:1fr}}header{{align-items:flex-start;gap:10px;flex-direction:column}}}}
 </style></head><body><main><header><strong>{page_title}</strong><small>{directory_label}</small></header><nav aria-label="{'パンくずリスト' if ja else 'Breadcrumb'}">{breadcrumbs or page_title}</nav><h1>{folder_heading}</h1><div class="summary"><span>{len(children_by_path[directory])} {folder_word}</span><span>{len(files_by_path[directory])} {file_word}</span><span>{date_label}: <time datetime="{today}">{today}</time></span></div><div class="grid"><section><h2>{folder_heading}</h2><ul>{folder_links or '<li>—</li>'}</ul></section><section><h2>{related_heading}</h2><ul>{shortcut_links or '<li>—</li>'}</ul></section><section><h2>{files_heading}</h2><ul>{file_links or '<li>—</li>'}</ul></section></div><footer>{page_title} · {directory_label}</footer></main></body></html>'''.encode("utf-8")
-        write_archive_member(archive, f"{directory}/index.html", page, language=language)
+        write_member(f"{directory}/index.html", page)
 
     root_path = paths[0]
     start_title = "共有資料の入口" if ja else "Workspace records"
@@ -357,15 +425,20 @@ def generate_path_maze(settings, language="ja"):
     start_page = (f'''<!doctype html><html lang="{'ja' if ja else 'en'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">{STATIC_HTML_SECURITY_META}<title>{start_title}</title><style>
 *{{box-sizing:border-box}}body{{margin:0;background:#f5f7fa;color:#26364b;font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}}main{{max-width:760px;margin:48px auto;padding:26px;background:#fff;border:1px solid #dbe2ea;border-radius:8px}}h1{{font-size:22px}}p{{color:#65758b}}a{{color:#1769aa}}
 </style></head><body><main><p>{'部門共有' if ja else 'Department workspace'}</p><h1>{start_title}</h1><p>{'共有資料のフォルダー構成を確認できます。' if ja else 'Browse the shared records and folder index.'}</p><a href="{html.escape(posixpath.join(root_path, 'index.html'), quote=True)}">{start_link}</a></main></body></html>''').encode("utf-8")
-    write_archive_member(archive, "index.html", start_page, language=language)
+    write_member("index.html", start_page)
     archive.close()
     documents = [name for directory_files in files_by_path.values() for name, _ in directory_files]
     index_files = ["index.html", *(f"{directory}/index.html" for directory in paths)]
-    summary = {"kind": "path_maze", "directories": len(paths), "documents": len(documents),
+    summary = {"kind": "path_maze", "os_type": os_type, "directories": len(paths), "documents": len(documents),
                "index_pages": len(index_files), "shortcuts": len(shortcuts)}
     companion = _operator("path_maze.operator.json", {"directories": paths, "files": documents,
                                                        "index_pages": index_files, "entry_page": "index.html",
                                                        "shortcuts": shortcuts})
+    package = output.getvalue()
+    LOGGER.info("path_maze_generation_complete directories=%d documents=%d indexes=%d shortcuts=%d archive_bytes=%d elapsed_ms=%d",
+                len(paths), len(documents), len(index_files), len(shortcuts), len(package),
+                max(0, round((time.monotonic() - started) * 1000)))
+    return Artifact("path_maze_deployment.zip", "application/zip", package, [companion], summary)
     package = output.getvalue()
     LOGGER.info("path_maze_generation_complete directories=%d documents=%d indexes=%d shortcuts=%d archive_bytes=%d elapsed_ms=%d",
                 len(paths), len(documents), len(index_files), len(shortcuts), len(package),

@@ -636,7 +636,7 @@ SETTING_KEYS = {
     "web": {"scenario", "canary_url"},
     "fake_trap": {"variant", "embed_canary", "canary_url"},
     "ransomware_tripwire": {"files"},
-    "path_maze": {"depth", "branches", "files"},
+    "path_maze": {"os_type", "depth", "branches", "files"},
     "sparse_decoy": {"size_gib", "extension"},
     "nest": {"scenario", "layers", "branches", "decoys",
              "directory_depth", "rows", "directories", "password_policy"},

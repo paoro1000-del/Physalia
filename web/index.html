@@ -296,6 +296,7 @@
         </div>
         <div id="path_maze-fields" class="fields" hidden>
           <div class="panel-title"><h3 data-i18n="path_maze_title">パス・メイズ</h3><p data-i18n="path_maze_desc">既定で13階層、最大20階層のフォルダーと多数の分岐・交差リンクを生成します。</p></div>
+          <label for="path-os" data-i18n="path_os">対象OS</label><select id="path-os"><option value="windows" data-i18n="path_os_windows">Windows系</option><option value="unix" data-i18n="path_os_unix">Unix系（Linuxなど）</option><option value="macos" data-i18n="path_os_macos">macOS（Mac）</option></select><p class="help" data-i18n="path_os_note">選択OSに合わせてフォルダー名の表記と相対パス長を調整します。実際の展開可否はファイルシステム、展開先の長さ、OS設定にも左右されます。</p>
           <div class="form-grid"><div><label for="path-depth" data-i18n="path_depth">最大階層（1〜20）</label><input id="path-depth" type="number" min="1" max="20" value="20" required></div><div><label for="path-branches" data-i18n="path_branches">各階層の横分岐数（1〜1,500）</label><input id="path-branches" type="number" min="1" max="1500" value="1000" required></div><div><label for="path-files" data-i18n="path_files">各フォルダーの架空ファイル数（1〜4）</label><input id="path-files" type="number" min="1" max="4" value="1" required></div></div>
           <p id="path-maze-estimate" class="inline-note" aria-live="polite"></p>
           <p class="inline-note" data-i18n="path_note">通常のフォルダーと架空ファイルを有限個作ります。リンクや常駐プログラムは使いません。攻撃がデコイを処理する場合に追加の仕事が生じます。並列処理や対象の絞り込みでは実ファイルが先に処理されることがあります。バックアップや検索にもファイルが増えます。</p>

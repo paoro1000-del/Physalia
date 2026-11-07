@@ -41,7 +41,7 @@ Extract ZIPs to inspect their contents. For the Static Decoy Portal or Directory
 
 ### Using Path Maze and Sparse Decoy
 
-Extract the Path Maze ZIP at the destination. Keep the separate operator-only JSON inventory to identify and remove its files. It contains ordinary folders and synthetic files, with no links or background service. Searches and backups can encounter the extra files.
+Choose a Windows, Unix-like or macOS profile and extract the Path Maze ZIP to a dedicated destination. It uses platform-oriented folder names and relative path budgets, but destination-path and filesystem limits still apply. HTML index links remain inside the archive; it creates no filesystem symlinks or background service. Keep the separate operator-only JSON inventory to identify and remove its files.
 
 For Sparse Decoy, the destination defaults to the Downloads folder, or the user folder if Downloads is unavailable; you can change it to another existing folder, then select a nominal size (1-1,024 GiB, up to 1 TiB) and extension. Generation creates one sparse file there without overwriting existing files; its logical size varies by up to about 0.5% from the selected value, only downward near the 1 TiB ceiling. The app stops if the filesystem does not support sparse allocation. Save the separate operator-only file list. The extension is for appearance only; the content does not match that format. Copies, synchronization, backups and encrypted output may use the full logical size.
 

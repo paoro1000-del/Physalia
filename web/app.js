@@ -678,14 +678,14 @@ methodFlows.en.path_maze.context = "Default example: depth 13, two branches per 
 methodFlows.ja.path_maze.steps[0][1] = "階層は最大20、分岐は最大5、各フォルダーのファイルは最大12件まで調整できます。既定値ではZIP内に49,150項目を作り、上限は50,000項目です。";
 methodFlows.en.path_maze.steps[0][1] = "Choose up to twenty levels, five branches and twelve files per folder. Defaults produce 49,150 archive entries; the hard cap is 50,000.";
 methodFlows.en.path_maze.note = "Links stay within the archive; it contains no executable script or external request. Extracting tens of thousands of items increases storage use and may slow search, backup, sync and antivirus scans. Deploy and remove it only in an authorized, dedicated location using the operator inventory.";
-methodExplanations.ja.path_maze.how = "既定で20階層、各階層1,000分岐を作ります。横枝ごとに合計6個の下位フォルダーを不均等に配置し、枝ごとに異なる形の7フォルダー小階層を作ります。合計約14万フォルダーと同数の架空ファイル・一覧ページを含みます。";
-methodExplanations.en.path_maze.how = "Defaults create twenty levels with 1,000 branches per level. Each side branch has six nested folders arranged in varying shapes, forming a seven-folder subtree. The result has about 140,000 folders, synthetic files and index pages.";
+methodExplanations.ja.path_maze.how = "Windows系・Unix系・macOSから選び、各OSの一般的なフォルダー名と命名上の制約に合わせた有限のファイルグラフを作ります。既定は20階層・各階層1,000分岐で、合計約14万フォルダーです。";
+methodExplanations.en.path_maze.how = "Choose Windows, Unix-like or macOS to generate a finite file graph using common directory naming and filename constraints for that platform. Defaults create twenty levels with 1,000 branches per level and about 140,000 folders.";
 methodExplanations.ja.path_maze.limit = "ZIPは最大500,000項目です。既定値でも約280,000項目になります。自動列挙・並列処理・オフライン解析で全体を把握される可能性は残り、遅延や防止効果は保証されません。展開後は検索・バックアップ・同期の負荷とWindowsの長いパスへの対応も確認してください。";
 methodExplanations.en.path_maze.limit = "The ZIP is capped at 500,000 entries; defaults already create about 280,000. Automated enumeration, parallel processing and offline analysis can still map it; delay or prevention is not guaranteed. Check search, backup and sync load and Windows long-path support after extraction.";
-methodFlows.ja.path_maze.context = "既定値の例：20階層、各階層1,000分岐、各フォルダー1ファイル。横枝の各々に形を変えた6個の下位フォルダーを加え、全体で約14万フォルダーに広がります。";
-methodFlows.en.path_maze.context = "Default example: twenty levels, 1,000 branches per level and one file per folder. Each lateral branch gains six nested folders in a varied shape, for about 140,000 folders overall.";
-methodFlows.ja.path_maze.steps[0][1] = "階層は最大20、各階層の横分岐は最大1,500、各フォルダーのファイルは1〜4件です。各横枝には2段の下位分岐を作ります。既定値ではZIP内に約279,763項目を作り、上限は500,000項目です。";
-methodFlows.en.path_maze.steps[0][1] = "Choose up to twenty levels, 1,500 lateral branches per level and 1–4 files per folder. Each side branch gets two nested levels. Defaults produce about 279,763 archive entries; the hard cap is 500,000.";
+methodFlows.ja.path_maze.context = "既定値の例：20階層、各階層1,000分岐、各フォルダー1ファイル。OSプロファイルに応じた表記とファイル名を使い、横枝ごとに異なる形の下位フォルダーを作ります。";
+methodFlows.en.path_maze.context = "Default example: twenty levels, 1,000 branches per level and one file per folder. The selected OS profile controls naming and directory style; side-branch subtrees vary in shape.";
+methodFlows.ja.path_maze.steps[0][1] = "Windows系・Unix系・macOSを選び、最大20階層・各階層1,500分岐・各フォルダー1〜4ファイルを設定します。既定値ではZIP内に約279,763項目を作り、上限は500,000項目です。";
+methodFlows.en.path_maze.steps[0][1] = "Choose Windows, Unix-like or macOS, then set up to twenty levels, 1,500 branches per level and 1–4 files per folder. Defaults produce about 279,763 archive entries; the hard cap is 500,000.";
 methodFlows.ja.path_maze.note = "ZIP内のリンクは同梱物だけを指し、実行スクリプトや外部通信はありません。既定でも20万項目を超えます。展開先の容量・検索・バックアップ・同期・ウイルススキャンへの負荷を確認してください。運用者用一覧を使い、許可済みの専用領域に配置して撤去してください。Windowsでは深い階層を長いパス非対応のツールで展開できない場合があります。";
 methodFlows.en.path_maze.note = "Links stay within the archive; it contains no executable script or external request. Defaults exceed 200,000 entries. Check storage, search, backup, sync and antivirus load. Deploy and remove it only in an authorized, dedicated location using the operator inventory. Deep paths may fail to extract with Windows tools that lack long-path support.";
 applyMethodKeyPointAdditions();
@@ -708,8 +708,8 @@ Object.assign(translations.ja, {path_maze_desc:"既定で14階層、最大20階�
 Object.assign(translations.en, {path_maze_desc:"Defaults to fourteen folder levels, with up to twenty. Increase branches and files per folder for a wider tree.", path_depth:"Maximum depth (1–20)", path_branches:"Branches per folder (1–12)", path_files:"Synthetic files per folder (1–16)", path_note:"Defaults use fourteen levels, two branches and two files per folder, creating about 32,800 folders, 65,500 synthetic files and 32,800 index pages. Each folder gets 2–8 cross-branch shortcuts. The ZIP contains no scripts or external requests. Up to 200,000 archive entries are allowed. Check destination capacity and the effect on search, backup and sync. On Windows, deeply nested paths may not extract with tools that lack long-path support.", path_maze_estimate:"Estimate: {directories} folders, {documents} synthetic files, {indexes} index pages ({members} archive entries total). Limit: 200,000 entries.", path_maze_over_limit:"This exceeds the 200,000 archive-entry limit. Reduce depth, branches or files per folder.", path_generated:"Created {directories} folders, {documents} synthetic files, {index_pages} navigation pages and {shortcuts} cross-folder shortcuts. Check destination capacity, search and backup impact, and save the separate operator inventory."});
 Object.assign(translations.ja, {path_maze_desc:"既定で14階層、各階層300個の横枝を持つ深く広い構成を生成します。", path_depth:"最大階層（1〜20）", path_branches:"各階層の横分岐数（1〜300）", path_files:"各フォルダーの架空ファイル数（1〜16）", path_note:"既定値は14階層・各階層300分岐・各フォルダー16ファイルで、約4,200フォルダー、約67,200件の架空ファイル、約4,200件の一覧ページになります。各階層では横枝を広げながら、1本の主経路を次の階層へ伸ばします。各ページには別枝への2〜8個のショートカットも作ります。ZIP内にスクリプトや外部通信はありません。合計200,000項目まで生成できます。展開先の容量・検索・バックアップ・同期への影響を確認してください。Windowsでは深い階層を長いパスに対応していないツールで展開できない場合があります。", path_maze_estimate:"見積り: {directories}フォルダー、架空ファイル{documents}件、一覧ページ{indexes}件（ZIP内合計{members}項目）。上限は200,000項目です。", path_maze_over_limit:"ZIP内200,000項目の上限を超えています。階層、横分岐数、または各フォルダーのファイル数を減らしてください。", path_generated:"{directories}フォルダー、架空ファイル{documents}件、一覧ページ{index_pages}件、別枝へのショートカット{shortcuts}件を作成しました。展開先の容量・検索・バックアップへの影響を確認し、運用者用の配置一覧も保存してください。"});
 Object.assign(translations.en, {path_maze_desc:"Defaults create a deep, wide layout with 300 lateral branches at each of fourteen levels.", path_depth:"Maximum depth (1–20)", path_branches:"Lateral branches per level (1–300)", path_files:"Synthetic files per folder (1–16)", path_note:"Defaults use fourteen levels, 300 branches per level and sixteen files per folder, creating about 4,200 folders, 67,200 synthetic files and 4,200 index pages. Each level fans out laterally while one main path continues to the next level. Each index also has 2–8 shortcuts to other branches. The ZIP contains no scripts or external requests. Up to 200,000 archive entries are allowed. Check destination capacity and the effect on search, backup and sync. On Windows, deeply nested paths may not extract with tools that lack long-path support.", path_maze_estimate:"Estimate: {directories} folders, {documents} synthetic files, {indexes} index pages ({members} archive entries total). Limit: 200,000 entries.", path_maze_over_limit:"This exceeds the 200,000 archive-entry limit. Reduce depth, lateral branches or files per folder.", path_generated:"Created {directories} folders, {documents} synthetic files, {index_pages} navigation pages and {shortcuts} cross-folder shortcuts. Check destination capacity, search and backup impact, and save the separate operator inventory."});
-Object.assign(translations.ja, {path_maze_desc:"既定で20階層、各階層1,000分岐を持ち、横枝の内側にも形の異なる下位フォルダーを作ります。", path_depth:"最大階層（1〜20）", path_branches:"各階層の横分岐数（1〜1,500）", path_files:"各フォルダーのファイル数（1〜4）", path_note:"既定値は20階層・各階層1,000分岐・各フォルダー1ファイルです。各横枝には合計6個の下位フォルダーを不均等に配置し、枝ごとに異なる形の7フォルダー小階層を作ります。全体で約139,881フォルダー、同数のファイルと一覧ページ、ZIP内約279,763項目です。各階層では1本の主経路も次の階層へ続きます。一覧ページには別枝へのショートカットも作ります。ZIP内にスクリプトや外部通信はありません。合計500,000項目まで生成できます。展開先の容量・検索・バックアップ・同期への影響を確認してください。Windowsでは深い階層を長いパスに対応していないツールで展開できない場合があります。", path_maze_estimate:"見積り: {directories}フォルダー、ファイル{documents}件、一覧ページ{indexes}件（ZIP内合計{members}項目）。上限は500,000項目です。", path_maze_over_limit:"ZIP内500,000項目の上限を超えています。階層、横分岐数、または各フォルダーのファイル数を減らしてください。", path_generated:"{directories}フォルダー、ファイル{documents}件、一覧ページ{index_pages}件、別枝へのショートカット{shortcuts}件を作成しました。展開先の容量・検索・バックアップへの影響を確認し、運用者用の配置一覧も保存してください。"});
-Object.assign(translations.en, {path_maze_desc:"Defaults create twenty levels with 1,000 branches per level and varied nested folders inside each branch.", path_depth:"Maximum depth (1–20)", path_branches:"Lateral branches per level (1–1,500)", path_files:"Files per folder (1–4)", path_note:"Defaults use twenty levels, 1,000 branches per level and one file per folder. Each side branch has six nested folders arranged unevenly, creating a different seven-folder subtree. The result has about 139,881 folders, the same number of files and index pages, and about 279,763 ZIP entries. One main path continues to the next level at every depth. Indexes also link to other branches. The ZIP contains no scripts or external requests. Up to 500,000 archive entries are allowed. Check destination capacity and the effect on search, backup and sync. On Windows, deeply nested paths may not extract with tools that lack long-path support.", path_maze_estimate:"Estimate: {directories} folders, {documents} files, {indexes} index pages ({members} archive entries total). Limit: 500,000 entries.", path_maze_over_limit:"This exceeds the 500,000 archive-entry limit. Reduce depth, lateral branches or files per folder.", path_generated:"Created {directories} folders, {documents} files, {index_pages} navigation pages and {shortcuts} cross-folder shortcuts. Check destination capacity, search and backup impact, and save the separate operator inventory."});
+Object.assign(translations.ja, {path_maze_desc:"Windows系・Unix系・macOSから対象を選び、OS別の命名に合わせたフォルダー群を生成します。", path_os:"対象OS", path_os_windows:"Windows系", path_os_unix:"Unix系（Linuxなど）", path_os_macos:"macOS（Mac）", path_os_note:"Windowsは予約名や禁止文字を避けた短い名前、Unix系は小文字とFHSを参考にした名前、macOSはLibrary等の表記と空白を含む名前を使います。Windowsの相対パス長は保守的に制限します。これはアプリ側の生成予算で、OS共通の絶対上限ではありません。実際の展開可否は展開先の長さ、ファイルシステム、長いパス設定やAPFSの大文字小文字設定にも左右されます。", path_depth:"最大階層（1〜20）", path_branches:"各階層の横分岐数（1〜1,500）", path_files:"各フォルダーのファイル数（1〜4）", path_note:"既定値は20階層・各階層1,000分岐・各フォルダー1ファイルです。各横枝には合計6個の下位フォルダーを不均等に配置し、枝ごとに異なる形の7フォルダー小階層を作ります。全体で約139,881フォルダー、同数のファイルと一覧ページ、ZIP内約279,763項目です。各階層では1本の主経路も次の階層へ続きます。一覧ページには別枝へのショートカットも作ります。ZIP内にスクリプトや外部通信はありません。合計500,000項目まで生成できます。展開先の容量・検索・バックアップ・同期への影響を確認してください。", path_maze_estimate:"見積り: {directories}フォルダー、ファイル{documents}件、一覧ページ{indexes}件（ZIP内合計{members}項目）。上限は500,000項目です。", path_maze_over_limit:"ZIP内500,000項目の上限を超えています。階層、横分岐数、または各フォルダーのファイル数を減らしてください。", path_generated:"{directories}フォルダー、ファイル{documents}件、一覧ページ{index_pages}件、別枝へのショートカット{shortcuts}件を作成しました。展開先の容量・検索・バックアップへの影響を確認し、運用者用の配置一覧も保存してください。"});
+Object.assign(translations.en, {path_maze_desc:"Choose Windows, Unix-like or macOS to generate a folder tree with platform-specific naming.", path_os:"Target OS", path_os_windows:"Windows family", path_os_unix:"Unix-like (Linux, etc.)", path_os_macos:"macOS (Mac)", path_os_note:"Windows uses short names that avoid reserved names and forbidden characters; Unix-like uses lowercase FHS-inspired names; macOS uses names such as Library and Application Support. The path lengths are app generation budgets, not universal OS limits. Extraction also depends on the destination path, filesystem, long-path settings and APFS case-sensitivity option.", path_depth:"Maximum depth (1–20)", path_branches:"Lateral branches per level (1–1,500)", path_files:"Files per folder (1–4)", path_note:"Defaults use twenty levels, 1,000 branches per level and one file per folder. Each side branch has six nested folders arranged unevenly, creating a different seven-folder subtree. The result has about 139,881 folders, the same number of files and index pages, and about 279,763 ZIP entries. One main path continues to the next level at every depth. Indexes also link to other branches. The ZIP contains no scripts or external requests. Up to 500,000 archive entries are allowed. Check destination capacity and the effect on search, backup and sync.", path_maze_estimate:"Estimate: {directories} folders, {documents} files, {indexes} index pages ({members} archive entries total). Limit: 500,000 entries.", path_maze_over_limit:"This exceeds the 500,000 archive-entry limit. Reduce depth, lateral branches or files per folder.", path_generated:"Created {directories} folders, {documents} files, {index_pages} navigation pages and {shortcuts} cross-folder shortcuts. Check destination capacity, search and backup impact, and save the separate operator inventory."});
 Object.assign(translations.en, {quick_start:"Quick create samples", quick_env:"Create .env.development ZIP", quick_html:"Create static portal (HTML + deployment ZIP)", quick_db:"Create selected database sample", quick_start_confirm:"Create this sample? If you entered a canary URL above, it replaces the URL in this sample's settings and is included in the output exactly as entered.", quick_database_confirm:"The {name} template will replace the current table and columns. Continue?", quick_canary_label:"Monitoring URL (canary link, optional)", quick_canary_url_invalid:"Enter a valid HTTPS URL without whitespace."});
 Object.assign(translations.ja, {connection_failed:"ローカルの生成サーバーに接続できません。起動用の画面が開いているか確認してください。閉じていた場合はアプリを起動し直し、このページを再読み込みしてください。入力内容はこの画面に残っています。"});
 Object.assign(translations.en, {connection_failed:"Could not reach the local generator. Check that its startup window is still open. If it closed, start the app again and reload this page. Your form entries remain on this page."});
@@ -2613,7 +2613,7 @@ form.addEventListener("submit", async event => {
       fake_trap: () => ({variant: $("#fake-variant").value,
         ...($("#fake-embed-canary").checked ? {canary_url: $("#fake-canary-url").value} : {})}),
       ransomware_tripwire: () => ({files: Number($("#tripwire-files").value)}),
-      path_maze: () => ({depth: Number($("#path-depth").value), branches: Number($("#path-branches").value), files: Number($("#path-files").value)}),
+      path_maze: () => ({os_type: $("#path-os").value, depth: Number($("#path-depth").value), branches: Number($("#path-branches").value), files: Number($("#path-files").value)}),
       sparse_decoy: () => ({size_gib: Number($("#sparse-size").value), extension: $("#sparse-extension").value}),
       stream: () => ({path: $("#stream-path").value, format: $("#stream-format").value, port: Number($("#stream-port").value), rate_kib: Number($("#stream-rate").value), max_streams: Number($("#stream-concurrency").value)}),
       directory_maze: () => ({scenario: $("#maze-scenario").value, ...($("#maze-scenario").value === "passwords" && $("#maze-format").value !== "env" ? vaultDomainSettings() : {}), title: $("#directory-title").value, depth: Number($("#maze-depth").value), branches: Number($("#maze-branches").value), files_per_directory: Number($("#maze-files").value), cross_links: $("#maze-cross-links").checked, canary_urls: $("#maze-url").value.split(/\r?\n/).filter(value => value.trim()), format: $("#maze-format").value}),
@@ -2741,7 +2741,7 @@ if ($("#save-settings")) $("#save-settings").addEventListener("click", () => {
       || columns.flat().some(hasSensitiveSettingText)) {
     result.textContent = t("sensitive_setting_text"); return;
   }
-  const config = {schema: "adg-ui-v14", kind: $('input[name="kind"]:checked').value,
+  const config = {schema: "adg-ui-v15", kind: $('input[name="kind"]:checked').value,
     // Keep the positional slots for compatibility, but never export canary tokens.
     controls: controls.map(el => el.type === "checkbox"
       ? (nonPersistentOperatorAttestations.has(el.id) ? false : el.checked)
@@ -2767,7 +2767,7 @@ $("#settings-file").addEventListener("change", async event => {
     const addedV4 = ["nest-scenario", "maze-scenario"];
     const addedV3 = ["env-layout", "env-suffix", "env-variable", "env-dev-comment", "env-prod-comment"];
     const excluded = config.schema === "adg-ui-v1" ? [...addedV4, ...addedV3, "canary-context", "canary-field", "canary-label"] : config.schema === "adg-ui-v2" ? [...addedV4, ...addedV3] : config.schema === "adg-ui-v3" ? addedV4 : [];
-    if (config.schema !== "adg-ui-v14") excluded.push("canary-link-style");
+    if (!['adg-ui-v14', 'adg-ui-v15'].includes(config.schema)) excluded.push("canary-link-style");
     const controls = configControls().filter(el => !excluded.includes(el.id));
     const legacyControlIndex = id => {
       const index = controls.findIndex(el => el.id === id);
@@ -2778,7 +2778,7 @@ $("#settings-file").addEventListener("change", async event => {
     let values = legacy && Array.isArray(config.controls) ? config.controls.slice(13) : config.controls;
     // UI v6 stored two trailing values for the retired generator.
     if (config.schema === "adg-ui-v6" && Array.isArray(values)) values = values.slice(0, -2);
-    if (Array.isArray(values) && !["adg-ui-v9", "adg-ui-v10", "adg-ui-v11", "adg-ui-v12", "adg-ui-v13", "adg-ui-v14"].includes(config.schema)) {
+    if (Array.isArray(values) && !["adg-ui-v9", "adg-ui-v10", "adg-ui-v11", "adg-ui-v12", "adg-ui-v13", "adg-ui-v14", "adg-ui-v15"].includes(config.schema)) {
       // v1-v8 predate the trailing vault-domain controls; v9 already contains them.
       if (config.schema !== "adg-ui-v9") values = [...values, "", false];
     }
@@ -2787,24 +2787,29 @@ $("#settings-file").addEventListener("change", async event => {
       const retiredIndex = legacyControlIndex("db-url") + 1;
       values.splice(retiredIndex, 2);
     }
-    if (Array.isArray(values) && !["adg-ui-v11", "adg-ui-v12", "adg-ui-v13", "adg-ui-v14"].includes(config.schema)) {
+    if (Array.isArray(values) && !["adg-ui-v11", "adg-ui-v12", "adg-ui-v13", "adg-ui-v14", "adg-ui-v15"].includes(config.schema)) {
       const encodingScenarioIndex = legacyControlIndex("encoding-scenario");
       if (encodingScenarioIndex < 0) throw new Error();
       values.splice(encodingScenarioIndex, 0, "crm");
     }
-    if (Array.isArray(values) && !["adg-ui-v12", "adg-ui-v13", "adg-ui-v14"].includes(config.schema)) {
+    if (Array.isArray(values) && !["adg-ui-v12", "adg-ui-v13", "adg-ui-v14", "adg-ui-v15"].includes(config.schema)) {
       const variedFormatIndex = controls.findIndex(el => el.id === "nest-varied-formats");
       if (variedFormatIndex < 0) throw new Error();
       values.splice(variedFormatIndex, 0, true);
     }
-    if (Array.isArray(values) && !["adg-ui-v13", "adg-ui-v14"].includes(config.schema)) {
+    if (Array.isArray(values) && !["adg-ui-v13", "adg-ui-v14", "adg-ui-v15"].includes(config.schema)) {
       const webScenarioIndex = controls.findIndex(el => el.id === "web-scenario");
       if (webScenarioIndex < 0) throw new Error();
       values.splice(webScenarioIndex, 0, "operations");
     }
+    if (Array.isArray(values) && config.schema !== "adg-ui-v15") {
+      const pathOsIndex = controls.findIndex(el => el.id === "path-os");
+      if (pathOsIndex < 0) throw new Error();
+      values.splice(pathOsIndex, 0, "windows");
+    }
     const method = [...document.querySelectorAll('input[name="kind"]')].find(el => el.value === config.kind);
     const kinds = [...$("#column-template").content.querySelectorAll("option")].map(el => el.value);
-    if (!["adg-ui-v1", "adg-ui-v2", "adg-ui-v3", "adg-ui-v4", "adg-ui-v5", "adg-ui-v6", "adg-ui-v8", "adg-ui-v9", "adg-ui-v10", "adg-ui-v11", "adg-ui-v12", "adg-ui-v13", "adg-ui-v14"].includes(config.schema) || !method || !Array.isArray(values) || values.length !== controls.length ||
+    if (!["adg-ui-v1", "adg-ui-v2", "adg-ui-v3", "adg-ui-v4", "adg-ui-v5", "adg-ui-v6", "adg-ui-v8", "adg-ui-v9", "adg-ui-v10", "adg-ui-v11", "adg-ui-v12", "adg-ui-v13", "adg-ui-v14", "adg-ui-v15"].includes(config.schema) || !method || !Array.isArray(values) || values.length !== controls.length ||
         !Array.isArray(config.columns) || config.columns.length < 1 || config.columns.length > 30) throw new Error();
     values.forEach((value, i) => {
       const el = controls[i];
@@ -2847,7 +2852,7 @@ $("#settings-file").addEventListener("change", async event => {
     if (!["adg-ui-v4", "adg-ui-v5", "adg-ui-v6", "adg-ui-v8", "adg-ui-v9", "adg-ui-v10", "adg-ui-v11", "adg-ui-v12", "adg-ui-v13"].includes(config.schema)) { $("#nest-scenario").value = "crm"; $("#maze-scenario").value = "crm"; }
     if (!["adg-ui-v11", "adg-ui-v12", "adg-ui-v13"].includes(config.schema)) $("#encoding-scenario").value = "crm";
     controls.forEach((el, i) => { if (el.type === "checkbox") el.checked = values[i]; else el.value = values[i]; });
-    if (config.schema !== "adg-ui-v14") $("#canary-link-style").value = "text";
+    if (!['adg-ui-v14', 'adg-ui-v15'].includes(config.schema)) $("#canary-link-style").value = "text";
     // Retain the legacy settings slots while always using automatic canary defaults.
     $("#canary-name").value = "";
     $("#canary-title").value = "";
