@@ -316,19 +316,45 @@ class Handler(BaseHTTPRequestHandler):
     sys_version = ""
 
     def _log_entry(self, handler_name):
-        self.request_id = secrets.token_hex(4)
-        LOGGER.info("request_started id=%s handler=%s", self.request_id, handler_name)
+        self.request_id = secrets.token_hex(8)
+        self._request_started_at = time.monotonic()
         path = self.path.partition("?")[0]
         if re.fullmatch(r"/canary/[A-Za-z0-9_-]{32,64}", path):
             route = "canary_contact"
         elif path == "/api/generate":
             route = "api_generate"
+        elif path == "/api/defaults":
+            route = "api_defaults"
+        elif path == "/api/database-templates":
+            route = "api_database_templates"
+        elif path == "/api/local-canary-browser":
+            route = "api_canary_browser"
+        elif path == "/api/local-canary-location":
+            route = "api_canary_location"
+        elif path == "/canary-client.js":
+            route = "canary_client"
         elif path.startswith("/api/"):
-            route = "api"
-        elif path == "/" or path.startswith(("/images/", "/guide", "/quickstart/", "/log-guide/", "/legal/")):
+            route = "api_other"
+        elif path == "/":
+            route = "home"
+        elif path.startswith("/images/"):
+            route = "image_asset"
+        elif path.startswith("/guide"):
+            route = "guide"
+        elif path.startswith("/quickstart/"):
+            route = "quickstart"
+        elif path.startswith("/log-guide/"):
+            route = "log_guide"
+        elif path.startswith("/legal/"):
+            route = "legal_guide"
+        elif path in ("/favicon.ico", "/app.js", "/app.css"):
             route = "static_content"
         else:
             route = "other"
+        self._request_route = route
+        self._response_error = False
+        LOGGER.debug("request_started id=%s method=%s route=%s handler=%s",
+                     self.request_id, self.command, route, handler_name)
         LOGGER.debug("request_classified id=%s method=%s route=%s", self.request_id,
                      self.command, route)
 
@@ -351,13 +377,34 @@ class Handler(BaseHTTPRequestHandler):
         try:
             super().handle()
         except (OSError, socket.timeout):
+            request_id = getattr(self, "request_id", "unclassified")
+            if request_id != "unclassified":
+                LOGGER.info("request_interrupted id=%s method=%s route=%s elapsed_ms=%d error_type=%s",
+                            request_id, self.command, self._request_route,
+                            max(0, round((time.monotonic() - self._request_started_at) * 1000)),
+                            type(sys.exc_info()[1]).__name__)
             LOGGER.debug("request_connection_ended id=%s reason=transport_error",
-                         getattr(self, "request_id", "unclassified"), exc_info=True)
+                         request_id, exc_info=True)
+            self.close_connection = True
+        except Exception as exc:
+            request_id = getattr(self, "request_id", "unclassified")
+            LOGGER.error("request_failed id=%s method=%s route=%s elapsed_ms=%d error_type=%s",
+                         request_id, getattr(self, "command", "unparsed"),
+                         getattr(self, "_request_route", "unparsed"),
+                         max(0, round((time.monotonic() - self._request_started_at) * 1000)),
+                         type(exc).__name__)
+            LOGGER.debug("request_failure_traceback id=%s", request_id, exc_info=True)
             self.close_connection = True
         finally:
             self._header_deadline_timer.cancel()
 
     def _start_header_deadline(self):
+        # Reset per-request correlation fields before a keep-alive connection
+        # begins reading the next request.
+        self.request_id = "unclassified"
+        self._request_route = "unparsed"
+        self._request_started_at = time.monotonic()
+        self._response_error = False
         self._request_headers_complete = False
         self._header_deadline_timer = threading.Timer(
             REQUEST_HEADER_DEADLINE_SECONDS, self._abort_incomplete_headers)
@@ -407,9 +454,19 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
         LOGGER.debug("response_sent id=%s status=%d mime=%s bytes=%d",
                      getattr(self, "request_id", "unclassified"), status, mime, len(body))
+        self._log_request_completed(status, len(body))
+
+    def _log_request_completed(self, status, response_bytes):
+        if self.request_id == "unclassified":
+            return
+        elapsed_ms = max(0, round((time.monotonic() - self._request_started_at) * 1000))
+        outcome = "error" if self._response_error or status >= 400 else "ok"
+        LOGGER.info("request_completed id=%s method=%s route=%s status=%d response_bytes=%d elapsed_ms=%d outcome=%s",
+                    self.request_id, self.command, self._request_route, status, response_bytes, elapsed_ms, outcome)
 
     def _json(self, status: int, payload: dict):
         body = json.dumps(payload, ensure_ascii=False, allow_nan=False).encode("utf-8")
+        self._response_error = isinstance(payload.get("error"), str)
         LOGGER.debug("json_response id=%s status=%d bytes=%d error=%s",
                      getattr(self, "request_id", "unclassified"), status, len(body),
                      isinstance(payload.get("error"), str))
@@ -628,6 +685,7 @@ class Handler(BaseHTTPRequestHandler):
         self._headers(200, mime, content, csp=app_csp)
 
     def do_HEAD(self):
+        self._log_entry("do_HEAD")
         # Link scanners sometimes probe with HEAD. Record it as a contact too.
         language = self._language()
         if not self._valid_host():
@@ -643,8 +701,10 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.end_headers()
+        self._log_request_completed(200, 0)
 
     def _other_canary_request(self):
+        self._log_entry("canary_other_method")
         # A client may send a request body; do not read or keep it, and do not
         # reuse the connection with unread bytes.
         self.close_connection = True
@@ -881,13 +941,12 @@ class Handler(BaseHTTPRequestHandler):
                                     "role": "deployment", "content": base64.b64encode(archive).decode("ascii"),
                                     "companions": [encode(item) for item in asset.companions],
                                     "summary": {**asset.summary, "deployment_format": "pax_sparse_1.0"}}
-                        LOGGER.info("sparse_tar_created logical_bytes=%d archive_bytes=%d format=pax_sparse_1.0",
-                                    asset.summary["size_bytes"], len(archive))
+                        LOGGER.info("sparse_tar_created id=%s logical_bytes=%d archive_bytes=%d format=pax_sparse_1.0",
+                                    self.request_id, asset.summary["size_bytes"], len(archive))
+                        LOGGER.info("generation_ready id=%s kind=%s primary_content_bytes=%d logical_gib=%.3f companions=%d generation_elapsed_ms=%d",
+                                    self.request_id, kind, len(archive), asset.summary["size_gib"],
+                                    len(asset.companions), max(0, round((time.monotonic() - started) * 1000)))
                         self._json(200, response)
-                        LOGGER.info("generation_response_complete id=%s kind=%s primary_memory_bytes=%d logical_gib=%s companions=%d elapsed_ms=%d",
-                                    self.request_id, asset.summary.get("kind", "unknown"), len(archive),
-                                    asset.summary.get("size_gib", "not_applicable"), len(asset.companions),
-                                    max(0, round((time.monotonic() - started) * 1000)))
                         return
                     destination = data.get("destination")
                     if (not isinstance(destination, str) or not destination.strip()
@@ -911,13 +970,13 @@ class Handler(BaseHTTPRequestHandler):
                     response = {**encode(asset),
                                 "companions": [encode(item) for item in asset.companions],
                                 "summary": asset.summary}
+                LOGGER.info("generation_ready id=%s kind=%s primary_content_bytes=%d logical_gib=%s companions=%d generation_elapsed_ms=%d",
+                            self.request_id, kind, len(asset.content),
+                            asset.summary.get("size_gib", "not_applicable"), len(asset.companions),
+                            max(0, round((time.monotonic() - started) * 1000)))
                 # Keep the generation slot until the encoded response is sent;
                 # otherwise another large artifact can multiply peak memory.
                 self._json(200, response)
-                LOGGER.info("generation_response_complete id=%s kind=%s primary_memory_bytes=%d logical_gib=%s companions=%d elapsed_ms=%d",
-                            self.request_id, asset.summary.get("kind", "unknown"), len(asset.content),
-                            asset.summary.get("size_gib", "not_applicable"),
-                            len(asset.companions), max(0, round((time.monotonic() - started) * 1000)))
             finally:
                 GENERATION_SLOT.release()
                 LOGGER.debug("generation_slot_released id=%s", self.request_id)

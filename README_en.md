@@ -41,7 +41,7 @@ On Linux, install Python 3.11–3.14 and ensure `venv` is available before start
 
 The launch script creates a virtual environment, installs the pinned dependencies on first launch, and starts the app in your browser. First-time installation requires internet access to download the packages.
 
-Application logs are written daily to `logs/YYYYMMDD_app.log` under the project folder. At startup, logs that are at least seven days old are deleted. Set `log_level` in the root `app_config.json` to `DEBUG`, `INFO`, `WARNING` or `ERROR`; the checked-in development setting is `DEBUG`; missing or invalid configuration falls back to `INFO`. `DEBUG` records route categories, generation stages, sizes, durations and stack traces without request bodies, URL paths or canary tokens. Request bodies, URL paths and canary tokens are not logged.
+Application logs are written daily to `logs/YYYYMMDD_app.log` under the project folder. At startup, logs that are at least seven days old are deleted. Set `log_level` in the root `app_config.json` to `DEBUG`, `INFO`, `WARNING` or `ERROR`; the checked-in development setting is `DEBUG`; missing or invalid configuration falls back to `INFO`. Each completed HTTP request gets one `INFO` summary with a correlation ID, method, safe route category, status, response bytes, elapsed milliseconds and outcome, for example `request_completed id=… method=GET route=home status=200 response_bytes=… elapsed_ms=… outcome=ok`. `DEBUG` adds processing stages and exception traces. Request bodies, URL paths, query strings, canary tokens and peer addresses are not logged.
 
 ## What you can do
 
