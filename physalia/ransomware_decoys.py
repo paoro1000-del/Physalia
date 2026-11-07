@@ -18,7 +18,37 @@ from physalia.nesting import Artifact
 from physalia.validation import integer
 
 MAX_PATH_MAZE_MEMBERS = 500_000
+MAX_SPARSE_SIZE_GIB = 1024
+SPARSE_SIZE_VARIATION_PER_MILLE = 5  # +/-0.5% around the selected nominal size
 LOGGER = logging.getLogger("physalia")
+
+
+def _probe_posix_sparse_support(directory):
+    """Check hole allocation on the destination filesystem before creating the requested file.
+
+    A failed probe can allocate at most 8 MiB on a filesystem that stores holes
+    densely, avoiding a potentially enormous write before the allocation check.
+    """
+    import tempfile
+
+    probe_size = 8 * 1024 * 1024
+    LOGGER.debug("sparse_filesystem_probe_started probe_bytes=%d", probe_size)
+    try:
+        with tempfile.TemporaryFile(mode="w+b", dir=directory) as probe:
+            probe.seek(probe_size - 1)
+            probe.write(b"\0")
+            probe.flush()
+            info = os.fstat(probe.fileno())
+            if not hasattr(info, "st_blocks"):
+                raise OSError("Filesystem does not report sparse allocation")
+            allocated = info.st_blocks * 512
+            if allocated >= probe_size // 2:
+                raise OSError("Filesystem does not create sparse files")
+    except Exception as exc:
+        LOGGER.warning("sparse_filesystem_probe_failed error_type=%s", type(exc).__name__)
+        raise
+    LOGGER.debug("sparse_filesystem_probe_complete probe_bytes=%d allocated_bytes=%d",
+                 probe_size, allocated)
 
 
 def create_sparse_file(directory, filename, logical_size, prefix):
@@ -34,6 +64,11 @@ def create_sparse_file(directory, filename, logical_size, prefix):
     folder = folder.resolve(strict=True)
     if not folder.is_dir() or Path(filename).name != filename:
         raise ValueError("Invalid destination directory or filename")
+    if os.name != "nt":
+        # POSIX-like filesystems represent holes implicitly. Verify the target
+        # volume first so an unsupported filesystem cannot densely allocate
+        # the requested (potentially 1 TiB) logical size.
+        _probe_posix_sparse_support(folder)
     target = folder / filename
     created = False
     try:
@@ -54,6 +89,7 @@ def create_sparse_file(directory, filename, logical_size, prefix):
                 returned = wintypes.DWORD()
                 if not device_io(handle, 0x000900C4, None, 0, None, 0, ctypes.byref(returned), None):
                     raise OSError(ctypes.get_last_error(), "Filesystem does not support sparse files")
+                LOGGER.debug("sparse_filesystem_verified platform=windows")
             file.write(prefix)
             # Writing the final byte leaves the intervening range sparse on
             # NTFS; Windows' CRT truncate can physically zero the whole gap.
@@ -278,18 +314,30 @@ def generate_path_maze(settings, language="ja"):
 def generate_sparse_decoy(settings, language="ja"):
     LOGGER.debug("sparse_decoy_metadata_started setting_keys=%s",
                  ",".join(sorted(key for key in settings if isinstance(key, str))))
-    size_gib = integer(settings.get("size_gib", 1), "size_gib", 1, 32, language)
+    size_gib = integer(settings.get("size_gib", 1), "size_gib", 1, MAX_SPARSE_SIZE_GIB, language)
     extension = settings.get("extension", "csv")
     if not isinstance(extension, str) or extension not in (
             "csv", "pdf", "xlsx", "docx", "zip", "bak", "db", "log", "txt", "xml"):
         raise ValueError("Invalid sparse decoy extension")
     stem = secrets.choice(("financial_forecast", "vendor_ledger", "project_export", "operations_register"))
     filename = f"{stem}_{secrets.token_hex(5)}.{extension}"
-    size = size_gib * 1024 ** 3
-    companion = _operator("sparse_decoy.operator.json", {"files": [filename], "logical_bytes_each": size,
-                                                           "display_extension_only": extension})
-    summary = {"kind": "sparse_decoy", "files": 1, "size_gib": size_gib,
+    gib = 1024 ** 3
+    nominal_size = size_gib * gib
+    maximum_variation = nominal_size * SPARSE_SIZE_VARIATION_PER_MILLE // 1000
+    minimum_variation = -maximum_variation
+    maximum_variation = min(maximum_variation, MAX_SPARSE_SIZE_GIB * gib - nominal_size)
+    variation = secrets.randbelow(maximum_variation - minimum_variation + 1) + minimum_variation
+    size = nominal_size + variation
+    actual_size_gib = round(size / gib, 3)
+    companion = _operator("sparse_decoy.operator.json", {
+        "files": [filename], "logical_bytes_each": size,
+        "requested_size_gib": size_gib,
+        "display_extension_only": extension})
+    summary = {"kind": "sparse_decoy", "files": 1, "size_gib": actual_size_gib,
+               "size_bytes": size, "requested_size_gib": size_gib,
                "extension": extension, "filename": filename}
+    LOGGER.info("sparse_size_randomized requested_gib=%d actual_gib=%.3f logical_bytes=%d",
+                size_gib, actual_size_gib, size)
     # This prefix is written to the sparse file at the chosen destination.
     content = b"Reference,Team,Status\nSYNTHETIC-104,Planning,Draft\n"
     return Artifact(filename, "application/octet-stream", content, [companion], summary)

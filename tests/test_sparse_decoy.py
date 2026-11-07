@@ -61,7 +61,7 @@ class SparseDecoyTests(unittest.TestCase):
                         response = conn.getresponse()
                         data = json.loads(response.read())
                         self.assertEqual(response.status, 200, data)
-                    self.assertTrue(any("sparse_created logical_gib=10 extension=csv" in line for line in logs.output))
+                    self.assertTrue(any("sparse_created requested_gib=10 actual_gib=" in line and "extension=csv" in line for line in logs.output))
                     self.assertNotIn(directory, "\n".join(logs.output))
                 finally:
                     conn.close()
@@ -69,7 +69,11 @@ class SparseDecoyTests(unittest.TestCase):
                 self.assertEqual(target.parent, Path(directory).resolve())
                 self.assertEqual(target.name, data["name"])
                 self.assertTrue(target.name.endswith(".csv"))
-                self.assertEqual(target.stat().st_size, 10 * 1024 ** 3)
+                nominal_size = 10 * 1024 ** 3
+                actual_size = target.stat().st_size
+                self.assertLessEqual(abs(actual_size - nominal_size), nominal_size // 200)
+                self.assertEqual(data["summary"]["size_bytes"], actual_size)
+                self.assertEqual(data["summary"]["requested_size_gib"], 10)
                 self.assertLess(allocated_bytes(target), target.stat().st_size // 32)
                 with target.open("rb") as file:
                     self.assertTrue(file.read(64).startswith(b"Reference,Team,Status\n"))

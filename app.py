@@ -833,12 +833,13 @@ class Handler(BaseHTTPRequestHandler):
                                          else "\u5b58\u5728\u3059\u308b\u4fdd\u5b58\u5148\u30d5\u30a9\u30eb\u30c0\u30fc\u3092\u7d76\u5bfe\u30d1\u30b9\u3067\u6307\u5b9a\u3057\u3066\u304f\u3060\u3055\u3044\u3002")
                     try:
                         saved_path = create_sparse_file(destination.strip(), asset.name,
-                                                        asset.summary["size_gib"] * 1024 ** 3, asset.content)
+                                                        asset.summary["size_bytes"], asset.content)
                     except (OSError, ValueError) as exc:
                         LOGGER.info("sparse_creation_failed error_type=%s", type(exc).__name__)
                         raise ValueError("Could not create a sparse file. Check the destination, permissions, and filesystem support; existing files are not overwritten." if language == "en" else "\u30b9\u30d1\u30fc\u30b9\u30d5\u30a1\u30a4\u30eb\u3092\u4f5c\u6210\u3067\u304d\u307e\u305b\u3093\u3002\u4fdd\u5b58\u5148\u3001\u66f8\u304d\u8fbc\u307f\u6a29\u9650\u3001\u5bfe\u5fdc\u30d5\u30a1\u30a4\u30eb\u30b7\u30b9\u30c6\u30e0\u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\u3002\u65e2\u5b58\u30d5\u30a1\u30a4\u30eb\u306f\u4e0a\u66f8\u304d\u3057\u307e\u305b\u3093\u3002") from exc
-                    LOGGER.info("sparse_created logical_gib=%d extension=%s",
-                                asset.summary["size_gib"], asset.summary["extension"])
+                    LOGGER.info("sparse_created requested_gib=%d actual_gib=%.3f logical_bytes=%d extension=%s",
+                                asset.summary["requested_size_gib"], asset.summary["size_gib"],
+                                asset.summary["size_bytes"], asset.summary["extension"])
                     response = {"name": asset.name, "mime": asset.mime, "role": asset.role,
                                 "savedPath": saved_path,
                                 "companions": [encode(item) for item in asset.companions],
