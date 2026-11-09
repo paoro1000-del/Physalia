@@ -2,7 +2,7 @@
 
 English | [日本語](README.md)
 
-Physalia is a local tool for generating fictional decoy files and samples for security testing. It does not deploy generated artifacts or integrate with production authentication or network monitoring services. Directory Maze, Encoding Maze, Infinite Stream and Ransomware Decoy Flood are under development and unavailable for selection or generation in the initial release.
+Physalia is a local toolkit for exploring defensive deception as a way to increase attacker effort and create opportunities for detection and response. It explains selected security measures and prepares synthetic samples for controlled evaluation; it does not deploy generated artifacts or integrate with production authentication or network monitoring services. Effects depend on the attacker and deployment and are not guaranteed. Directory Maze, Encoding Maze, Infinite Stream and Ransomware Decoy Flood are under development and unavailable for selection or generation in the initial release.
 
 ## Setup and launch
 

@@ -4,6 +4,8 @@
 
 Physalia is an early-stage defensive deception project. Contributions should improve two primary outcomes: make decoys credible to people and AI-assisted attackers, and consume enough attacker time or effort to create a useful response opportunity. Detection quality and impact on authorized users matter too.
 
+This is currently a personal project, and pull requests from others are not being accepted for the time being. The guidance below describes project expectations but does not mean submissions are open.
+
 ## Design and safety
 
 - Evaluate a method from the attacker's information and constraints. Include automated collection, AI-assisted analysis, parallel and offline work, short time budgets, and alternate paths to the real target.
@@ -30,6 +32,8 @@ Describe the user problem, attacker model, expected benefit, bypasses, authorize
 ## 日本語
 
 Physaliaは開発初期の防御用ディセプション・プロジェクトです。主な目的は、デコイを人やAI支援型の攻撃者に本物らしく見せることと、攻撃者の時間・作業を消費して対応機会を作ることです。検知の質と正規利用者への影響も重視します。
+
+個人プロジェクトとして開発しているため、当面、他の方からのPull Requestは受け付けていません。以下はプロジェクトの方針を説明するもので、現在変更提案を募集しているという意味ではありません。
 
 ### 設計と安全性
 
