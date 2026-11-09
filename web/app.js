@@ -4,6 +4,7 @@ document.querySelectorAll(".cards .card-foot").forEach(label => label.remove());
 document.querySelector(".category-guide")?.remove();
 document.querySelectorAll(".method-tag.ai").forEach(tag => tag.remove());
 const MAX_GENERATION_REQUEST_BYTES = Number($('meta[name="adg-generation-request-limit"]').content);
+const IN_DEVELOPMENT_METHODS = new Set(["directory_maze", "encoding_maze", "stream", "ransomware_tripwire"]);
 const form = $("#generator"), result = $("#result"), button = $("#submit"), languageSelect = $("#language");
 let language = "ja";
 const CANARY_DEFAULT_ROWS = 25;
@@ -113,11 +114,11 @@ const translations = {
     nest_varied_formats: "Keep this format common and occasionally mix other formats",
     nest_varied_formats_help: "About 75% of decoys use the selected format. Weighted alternatives such as Excel, SQLite and .env appear among documents inside the encrypted nest.",
     password_policy: "Automatically generated password policy", password_mode: "Generation mode", memorable: "Words + digits / symbols", random: "Fully random",
-    hints: "Include recovery-note decoys", hints_early: "First two layers", hints_all: "Every layer", hints_none: "No notes",
+    hints: "Add operational notes", hints_early: "First two layers", hints_all: "Every layer", hints_none: "No notes",
     min_length: "Minimum length", max_length: "Maximum length", lowercase: "Lowercase", uppercase: "Uppercase", digits: "Digits", symbols: "Symbols",
     password_words: "Word candidates (ASCII, comma-separated; blank for defaults)",
     progressive: "Start shorter and increase length in deeper layers",
-    password_help: "The default uses word-based 8–24 character passwords with digits and symbols, increasing with depth. Recovery notes point generally to a separate password register and do not claim that a certain number of characters is stored elsewhere. Use the separate password list only to verify your sample, and keep it private. Archives can be attacked offline and in parallel after download, so cracking time and delay are not guaranteed.",
+    password_help: "The default uses word-based 8–24 character passwords with digits and symbols, increasing with depth. Optional operational notes contain synthetic review or handover details and do not refer to passwords, keys or where they are stored. Use the separate password list only to verify your sample, and keep it private. Archives can be attacked offline and in parallel after download, so cracking time and delay are not guaranteed.",
     canary_percent: "Canary probability per decoy (%)", canary_probability: "Sampled independently per file. 0% means none; 100% means all decoys. Up to 400 URLs are accepted. Selected files receive different URLs before one is reused. URLs beyond the number of selected files remain unused; the selected count varies with the per-file probability. Reused URLs cannot identify the exact file from an alert. A blank URL list inserts no monitoring URL.",
     nest_note: "The downloaded ZIP is itself AES-encrypted. Open it directly with an AES-compatible archive tool; there is no ordinary ZIP wrapper to extract first. Use the ZIP password list to verify the sample. It contains passwords, so keep it private and never deploy or publish it with the decoys. Source content is limited to 32 MiB and cumulative encrypted archives to 64 MiB.",
     database_desc: "Create a SQLite file containing a fictional B2C customer table. You can customize its columns.", rows: "Number of records", database_rows_help: "Choose 1,000, 10,000 or 100,000 records. SQLite files are limited to 32 MiB; larger selections may need fewer columns.", table_name: "Table name", schema: "Column definitions", add_column: "+ Add column",
@@ -170,9 +171,9 @@ Object.assign(translations.en, {
   web_scenario_records: "Records management",
 });
 translations.en.workspace_create = "WORKSPACE / CREATE";
-translations.ja.hints = "復元メモのデコイを配置";
+translations.ja.hints = "架空の業務メモを追加";
 translations.ja.hints_none = "配置しない";
-translations.ja.password_help = "既定では単語に数字と記号を混ぜた8〜24文字のパスワードを使い、深い階層ほど長くします。復元メモは別のパスワード台帳を示しますが、別管理の文字数は記しません。検証用パスワード一覧はサンプル確認に限って使い、配置・公開しないでください。ZIP取得後はオフラインで並列試行できるため、解読時間や遅延は保証されません。";
+translations.ja.password_help = "既定では単語に数字と記号を混ぜた8〜24文字のパスワードを使い、深い階層ほど長くします。追加する業務メモは架空の確認・引継ぎ内容で、鍵やパスワードの場所・値は示しません。検証用パスワード一覧はサンプル確認に限って使い、配置・公開しないでください。ZIP取得後はオフラインで並列試行できるため、解読時間や遅延は保証されません。";
 translations.en.assets_eyebrow = "DECEPTION ASSETS";
 translations.ja.maze_estimate = "ディレクトリ{directories}個・デコイファイル{documents}個（上限400ディレクトリ）";
 translations.en.maze_estimate = "{directories} directories · {documents} files (limit: 400 directories)";
@@ -212,9 +213,9 @@ const methodExplanations = {
     env: {title:"カナリアファイル", how:"もっともらしい文書や設定ファイルに、運用者が指定した監視URLを埋め込みます。", target:"攻撃者がカナリアファイル（罠ファイル）を盗み出し、そこに書かれたURLへアクセスする場面を想定します。接続先の設定に応じて、通報やリクエスト情報の記録などを行い、侵害後の調査につなげます。", limit:"単体のカナリア生成ではURLを1つ使います。暗号化ネスト、ディレクトリ・メイズ、エンコーディング・メイズはURL一覧からファイルごとに割り当て、台帳に対応を記録します。ファイルの取得・閲覧だけではURL型トークンは発火しません。通信遮断やURLを試さない手順では通知されず、発火してもAIによるアクセスかは判定できません。"},
     database: {title:"デコイ・データベース", how:"顧客管理用のcustomersテーブルを初期値として、架空のBtoC顧客データを含むSQLiteを作ります。件数は1,000件、10,000件、100,000件から選べます。", target:"`.db`を探して顧客データを持ち出す攻撃者と、盗んだ後に本物らしさを検証する攻撃者を想定します。", limit:"生成するのはカナリアを含まない単独テーブルです。本番DBへの接続・読み取り監視はありません。登録日が古いほど論理削除フラグのtrue確率が上がりますが、trueは少数です。"},
     web: {title:"スタティック・デコイ・ポータル", how:"アーカイブや管理ポータルに見える静的HTMLを作ります。", target:"公開URLや管理画面らしいサブディレクトリを探索し、リンクやファイルをたどる攻撃を想定します。", limit:"静的ページです。認証、ログイン状態、設定変更、アクセス制御、通知処理は実装しません。画面を開くだけではリンク先のカナリアURLにアクセスしません。"},
-    fake_trap: {title:"フェイクトラップ", how:"サインイン確認、メンテナンス、新規デバイス、アクセス申請など8種類の業務ポータル風HTMLを作ります。任意でページ表示時に、設定したカナリアURLへGET要求を送り接触を記録できます。", target:"デコイ経路に到達したAIエージェントが、画面の構造や状態表示を読んでアクセス状況を再確認する状況を想定します。", limit:"AIを確実に欺く保証はありません。HTMLを直接判定する低レベルなツール、画面を読まないスクリプト、別経路を並列探索する攻撃には効果が薄くなります。メールスキャナーやプレビューも接触として記録され得ます。ログと通知は配置先で設定してください。"},
+    fake_trap: {title:"フェイクトラップ", how:"サインイン確認、メンテナンス、新規デバイス、アクセス申請など8種類の業務ポータル風HTMLを作ります。監視設定をONにして監視用URL（カナリアURL）を入力した場合、ページ表示時に埋め込み画像からGET要求を送り、接触を記録できます。", target:"デコイ経路に到達した人や、画面・HTMLの内容を読み取って判断するAIエージェントが、警告や状態表示を受けて状況を再確認する場面を想定します。", limit:"人やAIが表示を信じて判断を変えるとは限りません。HTMLを直接判定する低レベルなツール、画面を読まないスクリプト、別経路を並列探索する攻撃には効果が薄くなります。メールスキャナーやプレビューも接触として記録され得ます。ログと通知は配置先で設定してください。"},
     ransomware_tripwire: {title:"ランサムウェア・デコイフラッド", how:"架空の業務ファイル一式と、指定ファイルの内容変更・削除・差し替えをローカル記録するPython標準ライブラリ製の監視スクリプトを生成します。配置ZIPと監視スクリプトは別々に保存します。", target:"ランサムウェアなどが監視対象のファイルを暗号化・削除・置換する状況を想定します。", limit:"監視スクリプトは約1秒間隔の確認で、読み取りだけのアクセスは検知しません。検知前に実データが損なわれる可能性があり、プロセス停止・端末隔離・復元は行いません。監視対象の差し替えや監視停止にも弱く、見逃し・誤検知があります。"},
-    nest: {title:"エンクリプテッド・ディープ・ネスト", how:"ダウンロードされるZIP自体をAES暗号化し、分岐・多層化した中に文書や次のアーカイブを混在させます。複数のファイル形式をランダムに混ぜます。サンプル検証用のZIPパスワード一覧は別に取得できます。復元メモは別の鍵台帳を示しますが、文字数を手掛かりとして記しません。認証情報保管庫シナリオでは、文書に架空のlogin_url項目を使い、password値は変えません。", target:"バックアップや設定を急いで一括回収する攻撃者と、候補を順に展開して秘密を探す攻撃者を想定します。", limit:"持ち出した後に並列・オフラインで解析する攻撃者は、現場の時間を使いません。パスワードはオフラインでも試行でき、解読時間や遅延は保証されません。通常データの暗号化やバックアップの代替ではありません。"},
+    nest: {title:"エンクリプテッド・ディープ・ネスト", how:"ダウンロードされるZIP自体をAES暗号化し、分岐・多層化した中に文書や次のアーカイブを混在させます。複数のファイル形式をランダムに混ぜます。サンプル検証用のZIPパスワード一覧は別に取得できます。任意で追加する業務メモは、鍵やパスワードに言及しない架空の確認・引継ぎ内容です。認証情報保管庫シナリオでは、文書に架空のlogin_url項目を使い、password値は変えません。", target:"バックアップや設定を急いで一括回収する攻撃者と、候補を順に展開して秘密を探す攻撃者を想定します。", limit:"持ち出した後に並列・オフラインで解析する攻撃者は、現場の時間を使いません。パスワードはオフラインでも試行でき、解読時間や遅延は保証されません。通常データの暗号化やバックアップの代替ではありません。"},
     stream: {title:"インフィニット・ストリーム", how:"認証付きの隔離配信経路で、接続中は総容量・総時間で終わらない応答を返します。帯域と同時接続を抑え、管理者が停止できます。", target:"ファイル取得を完了するまで待つ、全量ダウンロード型の攻撃者を想定します。短時間で撤収したい攻撃者の時間と注意を拘束する狙いです。", limit:"バックエンドは無通信が5秒続くと接続を終了します。受信側が読み取らず書き込みが詰まった場合も対象です。部分取得、並列探索、明示的な切断でも迂回され、接続自体が罠と疑われることがあります。GUIはサーバーを起動せず、認証付き隔離経路・開始検知・負荷管理は配置側で必要です。"},
     directory_maze: {title:"ディレクトリ・メイズ", how:"実際のフォルダーとHTMLリンクで有限の階層・分岐を作り、文書や設定ファイルを配置します。認証情報保管庫シナリオでは、.envにシナリオ別環境変数、その他の形式に架空login_url項目を使い、password値は変えません。", target:"サブディレクトリ名を総当たりし、見つかったファイルを広く収集するクローラやAI生成ツールを想定します。", limit:"階層・ファイル数は有限で、URL重複排除や並列化で探索は速くなります。HTMLを全走査するだけの攻撃者には遅滞効果がなく、重要情報の見落としを保証しません。"},
     encoding_maze: {title:"エンコーディング・メイズ", how:"選択した業務シナリオに合わせ、候補ごとに独立した架空レコード・ファイル名・タイトルを作ってから多段変換します。認証情報保管庫では、.envにシナリオ別環境変数、その他の形式に架空login_url項目を使い、password値は変えません。", target:"取得後に複数候補を復元・正規化し、どれが価値ある情報か見極めようとする攻撃者を想定します。", limit:"暗号化ではありません。一括デコードは容易で、データベース自体が読むだけで通知するわけでもありません。"},
@@ -223,9 +224,9 @@ const methodExplanations = {
     env: {title:"Canary File", how:"Embeds a monitoring URL supplied by the operator in a plausible document or configuration file.", target:"An intruder steals a canary file and visits the URL inside it. Depending on the destination's configuration, it can report the contact or record request details for follow-up investigation.", limit:"A standalone canary file uses one URL. Encrypted Deep Nest, Directory Maze and Encoding Maze accept up to 400 URLs and record file assignments in their private operator inventory. If a URL is reused, an alert cannot identify the exact file. Reading or downloading a file alone does not trigger an HTTP token. Network blocking or workflows that never test URLs prevent alerts. An alert does not identify whether a human or AI caused it."},
     database: {title:"Decoy Database", how:"Creates a standalone SQLite file with a fictional B2C customer table, defaulting to customers. Choose 1,000, 10,000 or 100,000 records.", target:"Intruders collecting .db files for customer data, including those who validate stolen data later.", limit:"The generated artifact is one table with no canary URL. It does not connect to production or monitor reads. Older registration dates have a higher soft-delete probability, while deleted records remain sparse."},
     web: {title:"Static Decoy Portal", how:"Creates a static page that resembles an archive or operations portal.", target:"Attacks that enumerate public URLs and admin-like subdirectories, then follow links or collect files.", limit:"Static HTML has no authentication, session, setting changes, access control or alert delivery. Opening the page does not fetch its canary link."},
-    fake_trap: {title:"Fake Trap", how:"Creates eight business portal pages, including sign-in review, maintenance, device review and access requests. Optionally, the page sends a GET request to a configured canary URL when it loads.", target:"An AI agent reaching the decoy path reads the page structure or status and may reassess the access context.", limit:"There is no guarantee that an AI will be fooled. Low-level tools that classify HTML directly, scripts that do not read the page, and parallel exploration of other paths are less affected. Mail scanners and previews may also create contacts; configure logs and alerts separately."},
+    fake_trap: {title:"Fake Trap", how:"Creates eight business portal pages, including sign-in review, maintenance, device review and access requests. When monitoring is enabled and a URL is entered, an embedded image sends a GET request as the page loads.", target:"A person or an AI agent that reads and interprets the page may see a warning or status and reassess the situation.", limit:"Neither people nor AI agents are guaranteed to trust the display or change their actions. Low-level tools that classify HTML directly, scripts that do not read the page, and parallel exploration of other paths are less affected. Mail scanners and previews may also create contacts; configure logs and alerts separately."},
     ransomware_tripwire: {title:"Ransomware Decoy Flood", how:"Generates fictional business files and a Python standard-library monitor that locally records content changes, deletion or replacement of those specific files. The deployment ZIP and monitor script are separate downloads.", target:"Ransomware or another process encrypts, deletes or replaces a monitored tripwire file.", limit:"The monitor polls about once per second and does not detect read-only access. Real data may be damaged before an alert; it does not stop processes, isolate a device or restore data. It can miss brief changes and may produce false alarms."},
-    nest: {title:"Encrypted Deep Nest", how:"The downloaded ZIP is itself AES-encrypted and contains branching layers of decoy files and more archives. Multiple file formats are selected randomly and mixed within each ZIP. A separate password list is available for sample verification. The notes point generally to a separate key register without claiming a character count. In the Password Vault scenario, documents use a synthetic login_url field and password values stay unchanged.", target:"Intruders rapidly collecting backups/configuration and those who open candidate archives to find secrets.", limit:"Parallel/offline analysis after exfiltration adds no on-site delay. Passwords can be attacked offline; solve time and on-site delay are not guaranteed. This does not replace normal encryption or backups."},
+    nest: {title:"Encrypted Deep Nest", how:"The downloaded ZIP is AES-encrypted and contains branching layers of decoy files and archives. Multiple file formats are mixed within each ZIP. A separate password list is available for sample verification. Optional operational notes contain synthetic review or handover details and do not refer to passwords, keys or where they are stored. In the Password Vault scenario, documents use a synthetic login_url field and password values stay unchanged.", target:"Intruders rapidly collecting backups/configuration and those who open candidate archives to find secrets.", limit:"Parallel/offline analysis after exfiltration adds no on-site delay. Passwords can be attacked offline; solve time and on-site delay are not guaranteed. This does not replace normal encryption or backups."},
     stream: {title:"Infinite Stream", how:"An authenticated, isolated endpoint returns data without a total size or duration cutoff while connected, with bandwidth/concurrency caps and operator stop.", target:"Bulk-download workflows that wait for the file to finish, occupying a rushed intruder's time and attention.", limit:"The backend closes a connection after five seconds without socket activity, including when a stalled write blocks delivery. Partial downloads, parallel discovery and intentional disconnects also bypass it; an endless response may itself look suspicious. The GUI does not start it; deployment, authentication, start-event monitoring and capacity limits belong in the host environment."},
     directory_maze: {title:"Directory Maze", how:"Creates finite real directories and HTML links with branches, documents and configuration files. In the Password Vault scenario, .env files use the scenario's environment variable and other formats put the canary in a synthetic login_url field without changing password values.", target:"Crawlers and AI-generated tools that enumerate subdirectory names and download discovered files.", limit:"The tree is finite. URL deduplication and parallelism speed exploration; a crawler that only indexes links gains little delay. It cannot guarantee that important files are missed."},
     encoding_maze: {title:"Encoding Maze", how:"Creates independent synthetic records, file names and titles for the selected business scenario, then applies layered encodings. In the Password Vault scenario, .env files use the scenario's environment variable and other formats put the canary in a synthetic login_url field without changing password values.", target:"Intruders who restore and inspect multiple candidates after collection to identify useful information.", limit:"This is not encryption; batch decoding is easy. It does not alert when read."},
@@ -270,7 +271,7 @@ Object.assign(methodFlows.ja, {
  stream:{context:"例：隔離された配信経路を、取得完了まで待つバックアップに見立てます。",steps:[["1. 専用サーバーを用意","生成されたサンプルを隔離先に設置し、認証・帯域・同時接続数を設定します。"],["2. 要求を受ける","認証された要求に対して、サーバーがダミーデータの配信を始めます。"],["3. 配信が続く","接続中は総容量・総時間で終わらず、完了を待つ相手の時間を使わせます。"],["4. 開始を把握","サーバーの開始イベントを収集し、担当者が確認・停止できます。"]],ifCase:"全量のダウンロードが終わるまで待つ相手には、対応する時間を得られる可能性があります。",elseCase:"部分取得、切断、並列探索や無通信タイムアウトで、待たずに別の行動を取れます。",response:"サーバーの起動、ログ収集・通知、接続・帯域制限と停止手順を配信側で設定します。",note:"ツールはサーバーを自動起動しません。無通信が5秒続く接続は終了し、攻撃者の拘束は保証されません。"},
  directory_maze:{context:"例：archive／reports／backupなどの階層に偽ファイルを分散させます。",steps:[["1. 階層を生成","有限のディレクトリと偽文書を作り、必要なら別の枝へHTMLリンクを張ります。"],["2. 隔離先に配置","静的配信先で正規利用者の経路と分け、アクセスログを設定します。"],["3. 攻撃者が探索","ディレクトリやリンクを巡り、見つけたファイルを取得します。"],["4. 候補を確認","複数の文書の中から目的の情報を選ぶ場合、追加の確認が生じ得ます。"]],ifCase:"一つずつ巡り、各ファイルを確認する探索では、追加の要求や選別に時間を使い得ます。",elseCase:"並列探索やURLの重複排除、一括取得後のオフライン解析で、現場での遅れは小さくなります。",response:"配信ログの監視と、埋め込んだカナリアURLの通知を設定し、管理者用の対応表は別保管します。",note:"生成される階層は有限です。重要情報の見落としや通知の到達を保証しません。"},
  encoding_maze:{context:"例：架空の請求情報などを複数候補に分け、それぞれをBase64などで多段変換します。",steps:[["1. 候補を作る","業務シナリオに合わせて、異なる架空レコードやファイル名を用意します。"],["2. 多段変換","各候補を複数のエンコーディング層に包みます。暗号化ではありません。"],["3. 攻撃者が復元","取得後に形式を読み取り、各層をデコードします。"],["4. 内容を選別","復元した候補を比較して、価値がある情報かを判断します。"]],ifCase:"復元後の内容を個別に判断する場合、候補の確認作業が増える可能性があります。",elseCase:"既知の形式ならスクリプトで一括デコードでき、並列化すれば作業が短縮されます。",response:"取得を知るには配信側の監視が必要です。URLを試した場合のカナリア通知と区別します。",note:"オフラインでの復元・閲覧は自動検知できません。デコード順とURL対応は運用者用ファイルに保存します。"},
- fake_trap:{context:"例：業務に合うデバイス確認画面を配置し、HTMLを解析するAIエージェントの反応を評価します。",steps:[["1. 画面を選ぶ","サインイン確認、メンテナンス、新規デバイスなど8種類から生成します。"],["2. デコイ経路に配置","自組織の管理下に置き、正規利用者や監視ツールの誤接触を避けます。"],["3. AIがページを確認","HTML構造や状態表示を読むAIが、アクセス状況を再評価する可能性があります。"],["4. 防御側が確認","配信側ログで接触を観測し、AI・スクリプト・並列探索ごとに遅延を測ります。"]],ifCase:"HTMLや画面を確認するAIが、業務画面の状態を読み直して追加調査する場合、判断や探索に時間がかかる可能性があります。",elseCase:"静的HTMLを直接判定する低レベルツール、ページを読まないスクリプト、別経路を並列探索する攻撃では効果が薄くなります。AIに確実に有効とは限りません。",response:"配信側でログと内部通知を設定し、正規利用者の誤接触にも備えます。AIエージェント、スクリプト、並列処理を分けて効果を評価してください。",note:"カナリアURLを設定した場合、ページ表示時にそのURLへ要求を送ります。認証や追加の端末情報収集は行いません。未知のAPI呼び出しやAIへの指示注入は含みません。"},
+  fake_trap:{context:"例：業務に合うデバイス確認画面を配置し、人やHTMLを解析するAIエージェントの反応を評価します。",steps:[["1. 画面を用意する（起）","サインイン確認、メンテナンス、新規デバイスなど、配置先の業務に合う画面を選びます。"],["2. デコイ経路に置く（承）","自組織が管理する経路に配置します。接触を記録する場合は、監視サービスが発行した監視用URL（カナリアURL）を設定します。独自APIの実装は不要です。"],["3. 人やAIがページに到達する（転）","警告や状態表示を読んで再確認する場合があります。監視設定がONでURLが入力されていれば、ページ表示時に埋め込み画像のGET要求が送られます。プレビューやスキャナーも要求することがあります。"],["4. 記録を確認し効果を評価する（結）","接触記録だけで攻撃者とは断定せず、人・AI・スクリプト・並列探索を分けて同じ条件で反応や遅延を比べます。"]],ifCase:"人や、画面の文面・状態を読み取って判断するAIエージェントが、警告や処理中表示を受けて内容を調べ直す場合、判断や次の操作に時間がかかる可能性があります。",elseCase:"表示を見ても信じない人やAIには、判断を促す効果がありません。ページを描画・解釈しないスクリプトには作用せず、HTMLを直接分類するツールや別経路の並列探索では効果が薄くなります。",response:"監視URLは任意です。使う場合は監視サービスから発行されたHTTPS URLを設定してください。自分で接続先を用意するなら、自分が管理する隔離済みの受け口に限定し、本番認証やメールボックスに接続しないでください。接触ログと内部通知を設定し、正規利用者の誤接触にも備えます。",note:"監視設定がOFFまたはURL欄が空なら、外部要求も監視通知もありません。ONにしてURLを入力すると、ブラウザーがページを表示した時に埋め込み画像からGET要求を送ります。監視サービスには通常のHTTP接続情報が届く場合があり、プレビューやメールスキャナーが先に要求することもあります。接触記録はページへの要求を示す手掛かりであり、利用者の身元や攻撃を証明しません。"},
  ransomware_tripwire:{context:"例：普段の業務アプリが書き換えない共有フォルダーに、架空の運用ファイルを数個置きます。",steps:[["1. 架空ファイルを生成","業務らしい名前と合成データのファイルを4〜8個作ります。"],["2. 監視先へ配置","配置ZIPを展開し、通常のアプリが更新しない場所に置きます。"],["3. 監視を開始","運用者専用スクリプトを別の保護された場所に置き、配置先ルートを指定して起動します。"],["4. 変化を確認","変更・削除・差し替えをローカルログに記録し、担当者が初動を判断します。"]],ifCase:"攻撃プロセスが監視ファイルを書き換える・削除する場合、短い間隔で変化を記録できます。",elseCase:"読み取りや持ち出しだけでは反応しません。監視停止、差し替え、短い間に元へ戻す操作や並列実行で見逃す場合があります。",response:"ログを監視対象と別の保護された場所へ保存します。異常時は既存のEDRやOS保護機能で端末隔離を判断します。",note:"この仕組み自体は暗号化を止めず、データも復元しません。復元可能なコピーがない場合、破損した元データは戻せません。"},
  data_dilution:{context:"例：本物1万件と架空100万件を混ぜた場合、無作為に1件を選ぶと約99%は偽物です。",steps:[["1. 本物と偽物を混ぜる","関連する架空レコードも整え、同じ流出対象に大量の候補を用意する構想です。"],["2. 正規業務を維持","運用者は保護された判別機構を使い、本物だけを検索・集計します。"],["3. 混在データが流出","攻撃者が大量取得しても、個々の候補の真偽がすぐ分かるとは限りません。"],["4. 攻撃者が選別","外部情報と照合しても複数の説明が成り立つ場合、正解の判断が難しくなり得ます。"]],ifCase:"本物を高い精度で選別できなければ、流出データの利用・取引価値が下がる可能性があります。",elseCase:"選別せず全件を公開する、外部情報で絞る、判別機構も侵害する場合を別途評価します。",response:"判別台帳・アクセス権を分離し、DB読み取りや外部転送の監査と対応手順を設計します。",note:"技術紹介のみで実装はありません。99%は無作為抽出の割合で、被害軽減率ではなく、本物も流出します。"},
  honeyword:{context:"例：管理者アカウントの正規パスワードとは別に、認証側で検知用の偽パスワードを用意します。",steps:[["1. 認証側に偽候補を登録","対象アカウントに正規パスワードと区別できる偽パスワードを登録します。外部ファイルへの配置は必要ありません。"],["2. 攻撃者が試行","総当たりなどでログインを試みる場合や、流出したデータ・ディルーションの偽認証情報を試す場合を想定します。"],["3. 一致で分岐","登録済みの偽パスワードに一致した場合だけ、本番認証を成立させず独立した偽セッションへ誘導します。"],["4. 通知・操作観測","偽セッションへの移行を通知し、偽画面での操作を記録します。"]],ifCase:"試行された値が登録済みの偽パスワードに一致し、攻撃者が偽環境を調べれば、検知・遅滞につながる可能性があります。",elseCase:"偽候補に一致しなければ誘導されません。試行回数や偽候補の選び方によっては総当たりで一致しにくく、正規利用者の誤入力やMFAの差も課題です。",response:"正規認証とMFA、試行制限を維持し、偽セッションの権限・データ・ログを本番から隔離します。試行予算と誤発火を評価します。",note:"技術紹介のみで認証連携は未実装です。一般の誤パスワードすべてを誘導せず、総当たりの検知・阻止を保証しません。"}
@@ -283,7 +284,7 @@ Object.assign(methodFlows.en, {
  stream:{context:"Example: an isolated download endpoint resembles a backup that a client may wait to complete.",steps:[["1. Prepare a server","Deploy the generated sample in isolation; configure authentication, bandwidth and concurrency limits."],["2. Receive a request","The server begins delivering dummy data to an authenticated requester."],["3. Keep streaming","While connected, the response has no total size or duration cutoff."],["4. Observe the start","A separately collected start event can prompt investigation and operator stop."]],ifCase:"A client waiting for the full download may give responders additional time.",elseCase:"Partial retrieval, disconnecting, parallel exploration or an inactivity timeout ends or bypasses the wait.",response:"Start and monitor the server separately; set up logs, alerts, limits and an operator stop procedure.",note:"The tool does not start the server. A connection with five seconds of inactivity closes; attacker delay is not guaranteed."},
  directory_maze:{context:"Example: distribute decoy files across archive, reports and backup directories.",steps:[["1. Generate a tree","Create finite directories and fictional files, optionally linking branches with HTML."],["2. Host in isolation","Separate it from legitimate paths and configure hosting access logs."],["3. Intruder explores","The intruder follows directories or links and collects files."],["4. Check candidates","Finding useful-looking data may involve inspecting additional documents."]],ifCase:"Sequential traversal and inspection may add requests and selection work.",elseCase:"Parallel crawling, URL deduplication and bulk offline analysis may reduce on-site delay.",response:"Monitor hosting logs and canary URL use separately; retain the operator mapping privately.",note:"The tree is finite. Missing real information or receiving a timely alert is not guaranteed."},
  encoding_maze:{context:"Example: wrap several independent fictional invoice candidates in multiple encoding layers.",steps:[["1. Create candidates","Generate distinct fictional records and filenames for the chosen business scenario."],["2. Encode in layers","Wrap each candidate in multiple encodings; this is not encryption."],["3. Intruder decodes","After collection, the intruder reads the format and restores each layer."],["4. Assess content","The restored candidates are compared to identify useful information."]],ifCase:"Individual content assessment may add selection work after decoding.",elseCase:"Known formats can be decoded in bulk and parallelized to reduce the work.",response:"Use hosting-side monitoring for retrieval; distinguish it from alerts when a canary URL is requested.",note:"Offline decoding and reading are not automatically detected. Decode order and URL mappings are kept in the operator file."},
- fake_trap:{context:"Example: deploy a context-matched device-review page and evaluate AI agents that inspect HTML structure.",steps:[["1. Choose a page","Generate one of eight variants, such as sign-in review, maintenance or device review."],["2. Deploy the decoy","Host it on an authorized path and avoid accidental access by legitimate users or monitors."],["3. AI inspects the page","An agent reading its HTML or rendered status may reassess the access context."],["4. Defender measures","Use hosting logs and compare AI, script and parallel-exploration runs separately."]],ifCase:"An AI agent that reviews the page status or business context may spend more time checking the situation.",elseCase:"Low-level tools that classify static HTML, scripts that do not read the page, and parallel exploration are less affected. AI deception is not guaranteed.",response:"Configure hosting logs and internal alerts; prepare for legitimate users who encounter the page. Measure delay under equivalent conditions.",note:"When configured, the page requests the canary URL on load. It does not authenticate or collect additional device information. It includes no unknown API calls or instructions to AI."},
+  fake_trap:{context:"Example: deploy a context-matched device-review page and evaluate people or AI agents that interpret HTML or rendered content.",steps:[["1. Set the scene","Choose a page that fits the environment, such as sign-in review, maintenance or device review."],["2. Deploy the decoy","Host it on a path you control. To record contact, enter an HTTPS monitoring URL (canary URL) issued by a monitoring service; no custom API is needed."],["3. The visitor reacts","A warning or status may prompt reassessment. If monitoring is enabled and a URL is entered, an embedded image sends a GET request when the page loads. Previews and scanners may also request it."],["4. Review the outcome","Treat a contact as a lead, not proof of an attacker. Compare people, AI agents, scripts and parallel exploration under equivalent conditions."]],ifCase:"A person or an AI agent that interprets the page text or status may spend more time reassessing the situation after seeing a warning or processing display.",elseCase:"People or AI agents that do not trust or reconsider the display gain no added decision time. Scripts that do not render or interpret the page are unaffected; direct HTML classification and parallel exploration can reduce the effect.",response:"The monitoring URL is optional. Use one issued by a monitoring service. If you operate the endpoint yourself, use only an isolated sink that you control, with no production authentication or mailboxes. Configure contact logs and internal alerts, and prepare for legitimate users who encounter the page.",note:"When monitoring is off or the URL field is blank, no external request or alert is sent. When enabled with a URL, the browser sends a GET request through an embedded image as the page loads. The monitoring service may receive ordinary HTTP request metadata; previews and mail scanners may also request it first. A contact is a lead that the page was reached, not proof of a person's identity or an attack."},
  ransomware_tripwire:{context:"Example: place a few fictional operations files in a directory that ordinary applications do not update.",steps:[["1. Generate synthetic files","Create four to eight plausible-looking files containing fictional data."],["2. Place the files","Extract the deployment ZIP somewhere visible to an attacker but outside normal application write paths."],["3. Start the monitor","Keep the operator-only script separate and run it against the extracted root."],["4. Review local events","Changes, deletion or replacement are logged locally for an operator to assess."]],ifCase:"If a process changes, deletes or replaces a monitored tripwire file, the monitor can record the change shortly afterward.",elseCase:"Reads or exfiltration alone do not trigger it. Stopping the monitor, replacing the tripwire, or changing and restoring a file between polls can evade detection.",response:"Keep logs in a protected location outside the watched directory. Use existing endpoint controls to decide whether to isolate a device.",note:"This does not stop encryption or restore data. Without a recoverable copy, destroyed original data cannot be reconstructed."},
  data_dilution:{context:"Example: among 10,000 genuine and 1,000,000 synthetic records, a uniformly random single record is about 99% synthetic.",steps:[["1. Mix candidates","The concept adds many plausible synthetic records and related data to the same leak target."],["2. Maintain legitimate use","Authorized operations rely on a protected mechanism to distinguish real records."],["3. Mixed data leaks","An intruder retrieves the dataset but may not immediately know which records are genuine."],["4. Select candidates","External comparisons can still leave multiple plausible explanations and uncertain answers."]],ifCase:"If real records cannot be selected accurately, leaked data may become less useful or valuable to a buyer.",elseCase:"Evaluate publication without selection, external matching, and compromise of the classification mechanism separately.",response:"Design separated classification data and permissions, database read/transfer auditing and incident response.",note:"Concept overview only: no implementation. The 99% is a random-sample proportion, not a damage-reduction rate; real records still leak."},
  honeyword:{context:"Example: configure a privileged account with decoy passwords separate from its real password.",steps:[["1. Register decoy candidates","Configure decoy passwords for the account in the authentication system. Placing them in an external file is not required."],["2. Attacker attempts login","Consider password guessing or use of decoy credentials leaked through a Data Dilution design."],["3. Branch on a match","Only a registered decoy-password match routes to an isolated session; production authentication remains unsuccessful."],["4. Alert and observe","Alert on the decoy session and record its subsequent actions."]],ifCase:"If an attempt matches a registered decoy password and the attacker explores the fake environment, detection and delay may result.",elseCase:"No decoy session is issued without a match. Match probability depends on the attempt budget and decoy selection; legitimate mistakes and MFA differences also matter.",response:"Preserve real authentication, MFA and rate limits; isolate decoy permissions, data and logs. Evaluate attempt budgets and false positives.",note:"Concept overview only; authentication integration is not implemented. Ordinary incorrect passwords do not all trigger a decoy, and detecting or stopping every guessing attack is not guaranteed."}
@@ -300,12 +301,12 @@ const methodKeyPointAdditions = {
     stream:["生成しただけでは配信サーバーは起動しません。無通信が5秒続くと接続が終了し、部分取得や並列接続でも待ち時間を迂回される場合があります。"],
     directory_maze:["ディレクトリとファイル数は有限です。並列巡回や一括取得後のオフライン解析で遅延は小さくなり、実データの見落としや即時通知を保証しません。"],
     encoding_maze:["エンコードは暗号化ではありません。取得後の一括デコードやオフライン閲覧は自動検知されないため、取得ログを別途監視してください。"],
-    fake_trap:["認証や追加の端末情報収集は行いません。カナリアURLを設定するとページ表示時にGET要求が送られ、監視先に接触記録が残ります。メールスキャナーやプレビューも記録される場合があります。表示を無視する自動処理には作用しません。"],
+      fake_trap:["監視用URL（カナリアURL）は監視サービスが発行する、接触記録用のHTTPS URLです。設定をONにしてURLを入力した場合だけ、ページ表示時に埋め込み画像のGET要求を送ります。OFFまたはURL欄が空なら外部要求はありません。独自APIの用意は不要です。自分で受け口を運用する場合は、自分が管理する隔離先に限定し、本番認証・メールボックスに接続しないでください。プレビューやメールスキャナーも記録される場合があり、接触記録だけで攻撃者とは断定できません。"],
     ransomware_tripwire:["ファイル変更を記録する仕組みで、暗号化を止めたりデータを復元したりはしません。読み取りや持ち出しだけでは発火せず、監視停止や変更の復元で見逃す場合があります。"],
     data_dilution:["合成データを混ぜても本物のレコードは流出し得ます。ランダム抽出時の合成比率は、被害軽減率を示すものではありません。全件公開や外部情報との照合も防げません。"],
     honeyword:["登録済みの偽パスワードとの一致時だけ分岐します。このサンプルは認証連携・通知を実装せず、誤入力やMFAの違いによる誤検知にも注意が必要です。"],
     path_maze:["配置するフォルダーとファイルは有限です。対象を絞る攻撃や並列処理では実ファイルが先に処理される場合があり、遅滞や見落とし防止は保証されません。"],
-    sparse_decoy:["部分暗号化やサイズによる除外では追加負荷が小さくなります。バックアップ・同期・コピーは論理サイズ分の容量を使う場合があるため、小規模に試して空き容量を監視してください."]
+    sparse_decoy:["全域を読み書きし、疎領域を認識しない処理では追加負荷が生じる可能性があります。部分暗号化・大容量ファイルの除外・疎領域の最適化では影響が小さくなります。暗号化出力やコピーで論理サイズ分の容量を使う場合があるため、小さく試して空き容量を監視してください。"]
   },
   en: {
     env:["This URL canary triggers only when the URL is actually requested; reading, opening or running the file alone is not enough. External connectivity without a request produces no alert. A source address does not identify the attacker, and immediate delivery is not guaranteed."],
@@ -315,12 +316,12 @@ const methodKeyPointAdditions = {
     stream:["Generating the sample does not start its server. Five seconds without activity closes a connection, and partial retrieval or parallel connections may bypass the wait."],
     directory_maze:["The directory tree and file count are finite. Parallel crawling or offline analysis after bulk collection can reduce delay; the method does not guarantee missed real data or an immediate alert."],
     encoding_maze:["Encoding is not encryption. Bulk decoding and offline inspection after collection are not detected automatically; configure retrieval monitoring separately."],
-    fake_trap:["The page does not authenticate or collect additional device information. If a canary URL is configured, loading the page sends a GET request and creates a contact at the monitoring service. Mail scanners and previews may also be recorded. Automation that ignores the page is unaffected."],
+      fake_trap:["The monitoring URL (canary URL) is an HTTPS address issued by a monitoring service to record contact. A GET request through an embedded image is sent only when this option is on and a URL is entered; off or blank means no external request. No custom API is needed. If you operate the endpoint, use an isolated sink you control with no production authentication or mailboxes. Previews and mail scanners may also create contacts, so a contact alone does not identify an attacker."],
     ransomware_tripwire:["This records file changes; it does not stop encryption or restore data. Reads and exfiltration alone do not trigger it, and stopping the monitor or restoring a file between checks may evade detection."],
     data_dilution:["Genuine records can still leak. The synthetic share in a random sample is not a measure of harm prevented; this does not stop publication of all records or matching against external information."],
     honeyword:["Diversion occurs only when a registered decoy password matches. This sample does not implement authentication integration or alerts, and legitimate mistakes or MFA differences can cause false positives."],
     path_maze:["The deployed folders and files are finite. Selective targeting or parallel processing can reach real files first; delay and prevention of missed data are not guaranteed."],
-    sparse_decoy:["Partial encryption or size-based exclusions reduce the extra work. Backups, synchronization and copies may consume the full logical size, so start small and monitor free space."]
+    sparse_decoy:["Full read/write processing that does not account for sparse regions may add work. Partial encryption, large-file exclusions and sparse-aware processing can reduce the effect. Encrypted output or copies may use the full logical size, so start small and monitor free space."]
   }
 };
 function applyMethodKeyPointAdditions() {
@@ -390,11 +391,11 @@ delete methodFlows.ja.database.note;
 delete methodFlows.en.database.note;
 methodFlows.ja.data_dilution.ifCase = "全件が公開されても、本物を選別できなければ、データの信頼性や利用・取引価値が下がる可能性があります。外部情報との照合にも作業が必要で、一致だけでは正解と断定できない場合があります。";
 methodFlows.ja.data_dilution.elseCase = "判別台帳や照会権限も盗まれると、真偽を選別される可能性があります。また、真偽を選ばず大量に自動試行できる攻撃では、低い本物率でも成功が生じ得ます。流出元などが公開された候補の真偽を明らかにした場合も、その範囲では不確実性が減ります。";
-methodFlows.ja.data_dilution.response = "判別台帳と照会権限を分離・監査します。偽パスワードを試したときだけ隔離・検知するハニーワードと、試行制限・MFAを組み合わせる構想も評価します。一般の総当たりを一律に検知・阻止する仕組みではありません。";
+methodFlows.ja.data_dilution.response = "判別台帳と照会権限を分離・監査します。一般の総当たりを一律に検知・阻止する仕組みではありません。";
 methodFlows.ja.data_dilution.note = "このツールでは技術紹介のみを行い、本番DBへの混在は実装しません。全件公開には本物も含まれますが、公開と本物の判別・悪用は別に評価します。漏えい時の法令・契約上の通知義務は別途確認します。";
 methodFlows.en.data_dilution.ifCase = "Even if the full dataset is published, its reliability and resale or use value may fall if genuine records cannot be selected. External matching takes work, and a match alone may not establish ground truth.";
 methodFlows.en.data_dilution.elseCase = "A stolen classification inventory or lookup privilege may reveal which records are genuine. Large-scale automated attempts without prior selection can still succeed despite a low genuine fraction. If the source or another party discloses which published candidates are genuine, uncertainty is reduced for those records.";
-methodFlows.en.data_dilution.response = "Separate and audit the classification inventory and lookup privileges. Evaluate combining rate limits and MFA with honeywords that detect and isolate a specific decoy-password match; honeywords do not detect or stop all bulk attempts.";
+methodFlows.en.data_dilution.response = "Separate and audit the classification inventory and lookup privileges. This does not detect or stop all bulk attempts.";
 methodFlows.en.data_dilution.note = "This tool explains the concept but does not mix records into production. Full publication includes genuine records, but publication and identifying or exploiting them are assessed separately. Review applicable legal and contractual breach-notification duties.";
 methodFlows.ja.data_dilution.context = "例：本物1万件に対して合成レコードを何件混ぜるかを検討します。比率だけで安全性は決まりません。仮に本物1万件・合成1,000万件（本物の1,000倍）なら、無作為に1件選ぶ場合の合成率は約99.90%ですが、全件を取得すれば本物1万件もそのまま含まれます。";
 methodFlows.en.data_dilution.context = "Example: assess how many synthetic records to mix with 10,000 genuine records. No ratio establishes safety. With 10 million synthetic records (1,000 times the genuine count), a uniformly random single record is about 99.90% synthetic, but bulk acquisition still includes all 10,000 genuine records.";
@@ -402,34 +403,52 @@ methodFlows.ja.data_dilution.ifCase = "攻撃者が候補から本物だけを�
 methodFlows.en.data_dilution.ifCase = "Selection may take more work when an attacker needs genuine records from a candidate set, lacks classification information, and cannot infer meaning or relationships at a glance. The goal is not a safe multiplier; it is to reduce selection accuracy or raise the attacker's validation cost under a defined threat model.";
 methodFlows.ja.data_dilution.elseCase = "1,000倍でも安全とは言えません。攻撃者が全件を取得・公開する、会員IDやメールアドレスを外部情報と照合する、値の分布・更新履歴・欠番・参照関係で分類する、判別台帳や除外フラグを盗む場合は効果が弱まります。固有性の高いレコード、希少な属性、正確な実在住所・契約・医療・決済情報など、真偽を外から確認できるデータでは合成候補が紛れにくくなります。";
 methodFlows.en.data_dilution.elseCase = "Even a 1,000:1 ratio is not safe. The effect weakens if an attacker copies or publishes everything, matches customer IDs or emails to outside sources, classifies by distributions, update history, gaps or relationships, or steals the classification inventory or exclusion flag. Unique records, rare attributes, or externally verifiable address, contract, medical or payment facts are difficult to imitate convincingly.";
-methodFlows.ja.data_dilution.response = "導入を検討する場合は、本番業務に混ぜる前に隔離した複製環境で評価します。合成データであることを示す来歴・フラグは保護領域に分離し、権限・監査・バックアップ・エクスポートを設計します。集計、請求、通知、検索、機械学習、外部連携が合成レコードを除外できるか確認し、誤送信や業務数値の汚染を監視します。";
-methodFlows.en.data_dilution.response = "Evaluate in an isolated replica before considering production use. Keep provenance and classification flags in a protected, separately controlled mechanism, and design permissions, auditing, backups and exports. Verify that reporting, billing, notifications, search, machine learning and external integrations can exclude synthetic records; monitor for misdirected messages and contaminated business metrics.";
-methodFlows.ja.data_dilution.note = "倍率の普遍的な推奨値や、安全を保証する閾値はありません。必要な量は、想定する選別方法とコスト、実データの多様性、保存・索引・複製費用、正規処理への影響で決めます。毎日の集計や更新で全レコードを判定・除外する必要があり、その判別処理を安全に維持できない場合は不向きです。少量の特殊データしかなく自然な合成候補を作れない場合、レコード間の厳密な整合性が必要な場合、全件を対象とする法定報告・請求・監査・機械学習、第三者への通知や決済が混在データを前提とできない場合も採用しにくい方式です。データ量増加、性能・保管費用、重複や不整合、移行・削除・復元、利用者の権利請求、バックアップや分析用コピーへの反映まで含めて検討してください。このツールは技術紹介のみで、本番DBへの混在は実装しません。";
-methodFlows.en.data_dilution.note = "There is no universal recommended multiplier or threshold that guarantees safety. Choose a volume based on the assumed selection methods and cost, diversity of genuine data, storage/index/replication costs, and effects on legitimate processing. This approach is a poor fit if every daily aggregation or update must classify and exclude records and that classification cannot be maintained safely; if the dataset is small or too unusual to create plausible counterparts; if strict inter-record consistency is required; or if statutory reporting, billing, audits, machine learning, third-party messages or payments must operate on every row. Account for data growth, performance and storage costs, duplicates and inconsistencies, migrations, deletion and recovery, data-subject requests, backups and analytics copies. This tool provides an overview only and does not mix records into production.";
+methodFlows.ja.data_dilution.response = [
+  "倍率に普遍的な推奨値や安全を保証する閾値はありません。必要量は、想定する選別方法とコスト、実データの多様性、保存・索引・複製費用、正規処理への影響で決めます。",
+  "通常の定期集計は、合成レコードを除外するバッチ処理を組み込んで対応できます。追加の作り込みは必要ですが、バッチ内の処理として管理できます。リアルタイム集計や短い間隔での全件走査・更新では、負荷が大きくなる可能性があります。",
+  "少量・特殊なデータで自然な合成候補を作れない場合や、レコード間の厳密な整合性が必要な場合は慎重に判断します。",
+  "法定報告、請求、監査、機械学習、第三者への通知や決済など、全件を処理する業務が混在データを扱えない場合は採用が難しくなります。",
+  "本番利用を検討する前に隔離した複製環境で評価し、合成データの来歴・判別フラグを本番データから分離して保護します。権限、監査、バックアップ、エクスポートも設計します。",
+  "集計、請求、通知、検索、機械学習、外部連携が合成レコードを正しく除外できるか確認し、誤送信や業務数値の汚染を監視します。",
+  "データ増加、性能・保管費用、重複や不整合、移行・削除・復元、利用者の権利請求、バックアップや分析用コピーへの反映も検討します。",
+  "このツールは技術紹介のみで、本番DBへの混在は実装しません。"
+];
+methodFlows.en.data_dilution.response = [
+  "There is no universal recommended multiplier or threshold that guarantees safety. Choose a volume based on the assumed selection methods and cost, genuine-data diversity, storage/index/replication costs, and effects on legitimate processing.",
+  "Routine scheduled aggregates can filter synthetic rows through an added batch step. This requires implementation work but can be managed within the batch. Real-time aggregation or frequent full-table scans and rewrites may add substantial overhead.",
+  "Use caution if a small or unusual dataset cannot support plausible synthetic candidates or if strict inter-record consistency is required.",
+  "Adoption may be impractical when statutory reporting, billing, audits, machine learning, third-party messages or payments must process every row and cannot handle mixed data.",
+  "Before production use, evaluate in an isolated replica. Keep synthetic-data provenance and classification flags separate from production data and protected; design permissions, auditing, backups and exports.",
+  "Verify that reporting, billing, notifications, search, machine learning and external integrations can exclude synthetic records. Monitor for misdirected messages and contaminated business metrics.",
+  "Account for data growth, performance and storage costs, duplicates and inconsistencies, migrations, deletion and recovery, data-subject requests, backups and analytics copies.",
+  "This tool provides an overview only and does not mix records into production."
+];
+methodFlows.ja.data_dilution.note = "本物のレコードも流出し得ます。漏えい時の法令・契約上の通知義務は別途確認してください。";
+methodFlows.en.data_dilution.note = "Genuine records can still leak. Review applicable legal and contractual breach-notification duties.";
 
 const methodOutcomes = {
   ja: {
-    env: {deception:"実際の設定ファイル名・キー・接続先の置き方に合わせます。example.invalidは安全ですが、罠だと見抜く手掛かりになります。", delay:"ファイル自体に大きな遅滞はありません。取得やURL試行を記録し、発火をすぐ対応へ結びつけた場合に限り、防御側の猶予を作れます。"},
-    database: {deception:"周辺の実システムに合うスキーマ・列名・件数・業務語彙を使います。example.invalidは不自然さを示すため、必要なら所有する隔離デコイ専用ドメインを使います。", delay:"複数のDB候補の照合やデータの検証に時間を使わせます。単に読み取るだけでは通知されず、読み取り監査かカナリアURLへのアクセスが別途必要です。"},
-    web: {deception:"実サイト内の自然なパス・画面名・リンク構成に合わせて配置します。単独の汎用ページでは疑われやすくなります。", delay:"クローラーにリンク先やファイルを順に確認させ、追加リクエストと選別時間を生みます。巡回は有限で、並列化すれば短縮できます。"},
-    nest: {deception:"バックアップや移行資料に見合うファイル名・フォルダー・手掛かりを選びます。露骨な規則性や周辺環境と合わない内容は罠の兆候になります。", delay:"現場で層ごとに展開・確認する攻撃者には、各段のパスワード探索と内容判断が追加作業になります。持ち出し後の並列オフライン解析では現場の時間を使わせません。"},
-    stream: {deception:"実在するバックアップ配信経路に似せ、認証付きの隔離経路として配置します。終端のない応答自体が不自然に見える可能性があります。", delay:"終端不明の取得を続けるか切るか判断させ、帯域制限中の時間を使わせます。開始検知と対応が取得より先に間に合う運用が必要です。"},
-    directory_maze: {deception:"実サイトや共有領域の命名・階層に合うディレクトリとファイルを配置します。無関係な大量リンクは巡回パターンから疑われ得ます。", delay:"リンクをたどる巡回にリクエストと候補選別を追加します。深さ・件数には上限があり、URL重複排除や並列探索で短縮されます。"},
-    encoding_maze: {deception:"候補ごとに異なる架空レコードと業務らしいファイル名を使い、どの候補にも共通の比較基準を置きません。変換形式や不自然なデータは罠の手掛かりになります。", delay:"複数の候補を復元して内容の有用性を個別に判断させます。復元は一括自動化でき、遅滞は候補の数と選別手順に依存します。"},
+    env: {deception:"実際の設定ファイル名・キー・接続先の置き方に合わせます。example.invalidは安全ですが、罠だと見抜く手掛かりになります。", delay:"URLを実際に要求した攻撃者の接触を記録でき、担当者が調査・遮断する手掛かりになります。ファイル取得や閲覧自体に大きな遅滞はなく、要求が発生しない場合や通知・対応が遅い場合は猶予になりません。"},
+    database: {deception:"周辺の実システムに合うスキーマ・列名・件数・業務語彙を使います。example.invalidは不自然さを示すため、必要なら所有する隔離デコイ専用ドメインを使います。", delay:"複数のDB候補を照合・検証させ、選別の手間や偽データを本物と誤認するリスクを増やす可能性があります。防御側には流出データの信頼性や利用価値を下げる効果が期待されますが、閲覧だけでは通知されず、監査やカナリア監視は別途必要です。"},
+    web: {deception:"実サイト内の自然なパス・画面名・リンク構成に合わせて配置します。単独の汎用ページでは疑われやすくなります。", delay:"リンク先やファイルの確認に追加リクエストと選別作業が生じ、巡回ログから調査の手掛かりを得られる場合があります。対応の猶予になるには監視と迅速な対応が必要です。巡回は有限で、並列化や別経路で短縮・回避できます。"},
+    nest: {deception:"バックアップや移行資料に見合うファイル名・フォルダー・手掛かりを選びます。露骨な規則性や周辺環境と合わない内容は罠の兆候になります。", delay:"現場で層ごとに展開する攻撃者には、各段のパスワード探索と内容判断が追加作業になります。取得ログや通知があれば防御側の調査時間になる可能性がありますが、持ち出し後の並列オフライン解析では現場の猶予になりません。"},
+    stream: {deception:"実在するバックアップ配信経路に似せ、認証付きの隔離経路として配置します。終端のない応答自体が不自然に見える可能性があります。", delay:"攻撃者に待機を続けるか切断するかの判断と、帯域制限下での時間を使わせる可能性があります。防御側が配信開始を検知し、有用データの取得前に対応できる場合に猶予になります。部分取得・並列接続・切断で回避され得ます。"},
+    directory_maze: {deception:"実サイトや共有領域の命名・階層に合うディレクトリとファイルを配置します。無関係な大量リンクは巡回パターンから疑われ得ます。", delay:"リンク巡回に追加リクエストと候補選別の手間が生じ、監視ログがあれば防御側の調査材料になる場合があります。猶予には監視と対応が必要です。深さ・件数には上限があり、重複排除や並列探索で短縮されます。"},
+    encoding_maze: {deception:"候補ごとに異なる架空レコードと業務らしいファイル名を使い、どの候補にも共通の比較基準を置きません。変換形式や不自然なデータは罠の手掛かりになります。", delay:"複数候補の復元後に内容を個別評価させ、選別作業を増やす可能性があります。取得の監視があれば調査の手掛かりになりますが、復元自体は一括自動化でき、取得後のオフライン処理は検知できません。"},
   },
   en: {
-    env: {deception:"Match real configuration filenames, keys and endpoint placement. example.invalid is safe but also signals that the file is a decoy.", delay:"The file itself adds little delay. It buys response time only when downloads or URL attempts are logged and alerts reach responders promptly."},
-    database: {deception:"Match surrounding schemas, column names, record counts and business vocabulary. example.invalid looks artificial; use an owned domain dedicated to an isolated decoy when appropriate.", delay:"Make the intruder spend time comparing database candidates or validating records. A read alone does not alert; separate read auditing or a canary URL request is required."},
-    web: {deception:"Place it at a natural path within the real site and match page names and link structure. A generic standalone page is easier to dismiss.", delay:"Following links and checking files adds requests and selection work. The crawl is finite and can be shortened through parallelism."},
-    nest: {deception:"Use filenames, folders and clues that fit backup or migration workflows. Obvious patterns or content that conflicts with the environment can reveal the decoy.", delay:"On-site exploration adds password-solving and inspection at each layer. Parallel offline analysis after collection consumes no on-site time."},
-    stream: {deception:"Place it behind an authenticated isolated route that resembles a real backup download. An endless response may itself look suspicious.", delay:"An unknown completion point forces a decision to keep waiting or disconnect while bandwidth is capped. Start detection and response must beat useful data collection."},
-    directory_maze: {deception:"Use directory and file names that fit the site's real naming and hierarchy. Large unrelated link sets can look suspicious to a crawler.", delay:"Following links adds requests and candidate-selection work. Depth and file counts are bounded; URL deduplication and parallel crawling reduce delay."},
-    encoding_maze: {deception:"Give each candidate independent synthetic records and plausible filenames, with no shared baseline for direct comparison. Predictable encodings or implausible data can reveal the decoy.", delay:"Require recovery and individual assessment of multiple candidates. Decoding can be batched; delay depends on candidate count and selection workflow."},
+    env: {deception:"Match real configuration filenames, keys and endpoint placement. example.invalid is safe but also signals that the file is a decoy.", delay:"A request to the URL can create a contact record for responders to investigate. Retrieving or reading the file adds little delay, and no request means no alert; delayed notification or response may provide no useful window."},
+    database: {deception:"Match surrounding schemas, column names, record counts and business vocabulary. example.invalid looks artificial; use an owned domain dedicated to an isolated decoy when appropriate.", delay:"Comparing database candidates or validating records may add attacker work and reduce confidence or value in the stolen dataset. Reading alone does not alert; auditing or a canary request must be configured separately."},
+    web: {deception:"Place it at a natural path within the real site and match page names and link structure. A generic standalone page is easier to dismiss.", delay:"Checking links and files adds requests and selection work; hosting logs may give responders a lead. Monitoring and prompt response are needed for a useful window. Parallel crawling or another route can shorten or bypass it."},
+    nest: {deception:"Use filenames, folders and clues that fit backup or migration workflows. Obvious patterns or content that conflicts with the environment can reveal the decoy.", delay:"On-site exploration adds password-solving and inspection at each layer; retrieval logs may give defenders time to investigate. Parallel offline analysis after collection uses no on-site time."},
+    stream: {deception:"Place it behind an authenticated isolated route that resembles a real backup download. An endless response may itself look suspicious.", delay:"The attacker may spend time deciding whether to keep waiting or disconnect while bandwidth is capped. This creates a response window only if defenders detect the start and act before useful data is collected; partial retrieval or parallel connections can bypass it."},
+    directory_maze: {deception:"Use directory and file names that fit the site's real naming and hierarchy. Large unrelated link sets can look suspicious to a crawler.", delay:"Following links adds requests and candidate-selection work; access logs may give responders a lead. A useful window requires monitoring and response. Depth and file counts are bounded, and deduplication or parallel crawling reduces delay."},
+    encoding_maze: {deception:"Give each candidate independent synthetic records and plausible filenames, with no shared baseline for direct comparison. Predictable encodings or implausible data can reveal the decoy.", delay:"Recovering and assessing several candidates may add selection work, while retrieval monitoring may give defenders a lead. Decoding can be batched, and offline processing after collection is not detected by the files themselves."},
   },
 };
 
-methodOutcomes.ja.database.delay = "偽DBの確認・選別に時間を使わせるほか、本物として転売された偽DBが買い手に見破られれば、売り手の信用や次の取引に影響する可能性があります。";
-methodOutcomes.en.database.delay = "Besides selection time, a decoy resold as genuine may harm the seller's reputation and future business if the buyer recognizes it as fake.";
+methodOutcomes.ja.database.delay = "偽DBの確認・選別に時間を使わせ、偽データが本物として転売された場合は買い手の検証コストや売り手の信用に影響する可能性があります。防御側の利点は流出データの信頼性・価値を下げ得ることです。閲覧通知には別途監査が必要です。";
+methodOutcomes.en.database.delay = "Decoy databases may add review work; if resold as genuine, they may increase buyer validation costs and harm seller trust. The defensive benefit is a possible reduction in confidence or value of the stolen data. Separate auditing is needed for read alerts.";
 
 const methodLegal = {
   ja: {
@@ -455,26 +474,26 @@ methodExplanations.ja.honeyword = {title:"プリビレッジ・ハニーワー�
 methodExplanations.en.honeyword = {title:"Privilege Honeyword Session", how:"The concept registers decoy passwords for a privileged account and routes a match to a session isolated from production.", target:"An attacker guessing passwords or trying leaked decoy credentials.", limit:"It triggers only on a registered decoy password. Consider legitimate mistakes and differences in MFA. This tool explains the method; authentication integration and alerts are not implemented."};
 methodExplanations.ja.data_dilution = {title:"データ・ディルーション", how:"本物のデータに大量の架空レコードを混ぜ、流出後の真偽の選別を難しくする構想です。正規利用者には別の判別手段が必要です。", target:"攻撃者が本物と偽物をまとめて取得し、利用・売却しようとする状況を想定します。", limit:"本物も流出し、全件の公開や外部情報との照合、判別手段の侵害を防げません。このツールは手法の紹介のみを行い、本番データへの混在は実装しません。"};
 methodExplanations.en.data_dilution = {title:"Data Dilution", how:"The concept mixes many synthetic records with real data to make selection after a leak harder. Legitimate users need a separate way to distinguish records.", target:"An attacker obtaining a mixed dataset and trying to use or sell it.", limit:"Genuine records also leak. The approach cannot prevent publishing all records, external matching or compromise of the classification mechanism. This tool explains the concept and does not mix records into production."};
-methodOutcomes.ja.fake_trap = {deception:"配置先の業務や画面構成に合う複数の状態表示は、HTML構造や画面を確認するAIエージェントに、運用中の業務ポータルとして扱われる可能性があります。実装だけでAIを欺けるとは限りません。", delay:"AIエージェントが表示内容や画面遷移を確認し、アクセス状態を再評価する場合に調査時間が増える可能性があります。HTMLだけで見破るAIや低レベルなハッキングツール、画面を無視する自動処理には効果が薄くなります。"};
-methodOutcomes.en.fake_trap = {deception:"Context-matched status pages may be treated as an operational portal by AI agents that inspect page structure or render it. Implementation alone cannot guarantee that an AI will be deceived.", delay:"An AI agent may spend more time reassessing access when it inspects the page or its navigation. The effect is limited against tools that identify the decoy from HTML, low-level hacking tools, or automation that ignores the page."};
+methodOutcomes.ja.fake_trap = {deception:"配置先の業務や画面構成に合う状態表示は、人や、HTML構造・画面を確認するAIエージェントに、運用中の業務ポータルとして扱われる可能性があります。表示を読んでも誤認するとは限りません。", delay:"人やAIが表示を再確認する場合、判断に時間がかかり、防御側が対応する猶予になる可能性があります。監視URLや配信ログを設定すれば接触の手掛かりも得られますが、HTML判定・表示を無視する処理・別経路では効果が薄く、接触記録だけで攻撃者とは断定できません。"};
+methodOutcomes.en.fake_trap = {deception:"Context-matched status pages may be treated as an operational portal by people or AI agents that inspect the HTML or rendered page. Reading the display does not guarantee mistaken belief.", delay:"Reassessment by a person or AI may take time and give defenders a response window. A configured canary URL or hosting log may provide a lead, but HTML classification, automation that ignores the display, or another route reduces the effect; a contact alone does not identify an attacker."};
 methodLegal.ja.fake_trap = {normal:"自組織が管理する経路に架空の警告や待機画面を配置すること自体は、通常、第三者システムへの不正アクセスには当たりません。", risk:"実在機関へのなりすましや正規利用者の誤接触、アクセスログの収集方法を検討します。表示だけでは実際の通報は行いません。"};
 methodLegal.en.fake_trap = {normal:"Placing a fictional warning or waiting page on a route you control is not, by itself, necessarily unauthorized access to another system.", risk:"Consider impersonation of real organizations, accidental contact by legitimate users and access-log handling. The display itself does not report an incident."};
-methodOutcomes.ja.honeyword = {deception:"偽パスワードが試された場合、実際の管理画面に見合う隔離セッションへ誘導します。正規の認証やMFAと不自然な差があると気付かれます。", delay:"偽セッションで調査や操作を続ける攻撃者には追加の仕事が生じます。偽候補に一致しない場合は誘導されません。"};
-methodOutcomes.en.honeyword = {deception:"A decoy-password match leads to an isolated session resembling the actual management interface. Differences from genuine authentication or MFA may reveal it.", delay:"Exploration and actions in the decoy session add work. No redirection occurs without a registered decoy match."};
-methodOutcomes.ja.data_dilution = {deception:"本物と似た構造や業務上の関係を持つ架空レコードを混ぜ、候補の真偽を判断しにくくします。", delay:"攻撃者が本物を選別しようとする場合、照合や確認の仕事が増える可能性があります。全件公開や無差別な自動試行には限界があります。"};
-methodOutcomes.en.data_dilution = {deception:"Mix synthetic records with plausible structures and business relationships among genuine records.", delay:"An attacker selecting genuine records may need extra verification. Bulk publication and indiscriminate automated attempts remain possible."};
+methodOutcomes.ja.honeyword = {deception:"偽パスワードが試された場合、実際の管理画面に見合う隔離セッションへ誘導します。正規の認証やMFAと不自然な差があると気付かれます。", delay:"偽セッションの調査に攻撃者の時間を使わせ、認証連携と通知が適切なら防御側が試行を把握して対応する手掛かりになります。偽候補との一致が必要で、このツール自体は認証連携・通知を実装しません。"};
+methodOutcomes.en.honeyword = {deception:"A decoy-password match leads to an isolated session resembling the actual management interface. Differences from genuine authentication or MFA may reveal it.", delay:"Exploring the decoy session may consume attacker time and, with authentication integration and alerting, give defenders a lead to investigate. A registered decoy match is required; this tool does not implement authentication or alerts."};
+methodOutcomes.ja.data_dilution = {deception:"本物と似た構造や業務上の関係を持つ架空レコードを混ぜ、候補の真偽を判断しにくくします。", delay:"本物を選ぶ攻撃者には照合・検証の負担が増え、流出データ全体の信頼性や利用価値を下げる可能性があります。防御側の直接的な検知・遮断にはならず、全件公開や外部情報との照合には限界があります。"};
+methodOutcomes.en.data_dilution = {deception:"Mix synthetic records with plausible structures and business relationships among genuine records.", delay:"Selecting genuine records may require more matching and validation, reducing confidence or value in the stolen dataset. This does not directly detect or stop the theft; bulk publication and external matching remain possible."};
 methodLegal.ja.honeyword = {normal:"自組織が管理する認証で偽パスワードの一致を隔離環境へ分岐する通常利用は、それ自体が不正アクセスとは限りません。", risk:"入力された資格情報や操作ログの取扱い、第三者になりすます画面、監視の範囲を検討します。"};
 methodLegal.en.honeyword = {normal:"Routing a decoy-password match in an authentication system you control to an isolated environment is not, by itself, necessarily unauthorized access.", risk:"Review credential and activity-log handling, impersonation and monitoring scope."};
 methodLegal.ja.data_dilution = {normal:"管理する環境で合成データを用いて混在の構想を検討すること自体は、通常は第三者システムへの不正アクセスに当たりません。", risk:"本番データの取扱い、偽レコードへの誤送信、個人情報や契約上の義務を検討します。"};
 methodLegal.en.data_dilution = {normal:"Evaluating a synthetic-data mixing concept in an environment you control is not, by itself, necessarily unauthorized access to another system.", risk:"Consider production data handling, accidental messages to decoy records, privacy and contractual obligations."};
-methodOutcomes.ja.ransomware_tripwire = {deception:"実在の業務で使うファイル名・階層に近い架空ファイルを、通常の書き込み対象から外した場所に置きます。正規アプリが更新すると誤検知になります。", delay:"攻撃者の暗号化を遅らせる仕組みではありません。監視ファイルへの変更がログに残り、担当者が初動できる場合に限り被害拡大を抑えられる可能性があります。"};
-methodOutcomes.en.ransomware_tripwire = {deception:"Use fictional files and paths that fit the environment, in a location ordinary applications do not modify. Normal application writes will cause false alarms.", delay:"This does not slow encryption. It may help limit damage only if a change is logged and a responder can act before the attack spreads."};
+methodOutcomes.ja.ransomware_tripwire = {deception:"実在の業務で使うファイル名・階層に近い架空ファイルを、通常の書き込み対象から外した場所に置きます。正規アプリが更新すると誤検知になります。", delay:"暗号化の処理負担を増やす対策ではありません。変更を記録して担当者へ知らせることで、攻撃の進行を調べ、端末隔離などの対応を始める手掛かりになります。約1秒間隔の監視中に変更を捉え、実データへの被害拡大前に対応できる場合に限られます。"};
+methodOutcomes.en.ransomware_tripwire = {deception:"Use fictional files and paths that fit the environment, in a location ordinary applications do not modify. Normal application writes will cause false alarms.", delay:"This does not add encryption work. A recorded change can give responders a lead to investigate and start containment, but only if the monitor is running, captures the change and response occurs before harm spreads to real data."};
 methodLegal.ja.ransomware_tripwire = {normal:"自組織が管理する環境に架空ファイルとローカル監視ツールを配置する通常利用は、それ自体が同法上の不正アクセスとは限りません。", risk:"他者の端末や共有領域へ無断で配置・監視すること、ログに個人情報や通信データを収集することは別途検討が必要です。"};
 methodLegal.en.ransomware_tripwire = {normal:"Placing synthetic files and a local monitor in an environment you control is not, by itself, necessarily unauthorized access under the Act.", risk:"Unauthorized placement or monitoring on another party's device or shared space, and collection of personal or communication data in logs, require separate review."};
 usLegal.ja.ransomware_tripwire = ["自組織が管理する端末で架空ファイルを監視する通常利用は、それ自体が第三者システムへの無断アクセスとは限りません。", "他者の端末や共有領域への無断アクセス、個人情報や通信内容の収集は別途検討します。"];
 usLegal.en.ransomware_tripwire = ["Monitoring synthetic files on a device you control is not, by itself, necessarily unauthorized access to another system.", "Unauthorized access to another party's device or shared space, and collection of personal or communication data, require separate review."];
-Object.assign(translations.ja, {fake_title:"フェイクトラップ", fake_card:"警告や待機表示で再確認を促す", dilution_title:"データ・ディルーション", dilution_card:"本物に偽レコードを混ぜて選別を困難に", honeyword_title:"プリビレッジ・ハニーワード・セッション", honeyword_card:"偽パスワードで隔離デコイへ誘導", technology_only:"技術紹介のみです。生成や本番環境への変更は行いません。", fake_desc:"警告または待機表示の静的HTMLを生成します。", fake_variant:"表示パターン", fake_warning:"異常アクセスの警告", fake_reported:"通報済みの警告", fake_waiting:"認証中のスピナー", fake_note:"ファイル名を空欄にすると認証・セッション処理に使われる名前から自動で選びます。表示だけの静的ページです。検知・通報・認証・情報収集は行わず、外部への通信やプログラム送信もありません。監視・通知は配信側で別途設定してください。通報済みの表示は実際の通報を意味しません。正規利用者の誤接触に配慮してください。", template_replace_confirm:"このテンプレートを適用すると、編集したテーブル名と項目が置き換わります。続けますか？", quick_db_loading:"他のデータベース用プリセットを読み込み中です。顧客管理のサンプルは今すぐ作成できます。", quick_db_failed:"テンプレートを読み込めませんでした。下の「もう一度読み込む」を押してください。", quick_start_help:"最初はサンプルを一つ作成してみてください。生成ファイルは架空データで、ブラウザーから保存します。.envサンプルでは、カスタムファイル名や設定パターンの初期化が必要な場合だけ確認します。他の値は引き継ぎます。カナリア通知には、運用者が発行した監視URLへ実際にアクセスされる必要があります。生成器はURLに接続しません。", quick_env_reset_confirm:"このサンプルのため.envの設定パターンとファイル名を初期値に戻します。カナリアURLは保持します。続けますか？"});
-Object.assign(translations.en, {fake_title:"Fake Trap", fake_card:"Prompt reassessment with warnings or waiting screens", dilution_title:"Data Dilution", dilution_card:"Mix real and decoy records to hinder selection", honeyword_title:"Privilege Honeyword Session", honeyword_card:"Route decoy password use to an isolated decoy", technology_only:"Technology overview only. No files are generated and production systems are not changed.", fake_desc:"Generate a static warning or waiting page.", fake_variant:"Display pattern", fake_warning:"Unusual access warning", fake_reported:"Reported warning", fake_waiting:"Authentication spinner", fake_note:"When the filename is blank, the generator selects a common authentication or session-related name automatically. This static page only displays a message. It does not detect, report, authenticate, collect information, communicate externally or send software. Configure monitoring and alerts separately. The reported message does not mean a report was sent. Avoid exposing legitimate users to the page", template_replace_confirm:"Applying this template will replace your edited table name and columns. Continue?", quick_db_loading:"Loading more database presets. The customer sample is ready to create now.", quick_db_failed:"Could not load database templates. Select Retry loading presets below.", quick_start_help:"Start with one sample. Files contain fictional data and are saved by your browser. The .env shortcut asks only if it needs to reset a custom filename or layout; other current values are kept. A canary alert requires your monitoring URL to be accessed. The generator never contacts that URL.", quick_env_reset_confirm:"For this sample, reset the .env layout and filename to their defaults. Your canary URL will be kept. Continue?"});
+Object.assign(translations.ja, {fake_title:"フェイクトラップ", fake_card:"警告や待機表示で再確認を促す", dilution_title:"データ・ディルーション", dilution_card:"本物に偽レコードを混ぜて選別を困難に", honeyword_title:"プリビレッジ・ハニーワード・セッション", honeyword_card:"偽パスワードで隔離デコイへ誘導", technology_only:"技術紹介のみです。生成や本番環境への変更は行いません。", fake_desc:"警告または待機表示の静的HTMLを生成します。", fake_variant:"表示パターン", fake_warning:"異常アクセスの警告", fake_reported:"通報済みの警告", fake_waiting:"認証中のスピナー", fake_note:"監視設定がOFFまたは監視用URLが空欄の場合、外部要求はありません。設定をONにしてURLを入力すると、ページ表示時に接触を記録します。プレビューやメールスキャナーも要求する場合があります。", template_replace_confirm:"このテンプレートを適用すると、編集したテーブル名と項目が置き換わります。続けますか？", quick_db_loading:"他のデータベース用プリセットを読み込み中です。顧客管理のサンプルは今すぐ作成できます。", quick_db_failed:"テンプレートを読み込めませんでした。下の「もう一度読み込む」を押してください。", quick_start_help:"最初はサンプルを一つ作成してみてください。生成ファイルは架空データで、ブラウザーから保存します。.envサンプルでは、カスタムファイル名や設定パターンの初期化が必要な場合だけ確認します。他の値は引き継ぎます。カナリア通知には、運用者が発行した監視URLへ実際にアクセスされる必要があります。生成器はURLに接続しません。", quick_env_reset_confirm:"このサンプルのため.envの設定パターンとファイル名を初期値に戻します。カナリアURLは保持します。続けますか？"});
+Object.assign(translations.en, {fake_title:"Fake Trap", fake_card:"Prompt reassessment with warnings or waiting screens", dilution_title:"Data Dilution", dilution_card:"Mix real and decoy records to hinder selection", honeyword_title:"Privilege Honeyword Session", honeyword_card:"Route decoy password use to an isolated decoy", technology_only:"Technology overview only. No files are generated and production systems are not changed.", fake_desc:"Generate a static warning or waiting page.", fake_variant:"Display pattern", fake_warning:"Unusual access warning", fake_reported:"Reported warning", fake_waiting:"Authentication spinner", fake_note:"When monitoring is off or the monitoring URL is blank, no external request is sent. When enabled with a URL, page load records a contact; previews and mail scanners may also request it.", template_replace_confirm:"Applying this template will replace your edited table name and columns. Continue?", quick_db_loading:"Loading more database presets. The customer sample is ready to create now.", quick_db_failed:"Could not load database templates. Select Retry loading presets below.", quick_start_help:"Start with one sample. Files contain fictional data and are saved by your browser. The .env shortcut asks only if it needs to reset a custom filename or layout; other current values are kept. A canary alert requires your monitoring URL to be accessed. The generator never contacts that URL.", quick_env_reset_confirm:"For this sample, reset the .env layout and filename to their defaults. Your canary URL will be kept. Continue?"});
 Object.assign(translations.ja, {tripwire_title:"ランサムウェア・デコイフラッド", tripwire_card:"架空ファイルの改変・削除をローカルで監視", tripwire_desc:"架空の業務ファイルを配置し、そのファイル群の変化を監視するスクリプトを別ファイルで作成します。", tripwire_files_label:"配置する架空ファイル数（4〜8）", tripwire_note:"配置ZIPには架空ファイルだけを入れます。監視スクリプトは運用者専用ファイルとして別に保存し、監視先でPython 3.11以降を使って実行します。起動中のみ、ファイル内容の変更・削除・差し替えを約1秒間隔でローカル記録します。停止中は記録しません。読み取りだけは検知せず、自動停止もしません。見逃しや誤検知があり、本番データの保護や復元にはなりません。対象ディレクトリは正規アプリの書き込み経路から外し、ログは別の保護された場所へ保存してください。", tripwire_monitor_download:"監視スクリプトを保存（運用者専用・公開禁止）", tripwire_deployment_download:"配置用ZIPを保存（架空ファイル）", tripwire_generated_summary:"架空ファイル {count} 件を配置ZIPに作成しました。監視スクリプトは別途ダウンロードし、配置ZIPの外に保管してください。Python 3.11以降の監視先で、展開先ディレクトリを指定して実行します。Windowsは py -3、macOS・Linuxは python3 を使えます。読み取り検知や自動停止は行いません。"});
 Object.assign(translations.en, {tripwire_title:"Ransomware Decoy Flood", tripwire_card:"Locally monitor synthetic files for changes or deletion", tripwire_desc:"Generate fictional business files and a separate monitor for changes to those specific files.", tripwire_files_label:"Number of synthetic files (4–8)", tripwire_note:"The deployment ZIP contains synthetic files only. Save the monitor script separately as an operator-only file and run it on the monitored host with Python 3.11 or later. While running, it logs content changes, deletion and replacement locally, polling about once per second. It records nothing while stopped. It does not detect reads or stop a process. It can miss events or produce false alarms; it does not protect or restore production data. Keep the watched directory outside normal application write paths and store logs in a separate protected location.", tripwire_monitor_download:"Save monitor script (operator-only; never publish)", tripwire_deployment_download:"Save deployment ZIP (synthetic files)", tripwire_generated_summary:"Created {count} synthetic files in the deployment ZIP. Download the monitor separately and keep it outside the deployment. On a monitored host with Python 3.11+, run it against the extracted directory, for example: py -3 ransomware_tripwire_monitor.py <extracted-directory> on Windows or python3 ransomware_tripwire_monitor.py <extracted-directory> on macOS/Linux. It does not detect reads or stop processes."});
 Object.assign(translations.ja, {quick_start:"サンプルをかんたん作成", quick_env:".env.development用ZIPを作成", quick_html:"静的ポータル（HTML＋配置用ZIP）を作成", quick_db:"選択したDBサンプルを作成", quick_start_confirm:"サンプルを作成します。上のカナリアURLを入力した場合、選択したサンプルの既存URL欄を置き換え、そのまま出力に含めます。続けますか？", quick_database_confirm:"「{name}」テンプレートを適用し、表と項目を置き換えてサンプルを作成します。続けますか？", quick_canary_label:"監視URL（カナリアURL・任意）", quick_canary_url_invalid:"カナリアURLは空白を含まない有効なHTTPS URLにしてください。"});
@@ -486,10 +505,10 @@ methodFlows.ja.ransomware_tripwire = {context:"架空の業務ファイルを配
 methodFlows.en.ransomware_tripwire = {context:"Place synthetic files and run a replenishment script on the same host.", steps:[["1. Place synthetic files","Extract the deployment ZIP."],["2. Start replenishment","Run the separate script against the extracted directory."],["3. Watch decoy changes","Check for changes and deletion about once per second."],["4. Replenish decoys","Create a new synthetic file in the same directory for each observed change."]], ifCase:"Repeated enumeration and processing of added files may increase attacker work.", elseCase:"A one-time file listing or parallel processing can reach real files first.", response:"Optional startup arguments limit the number and bytes of replacements. The default is unlimited.", note:"A full disk can disrupt work and recovery and does not necessarily prevent overwriting existing files."};
 flowScenarios.ja.ransomware_tripwire = "想定：ファイルを探索して暗号化する攻撃に、補充される架空ファイルを処理させます。";
 flowScenarios.en.ransomware_tripwire = "Scenario: an encrypting process repeatedly finds and processes replenished synthetic files.";
-methodOutcomes.ja.ransomware_tripwire = {deception:"架空の業務ファイルを配置し、変更後は別名で補充します。", delay:"追加ファイルが再探索・処理される場合に仕事を増やす仮説です。"};
-methodOutcomes.en.ransomware_tripwire = {deception:"Place synthetic business files and replenish changed files under new names.", delay:"Additional work depends on the attacker discovering and processing replacements."};
-Object.assign(translations.ja, {fake_desc:"AIエージェントによるHTML解析や画面巡回も想定した、業務ポータル風の静的画面を8種類から生成します。",fake_warning:"サインインの追加確認",fake_reported:"確認リクエスト受付済み",fake_waiting:"セッション確認中",fake_maintenance:"サービスメンテナンス",fake_device_review:"新しいデバイスの確認",fake_access_request:"アクセス申請の確認",fake_sync_status:"アカウント同期状況",fake_policy_update:"セキュリティ設定更新",fake_embed_canary:"ページ表示時にカナリアURLへ接続する",fake_canary_help:"監視サービスから発行されたHTTPS URLを入力します。生成ページを表示するとGET要求を送り、接触として記録します。スキャナー等も記録され得ます。URLは生成ファイルに含まれるため、公開リポジトリに置かないでください。",fake_note:"カナリアURLを設定すると、ページ表示時に監視先へ接触します。監視先は接続元IPやUser-Agentなど通常のHTTP要求情報を記録する場合があります。メールスキャナーやプレビューも接触として記録され得ます。URLを設定しない場合、外部通信はありません。ページは認証や位置情報の収集を行いません。低レベルなHTML判定やページを表示しない自動処理には効果が薄くなります。"});
-Object.assign(translations.en, {fake_desc:"Generate one of eight polished business portal pages designed for review by AI agents and page crawlers.",fake_warning:"Sign-in review",fake_reported:"Review request received",fake_waiting:"Session review in progress",fake_maintenance:"Service maintenance",fake_device_review:"New device review",fake_access_request:"Access request review",fake_sync_status:"Account sync status",fake_policy_update:"Security settings updated",fake_embed_canary:"Contact the canary URL when the page opens",fake_canary_help:"Enter an HTTPS URL issued by your monitoring service. Opening the generated page sends a GET request; scanners may also trigger it. The URL is included in the generated file, so do not put that file in a public repository.",fake_note:"When configured, the page contacts the monitoring endpoint as soon as it loads. The service may log ordinary HTTP request data such as source IP and User-Agent. Mail scanners and previews may also create contacts. No external request is made without a URL. The page does not authenticate or request location. Low-level HTML inspection and automation that does not render the page are less affected."});
+methodOutcomes.ja.ransomware_tripwire = {deception:"架空の業務ファイルを配置し、変更後は別名で補充します。", delay:"攻撃者が補充ファイルも再探索・処理すれば作業が増える可能性があります。主な防御側の利点は監視ログを初動の手掛かりにできることですが、監視間隔・見逃し・対応速度に左右されます。"};
+methodOutcomes.en.ransomware_tripwire = {deception:"Place synthetic business files and replenish changed files under new names.", delay:"If the attacker discovers and processes replacements, the added files may increase its work. The main defensive benefit is a monitoring lead for response, subject to polling gaps, missed changes and responder speed."};
+Object.assign(translations.ja, {fake_desc:"AIエージェントによるHTML解析や画面巡回も想定した、業務ポータル風の静的画面を8種類から生成します。",fake_warning:"サインインの追加確認",fake_reported:"確認リクエスト受付済み",fake_waiting:"セッション確認中",fake_maintenance:"サービスメンテナンス",fake_device_review:"新しいデバイスの確認",fake_access_request:"アクセス申請の確認",fake_sync_status:"アカウント同期状況",fake_policy_update:"セキュリティ設定更新",fake_embed_canary:"ページ表示時に監視先へ接触を記録する（任意）",fake_canary_url_label:"監視用URL（カナリアURL）",fake_canary_help:"監視用URL（カナリアURL）は、アクセス時の接触を記録する監視先のページURLです。外部監視にはサービス発行のHTTPS URLを入力してください。このPCだけで試す場合は、Physaliaが用意したローカルURLを使えます（同じPCでアプリが起動中の場合のみ）。設定をONにしてURLを入力すると、ページ表示時に埋め込み画像のGET要求として接続します。独自APIの実装は不要です。監視先には接続元IPやUser-Agentなど通常のHTTP要求情報が届く場合があり、プレビューやメールスキャナーも記録されることがあります。URLは生成ファイルに含まれるため、公開リポジトリに置かないでください。",fake_note:"設定をOFFにするかURL欄を空にすると、ページから外部要求は送られません。ONにしてURLを設定した場合、ページ表示時に監視サービスへ接触記録を送ります。プレビューやメールスキャナーも要求する場合があるため、記録だけで攻撃者とは断定できません。ページは認証や位置情報の収集を行いません。低レベルなHTML判定やページを表示しない自動処理には効果が薄くなります。"});
+Object.assign(translations.en, {fake_desc:"Generate one of eight polished business portal pages designed for review by AI agents and page crawlers.",fake_warning:"Sign-in review",fake_reported:"Review request received",fake_waiting:"Session review in progress",fake_maintenance:"Service maintenance",fake_device_review:"New device review",fake_access_request:"Access request review",fake_sync_status:"Account sync status",fake_policy_update:"Security settings updated",fake_embed_canary:"Optionally record contact when the page opens",fake_canary_url_label:"Monitoring URL (canary URL)",fake_canary_help:"The monitoring URL (canary URL) is the address that records page contacts. For external monitoring, enter an HTTPS URL issued by a monitoring service. For a local check on this PC, use the local URL supplied by Physalia; it works only while the app is running on the same PC. When this option is enabled and a URL is entered, loading the page sends a GET request through an embedded image. No custom API is needed. The service may receive ordinary HTTP request metadata such as source IP and User-Agent; previews and mail scanners may also trigger a contact. The URL is included in the generated file, so do not put that file in a public repository.",fake_note:"When this option is off or the URL field is blank, the page sends no external request. When enabled with a URL, loading the page records a contact at the monitoring service. Previews and mail scanners may also trigger a request, so a contact alone does not identify an attacker. The page does not authenticate or collect location. Low-level HTML inspection and automation that does not render the page are less affected."});
 translations.ja.fake_canary_default_note = "初期状態はOFFです。意図しない外部通信や監視先への接触を避け、明示的に有効化した場合だけ監視要求を含めます。";
 translations.en.fake_canary_default_note = "Off by default to avoid unintended external requests. The generated page includes a monitoring request only when you explicitly enable it.";
 Object.assign(translations.ja, {path_maze_title:"パス・メイズ", path_maze_card:"架空ファイルを通常のフォルダーに分散", path_maze_desc:"有限の通常フォルダーに架空ファイルを配置します。", path_depth:"階層の深さ（1〜4）", path_branches:"各フォルダーの分岐数（1〜3）", path_files:"各フォルダーのファイル数（1〜4）", path_note:"通常のフォルダーと架空ファイルを有限個作ります。リンクや常駐プログラムは使いません。攻撃がデコイを処理する場合に追加の仕事が生じます。並列処理や対象の絞り込みでは実ファイルが先に処理されることがあります。バックアップや検索にもファイルが増えます。", sparse_title:"スパース・デコイ", sparse_card:"見かけ上大きな架空ファイルを作成", sparse_desc:"指定したフォルダーにスパースファイルを1件直接作成します。", sparse_size:"指定サイズの目安（GiB、1〜1,024）", sparse_extension:"ファイル名の見た目の拡張子", sparse_extension_help:"拡張子は名前の見た目だけに使います。ファイルの中身は選んだ形式に準拠しません。", sparse_note:"実際の論理サイズは指定値から最大0.5%程度変動します。上限に近い指定では1 TiBを超えない範囲で変動します。スパースファイルなので実際の使用容量は通常小さくなりますが、コピー・同期・バックアップ・暗号化では最大1 TiBを使う場合があります。対応するファイルシステムが必要です。拡張子は見た目だけで、中身はその形式に準拠しません。", path_generated:"{directories}フォルダーに架空ファイル{documents}件を作成しました。運用者用の配置一覧も保存してください。", sparse_generated:"指定フォルダーに架空ファイル「{filename}」を論理サイズ{size} GiBで作成しました。運用者用の一覧も保存してください。"});
@@ -510,8 +529,8 @@ methodFlows.ja.path_maze = {context:"例：架空の業務フォルダーに、�
 methodFlows.en.path_maze = {context:"Example: place linked indexes and synthetic files across an ordinary-looking folder tree.", steps:[["1. Generate the graph","Choose depth, branches and file count; each directory gets an HTML index."],["2. Review deployment and inventory","Extract the ZIP and keep the operator-only tree and shortcut map."],["3. Attacker traverses","The crawler follows child folders and cross-branch references while inspecting candidate files."],["4. Reconcile paths","Multiple routes and repeated references require mapping to understand the complete layout."]], ifCase:"Sequential review of the indexes and file contents may add traversal and reconciliation work.", elseCase:"Automated filesystem enumeration, parallel traversal or offline analysis can map the tree quickly.", response:"Use the operator inventory to manage placement and removal, and check backup and search impact.", note:"All links stay within the archive; it contains no resident program or external request."};
 methodExplanations.ja.path_maze = {title:translations.ja.path_maze_title, how:"通常の有限フォルダーに、架空の業務ファイルを分散して配置します。", target:"複数のディレクトリを探索してファイルを暗号化する攻撃。", limit:"探索対象が絞られる場合や並列処理では実ファイルが先に処理されます。検索・バックアップの対象も増えます。"};
 methodExplanations.en.path_maze = {title:translations.en.path_maze_title, how:"Distributes synthetic business files across a finite tree of ordinary folders.", target:"An encryptor that traverses directories and processes files.", limit:"Selective targeting or parallel processing can reach real files first. Searches and backups also encounter the additional files."};
-methodExplanations.ja.sparse_decoy = {title:translations.ja.sparse_title, how:"配置先で見かけのサイズが大きい架空ファイルを1件作り、全体を読む暗号化処理の仕事を増やします。拡張子は名前の見た目だけで、中身は形式に準拠しません。", target:"サイズの大きいファイルを全体読み取りして暗号化する攻撃。", limit:"部分暗号化や大きなファイルの除外では効果が弱まります。バックアップや同期で見かけのサイズ分の容量を消費する場合があります。"};
-methodExplanations.en.sparse_decoy = {title:translations.en.sparse_title, how:"Creates one synthetic file with a large logical size to add work for an encryptor that reads the whole file. Its extension is for appearance only; the content does not match the format.", target:"Encryption that reads and processes large files in full.", limit:"Partial encryption or size-based exclusions reduce the effect. Backups and synchronization can consume the entire logical size."};
+methodExplanations.ja.sparse_decoy = {title:translations.ja.sparse_title, how:"論理サイズが大きく初期割り当てが小さい架空ファイルを作ります。全域を読み書きし、疎領域を最適化しない処理で負荷が増える可能性を狙います。拡張子は見た目だけで、中身は形式に準拠しません。", target:"疎領域を最適化せずファイル全域を処理する暗号化・走査処理。", limit:"疎領域を認識する処理、大容量ファイルの除外、部分暗号化では負荷が小さくなり得ます。書き込みで割り当て量が増え、空き容量を圧迫する危険があります。効果や遅延は保証されません。"};
+methodExplanations.en.sparse_decoy = {title:translations.en.sparse_title, how:"Creates a synthetic file with a large logical size and small initial allocation. Processing may add work when a tool reads and writes the full file without optimizing sparse regions. The extension is cosmetic; the content does not match the format.", target:"Encryption or scanning that processes the entire file without optimizing sparse regions.", limit:"Sparse-aware processing, large-file exclusions and partial encryption can reduce the work. Writes may increase allocated space and consume free capacity. Effect and delay are not guaranteed."};
 methodFlows.ja.path_maze = {context:"例：架空の業務フォルダーを配置し、ファイル探索の対象を増やします。", steps:[["1. 階層を作成","有限のフォルダーと架空ファイルをZIPにします。"],["2. 配置","展開先と運用者用の一覧を確認します。"],["3. 攻撃者が探索","階層とデコイを処理します。"],["4. 仕事が増える","デコイの処理分だけ追加の仕事が生じます。"]], ifCase:"攻撃側が対象に含めて処理する場合に仕事が増えます。", elseCase:"並列処理や対象の絞り込みでは、実ファイルが先に処理される場合があります。", response:"運用者専用の一覧を使って配置と撤去を管理します。", note:"通常の検索やバックアップも対象にする場合があります。"};
 methodFlows.en.path_maze = {context:"Example: place a tree of fictional business files in an authorized location.", steps:[["1. Create a tree","Generate a finite ZIP of ordinary folders and synthetic files."],["2. Place it","Extract the ZIP and keep the operator inventory."],["3. Attacker traverses","The encryptor discovers and processes decoys."],["4. Work increases","Processing extra files requires additional work."]], ifCase:"Work increases when the attack selects and processes decoys.", elseCase:"Parallel processing or selective targeting can reach real files first.", response:"Use the operator inventory to manage placement and removal.", note:"Ordinary searches and backups may also process these files."};
 methodFlows.ja.sparse_decoy = {context:"例：見かけ上1 GiBの架空ファイルを対応ファイルシステムに置きます。拡張子は選べますが、中身はその形式に準拠しません。", steps:[["1. 生成設定","サイズと見た目の拡張子を選び、ZIPを保存します。"],["2. 配置先で作成","説明書を読み、スクリプトを手動で実行します。"],["3. 攻撃側が読み取り","対象に選ばれたデコイが処理されます。"],["4. 仕事が増える","全体を読んで暗号化すれば処理量が増えます。"]], ifCase:"ファイル全体を処理する攻撃に追加の読み取り・暗号化を行わせます。", elseCase:"部分暗号化やサイズによる除外では、追加の仕事が小さくなります。", response:"配置ファイル名の運用者用一覧を保管し、バックアップと同期への影響を確認します。", note:"コピーや暗号化結果は見かけのサイズ分の領域を消費することがあります。"};
@@ -523,134 +542,134 @@ const methodGuidance = {
   ja: {
     env: {
       ifCase:["侵入後に設定ファイルや業務文書を探す攻撃者が、内部からカナリアURLへアクセスすれば、外部持ち出し前の兆候を検知する手掛かりになります。","盗み出したファイルのURLを後から試す攻撃者にも、要求が監視先へ届けば接触を記録できます。"],
-      elseCase:["URLを試さずファイルだけ読む攻撃、URLへの通信を遮断する環境、監視サービスへ届かない経路では通知されません。","ページが正規利用者にも見つけやすい場所にある、またはファイルを広く共有すると、誤接触や第三者のアクセスが混ざります。"],
+      elseCase:["ファイルを読んだだけではURL通知は発生しません。","URLを試さない場合も通知されません。","外向き通信が遮断されていると、監視先へ要求が届きません。","監視先へ到達できない経路では通知されません。","正規利用者が見つけやすい場所に置くと、誤接触が混ざる場合があります。","ファイルを広く共有すると、第三者やスキャナーから接触される場合があります。"],
       response:["正規利用者が通常アクセスしない場所にページを置き、URLは文書内の自然な文脈に埋め込みます。","内部・外部からの到達性、通知先、Web／OSのファイル取得ログを確認し、URLが露見したら無効化して新しいものに交換します。"]
     },
     database: {
       ifCase:["盗んだDB候補から顧客・注文情報を選別しようとする攻撃者が偽物を本物と誤認すれば、確認や利用に手間がかかり、偽情報を持ち出す可能性があります。"],
-      elseCase:["攻撃者が偽DBを無視する、本物を別経路で得る、候補をまとめて持ち出して後で解析する場合、現場での遅延は小さくなります。","実データとの比較材料が明白だったり、明らかに偽名や偽住所など偽物だと判別できたりすると、見破られやすくなります。"],
+      elseCase:["偽DBを無視されると、選別作業は増えません。","本物を別経路で取得された場合、このデコイの影響は小さくなります。","候補を一括で持ち出して後で解析されると、現場での遅延は小さくなります。","実データとの比較材料が明白だと、偽物だと見破られやすくなります。","明らかな偽名や偽住所も、デコイを見分ける手掛かりになります。"],
       response:["侵入後にDBやバックアップを探索される環境で、業務に合わせた架空データを使います。","本番DBと分離し、配置場所やアクセスログを管理します。"]
     },
     web: {
       ifCase:["管理画面やバックアップを探す攻撃者が、偽ポータルのページやリンクを調査すれば、候補の確認に時間を使う可能性があります。","ページ要求やカナリアリンクへのアクセスを監視していれば、探索の兆候を把握できます。"],
-      elseCase:["攻撃者がページを無視する、別経路を使う、リンク先へアクセスしない場合、調査の遅延やカナリア通知は期待できません。","ページの内容やURLが不自然で、デコイだとすぐ分かる場合も効果が弱まります。"],
+      elseCase:["ページを無視されると、表示による遅延は期待できません。","別経路を使われた場合、このページは探索に影響しません。","リンク先へアクセスされない場合、カナリア通知は発生しません。","ページ内容やURLが不自然だと、デコイを見破られやすくなります。"],
       response:["管理ポータルやアーカイブを探される環境で、実際の業務に沿うページ内容と配置先を選びます。","ページ要求ログとカナリアサービスの通知を別々に監視し、本番認証情報や本番機能を接続しません。"]
     },
     nest: {
       ifCase:["盗んだアーカイブから目的の情報を探す攻撃者が、各階層の候補を安全に選別できないと考えれば、追加の解凍・確認を続けるか、価値不明の候補を捨てるか判断に手間がかかります。","途中で偽物を見つけても未確認の枝に本物がある可能性が残る構成なら、確認作業が続くことがあります。"],
-      elseCase:["攻撃者が構造の不自然さや既知の情報との矛盾から罠を見抜く、全体を持ち出して並列・オフライン解析する、本物を別経路で得る場合は現場での遅れが小さくなります。"],
+      elseCase:["不自然な構造や既知の本番情報との矛盾は、罠を疑う手掛かりになります。","全体を持ち出して並列・オフライン解析されると、現場での展開時間は減ります。持ち出し後の選別作業は残る場合があります。","本物を別経路で取得された場合、この罠の影響は小さくなります。"],
       response:["アーカイブやバックアップを持ち出される可能性がある環境で、自然な階層と一貫した合成文書を設計します。","運用者用のパスワード・構成台帳は公開物から分離し、実データや本物の秘密を混ぜません。"]
     },
     stream: {
       ifCase:["取得完了まで待つ必要があるバックアップを狙う攻撃者が、配信を最後まで待てば、対応者が調査・封じ込めを始める時間を得られる可能性があります。","配信開始イベントをすぐ把握できる構成なら、対応判断を早める手掛かりになります。"],
-      elseCase:["攻撃者が部分取得で目的を満たす、切断して別作業を進める、並列接続する場合、待ち時間は小さくなります。無通信タイムアウトでも接続は終了します。","監視や担当者への通知が遅い、帯域制限が厳しい場合は、配信が時間を稼ぐ前に終わることがあります。"],
+      elseCase:["部分取得だけで目的を満たせる場合、最後まで待つ必要はありません。","接続を切って別の作業へ進むこともできます。","並列接続で待ち時間を短縮される場合があります。","無通信タイムアウトに達すると接続は終了します。","監視や担当者への通知が遅れると、対応開始が間に合わない場合があります。","帯域制限が厳しすぎると、配信が時間を稼ぐ前に終わることがあります。"],
       response:["隔離したデコイ配信経路を運用でき、帯域・同時接続・費用を監視できる環境向けです。","認証、開始ログ、通知、停止手順と容量上限を準備し、本番データや認証系統から切り離します。"]
     },
     directory_maze: {
       ifCase:["ディレクトリを順に巡って目的のファイルを探す攻撃者が、偽ファイルも個別に取得・確認すれば、要求や選別の手間が増える可能性があります。"],
-      elseCase:["攻撃者が対象を絞る、並列クローラーで探索する、全体を一括取得してオフライン解析する場合、現場での遅延は小さくなります。","正規利用者の検索・バックアップもファイルを処理するため、デコイを除外できない運用では影響が出ます。"],
+      elseCase:["対象を絞り込まれると、デコイが探索対象から外れる場合があります。","並列クローラーで探索されると、巡回時間は短くなります。","全体を一括取得してオフライン解析されると、現場での遅延は小さくなります。","正規利用者の検索やバックアップもファイルを処理するため、業務に影響する場合があります。"],
       response:["攻撃者が参照できるファイル共有や静的配信領域で、正規利用者の作業を妨げずに配置できる環境向けです。","自然なフォルダー名と業務に合う合成文書を使い、運用者用の配置一覧とアクセスログを保管します。"]
     },
     encoding_maze: {
       ifCase:["複数の候補ファイルから目的の情報を探す攻撃者が、復元した内容を個別に見比べる場合、候補選別の手間が増える可能性があります。"],
-      elseCase:["使われている変換形式が既知なら、攻撃者はスクリプトで一括復元・並列処理できます。明確な形式名や同じ構造の反復も選別を容易にします。"],
+      elseCase:["変換形式が既知なら、スクリプトで一括復元される場合があります。","復元を並列化すると処理時間を短縮できます。","明確な形式名は、復元方法を推測する手掛かりになります。","同じ構造が繰り返されると、候補を比較しやすくなります。"],
       response:["ファイルを自動収集・解析される可能性がある環境で、形式やファイル名に変化を持たせ、すべて合成データにします。","配信・取得ログを別途監視し、オフライン解析では取得自体を検知できない点を踏まえて対応を設計します。"]
     },
     fake_trap: {
-      ifCase:["画面の警告や処理中表示を信じて内容を調べ直す攻撃者には、判断や次の操作に時間がかかる可能性があります。"],
-      elseCase:["画面を表示せず処理するスクリプト、警告を無視する攻撃者、別の経路を並行探索する攻撃者には表示だけでは作用しません。","通常利用者が誤って画面に到達する配置では、誤警報や業務上の混乱が起きます。"],
-      response:["人がブラウザーで探索する可能性があるデコイ経路向けです。攻撃者の自動化にも効くとは限らない前提で使います。","デコイ側でログと通知を設け、正規利用者が接触した場合の案内・復旧手順も決めます。"]
+      ifCase:["人や、画面の文面・状態を読み取って判断するAIエージェントが、警告や処理中表示を受けて内容を調べ直す場合、判断や次の操作に時間がかかる可能性があります。"],
+      elseCase:["表示を見ても信じない人やAIには、判断を促す効果がありません。","ページを描画・解釈しないスクリプトには、表示だけでは作用しません。","HTMLを直接分類するツールは、画面の意味を検討せずに見破る場合があります。","別経路を並行探索されると、この画面による遅延は小さくなります。","通常利用者が画面に到達すると、誤警報や業務上の混乱が起きる場合があります。"],
+      response:["人がブラウザーで探索する経路や、ページ内容を解釈するAIエージェントが到達し得るデコイ経路向けです。AIへの効果は画面の文脈や挙動に左右され、保証されません。","デコイ側でログと通知を設け、正規利用者が接触した場合の案内・復旧手順も決めます。"]
     },
     ransomware_tripwire: {
       ifCase:["ファイルを探索して暗号化・削除する攻撃が監視対象のデコイを変更すれば、その変化を記録し、対応開始の手掛かりにできます。","変更後も攻撃が追加ファイルを繰り返し探索・処理する場合、追加の作業が生じる可能性があります。"],
-      elseCase:["読み取りや持ち出しだけの攻撃では反応しません。監視を停止する攻撃、短時間で変更と復元を行う処理、一覧を一度だけ取得する処理では検知や遅延が弱まります。","補充処理が無制限だと、攻撃より先にディスクを圧迫して業務や復旧を妨げる恐れがあります。"],
+      elseCase:["読み取りや持ち出しだけでは反応しません。","監視スクリプトを停止されると、変化を記録できません。","確認の合間に変更を元へ戻されると、見逃す場合があります。","ファイル一覧を一度だけ取得する攻撃では、補充後のファイルが処理対象にならない場合があります。","補充が無制限だとディスクを圧迫し、業務や復旧を妨げる恐れがあります。"],
       response:["ファイル変更を監視できる端末や共有領域向けです。通常業務が触れない場所にデコイを置き、補充数・容量の上限を設定します。","ログは監視対象の外に保管し、既存のEDR・バックアップ・端末隔離手順と連携します。"]
     },
     data_dilution: {
       ifCase:["盗んだデータを販売・利用する攻撃者が本物を確実に選べない場合、データ全体の信頼性や取引価値を下げ、照合・選別の負担を増やす可能性があります。"],
-      elseCase:["真偽を選ばず全件を公開・試行する攻撃、外部情報で本物を照合する攻撃、判別台帳や照会権限も奪う攻撃では効果が弱まります。","漏えい元や第三者が真偽を明らかにすると、その範囲の不確実性は減ります。"],
-      response:["本番DBへ合成レコードを混在させる構想です。データ形式・業務処理・監査を管理できる組織で、影響を隔離して評価します。","判別台帳と照会権限を本番DBから分離・監査し、誤送信、通知、法令・契約上の扱いを事前に検討します。このツールは本番DBへの混在を実装しません。"]
+      elseCase:["真偽を選ばず全件を公開・試行する攻撃には、選別を難しくする効果が及びません。","外部情報との照合で、本物を特定される場合があります。","判別台帳や照会権限も奪われると、真偽を知られる恐れがあります。","漏えい元や第三者が真偽を明らかにすると、その範囲では不確実性が減ります。"],
+      response:["倍率に普遍的な推奨値や安全を保証する閾値はありません。必要量は、想定する選別方法とコスト、実データの多様性、保存・索引・複製費用、正規処理への影響で決めます。","通常の定期集計は、合成レコードを除外するバッチ処理を組み込んで対応できます。追加の作り込みは必要ですが、バッチ内の処理として管理できます。リアルタイム集計や短い間隔での全件走査・更新では、負荷が大きくなる可能性があります。","少量・特殊なデータで自然な合成候補を作れない場合や、レコード間の厳密な整合性が必要な場合は慎重に判断します。","法定報告、請求、監査、機械学習、第三者への通知や決済など、全件を処理する業務が混在データを扱えない場合は採用が難しくなります。","本番利用を検討する前に隔離した複製環境で評価し、合成データの来歴・判別フラグを本番データから分離して保護します。権限、監査、バックアップ、エクスポートも設計します。","集計、請求、通知、検索、機械学習、外部連携が合成レコードを正しく除外できるか確認し、誤送信や業務数値の汚染を監視します。","データ増加、性能・保管費用、重複や不整合、移行・削除・復元、利用者の権利請求、バックアップや分析用コピーへの反映も検討します。","このツールは技術紹介のみで、本番DBへの混在は実装しません。"]
     },
     honeyword: {
       ifCase:["特権アカウントを狙う攻撃者が、登録済みの偽パスワードを試し、一致後に偽環境を本物と思って探索すれば、試行の検知や偽情報の確認に時間を使わせる可能性があります。"],
-      elseCase:["攻撃者が偽候補を試さない、偽パスワードが一致しない、または別経路で本番へ入る場合は誘導されません。","偽環境と本番の差、MFAの挙動、既知の画面情報から仕組みを見抜かれることがあります。正規利用者の誤入力も誤発火要因です。"],
+      elseCase:["偽パスワードを試されなければ、誘導は起きません。","試行された値が登録済みの偽パスワードと一致しない場合も分岐しません。","別経路で本番へ入られると、デコイセッションは影響しません。","偽環境と本番の違いから、仕組みを見抜かれる場合があります。","MFAの挙動や既知の画面情報も、見分ける手掛かりになります。","正規利用者の誤入力で、誤発火する場合があります。"],
       response:["認証基盤を運用する組織向けの構想で、認証フローに統合できる仕組みと専門的な運用が必要です。このサンプル自体は認証へ接続しません。","本番認証・MFA・試行制限を維持し、偽セッションの権限、データ、ネットワーク、ログを本番から隔離します。"]
     },
     path_maze: {
       ifCase:["広いフォルダー範囲を巡回して暗号化する攻撃が、配置したデコイも対象に含めれば、追加ファイルの発見・処理分だけ作業が増える可能性があります。"],
-      elseCase:["攻撃者が対象を絞る、並列処理する、一覧を先に取得して実ファイルから処理する場合、実データが先に処理されることがあります。","通常の検索・バックアップも対象にすると、攻撃前に業務処理が増える場合があります。"],
+      elseCase:["対象を絞り込まれると、デコイが処理されない場合があります。","並列処理では、実データが先に処理される場合があります。","一覧を先に取得して実ファイルから処理されると、遅延は小さくなります。","通常の検索やバックアップもデコイを処理するため、業務負荷が増える場合があります。"],
       response:["広範囲のファイル探索を想定する端末・共有領域向けです。正規業務が使わない場所を選び、有限の規模から導入します。","運用者用一覧で設置・撤去を管理し、バックアップや検索への影響を確認します。"]
     },
     sparse_decoy: {
       ifCase:["ファイル全体を読み取って暗号化する攻撃が大きな論理サイズのデコイを処理すれば、読み取り・暗号化の作業が増える可能性があります。"],
-      elseCase:["部分暗号化、サイズによる除外、ファイル先頭だけの処理では追加作業が小さくなります。","バックアップ、同期、コピーや暗号化後の保存先が見かけ上の全サイズを扱うと、運用側の容量・時間も消費します。"],
+      elseCase:["部分暗号化では、追加作業が小さくなる場合があります。","大容量ファイルを除外されると、デコイは処理されません。","ファイル先頭だけを処理する方式では、全体サイズに応じた負荷は生じません。","バックアップや同期も、論理サイズ分の容量を使う場合があります。","コピーや暗号化出力で容量を使い切ると、業務や復旧に影響する恐れがあります。"],
       response:["疎ファイルに対応するファイルシステムで、容量とバックアップ挙動を管理できる端末向けです。","小さなサイズで検証し、空き容量を監視します。運用者用ファイル名一覧は配置先と分けて保管します。"]
     }
   },
   en: {
     env: {
       ifCase:["If an intruder searching for configuration files or business documents accesses the canary URL from inside the network, the request can provide a lead before data leaves the network.","If an intruder later tests a URL from a stolen file, the contact can be recorded when the request reaches the monitor."],
-      elseCase:["Reading a file without requesting its URL, blocked outbound traffic, or a route that cannot reach the monitor produces no alert.","A page that legitimate users can easily find, or a widely shared file, can attract accidental visits, scanners or third parties."],
+      elseCase:["Reading a file without requesting its URL produces no alert.","No alert is sent if the URL is not requested.","Blocked outbound traffic prevents the request from reaching the monitor.","A route that cannot reach the monitor also prevents an alert.","If legitimate users can easily find the page, accidental contacts may occur.","A widely shared file may attract scanners or third parties."],
       response:["Place the page somewhere legitimate users do not normally visit and embed its URL naturally in a document.","Check internal and external reachability, alert routing and file access logs. Disable and replace a URL if it is exposed."]
     },
     database: {
       ifCase:["If an intruder selecting customer or order data from stolen database candidates mistakes a decoy for genuine data, verification or use may take extra work and the intruder may carry away false information."],
-      elseCase:["Ignoring the decoy, obtaining the real database elsewhere, or collecting everything for later offline analysis reduces on-site delay.","A decoy is easier to identify when comparison data is obvious or names and addresses are clearly fake."],
+      elseCase:["Ignoring the decoy adds no selection work.","Obtaining the real database elsewhere reduces the effect of this decoy.","Collecting all candidates for later offline analysis reduces on-site delay.","Obvious comparison data may reveal which database is synthetic.","Clearly fictional names or addresses can expose the decoy."],
       response:["Use synthetic data matching the real schema and business context where intruders may search databases or backups.","Keep it separate from production and monitor placement and access."]
     },
     web: {
       ifCase:["If an intruder searching for an admin portal or backup examines a decoy page and its links, checking the candidate may take extra time.","Monitoring page requests and canary-link requests can provide evidence of exploration."],
-      elseCase:["Ignoring the page, using another route, or never requesting the link means little delay and no canary alert.","Unnatural content or URLs can make the decoy easy to recognize."],
+      elseCase:["Ignoring the page adds no review time.","Using another route bypasses this decoy page.","If the link is never requested, no canary alert is sent.","Unnatural content or URLs can make the decoy easy to recognize."],
       response:["Use this where intruders may search for portals or archives, with content and placement that fit the business context.","Monitor page requests separately from canary-service alerts. Do not connect production authentication or functions."]
     },
     nest: {
       ifCase:["If an intruder searching a stolen archive cannot confidently distinguish candidates, they may spend effort decrypting and checking more branches or risk discarding files of uncertain value.","A convincing layout that leaves unchecked branches as plausible candidates may extend inspection even after one decoy is found."],
-      elseCase:["Unnatural structure or contradictions with known information may expose the trap. Bulk collection followed by parallel offline analysis reduces on-site delay, and a separate route to real data reduces the effect."],
+      elseCase:["Unnatural structure or contradictions with known information may reveal the trap.","Bulk collection followed by parallel offline analysis reduces on-site inspection time, though later selection work may remain.","Obtaining real data through a separate route reduces the effect of the decoy."],
       response:["Use where archives or backups may be stolen; build natural directory structures and internally consistent synthetic documents.","Keep operator-only passwords and structure inventories separate from deployable files. Never mix in real secrets."]
     },
     stream: {
       ifCase:["If an intruder targeting a backup must wait for the complete download, responders may gain time to investigate and contain the activity.","Prompt awareness of stream-start events can help responders make a timely decision."],
-      elseCase:["Partial retrieval, disconnecting, or parallel connections can reduce waiting. An inactivity timeout also ends a connection.","If monitoring or response is slow, or bandwidth caps are too restrictive, delivery may end before useful response time is gained."],
+      elseCase:["Partial retrieval may let a client stop before the stream ends.","A client can disconnect and move to other work.","Parallel connections may reduce waiting.","An inactivity timeout also ends a connection.","Slow monitoring or response can prevent responders from using the time gained.","Overly restrictive bandwidth caps may end delivery before useful response time is gained."],
       response:["Suitable for an isolated decoy delivery path where bandwidth, concurrency and cost can be monitored.","Prepare authentication, start-event logging, alerts, limits and a stop procedure. Keep it separate from production data and authentication."]
     },
     directory_maze: {
       ifCase:["If an intruder traversing directories to find target files also retrieves and inspects decoys individually, additional requests and selection work may result."],
-      elseCase:["Target filtering, parallel crawlers, or bulk collection followed by offline analysis can reduce on-site delay.","Normal searches and backups also process files, so placement may affect routine operations."],
+      elseCase:["Target filtering may exclude decoys from the crawl.","Parallel crawlers can shorten traversal.","Bulk collection followed by offline analysis reduces on-site delay.","Normal searches and backups also process files, so placement may affect routine operations."],
       response:["Suitable for authorized file shares or static delivery areas that intruders could browse without disrupting legitimate work.","Use plausible folder names and synthetic documents; maintain an operator placement inventory and access logs."]
     },
     encoding_maze: {
       ifCase:["If an intruder must compare recovered content from multiple file candidates to find a target, individual review may add selection work."],
-      elseCase:["Known encodings can be decoded in bulk with scripts and parallelized. Obvious format labels or repeated structures make selection easier."],
+      elseCase:["Known encodings can be decoded in bulk with scripts.","Parallel decoding can shorten processing time.","Obvious format labels make the recovery method easier to identify.","Repeated structures make candidates easier to compare."],
       response:["Use where files may be collected and analyzed automatically; vary formats and names while keeping all data synthetic.","Monitor retrieval at the hosting layer. Offline analysis cannot be detected from the file alone."]
     },
     fake_trap: {
-      ifCase:["An intruder who trusts a warning or processing display and investigates or waits may spend extra time deciding what to do."],
-      elseCase:["Scripts that do not render the page, intruders who ignore warnings, or parallel exploration through another route bypass the display.","Placement that exposes legitimate users can cause false alerts or operational confusion."],
-      response:["Use on decoy routes likely to be explored in a browser, while assuming automated tools may ignore the display.","Set up hosting logs and alerts, and prepare guidance for legitimate users who encounter the page."]
+      ifCase:["A person or an AI agent that interprets the page text or status may spend more time reassessing the situation after seeing a warning or processing display."],
+      elseCase:["People or AI agents that do not trust or reconsider the display gain no added decision time.","Scripts that do not render or interpret the page are unaffected by its display.","Tools that classify the HTML directly may identify the decoy without considering its displayed meaning.","Parallel exploration through another route can bypass the display.","If legitimate users encounter the page, false alerts or operational confusion may result."],
+      response:["Use on decoy routes likely to be explored by people or by AI agents that interpret page content. Effect on AI depends on the page context and behavior and is not guaranteed.","Set up hosting logs and alerts, and prepare guidance for legitimate users who encounter the page."]
     },
     ransomware_tripwire: {
       ifCase:["If an encrypting or deleting process changes a monitored decoy file, the change can be recorded as a lead for response.","If the attack repeatedly discovers and processes replenished files, the added files may increase its work."],
-      elseCase:["Reads or exfiltration alone do not trigger it. Stopping the monitor, briefly changing and restoring files, or processing a cached file list can reduce detection or delay.","Unlimited replenishment can fill storage before the attack does, disrupting work or recovery."],
+      elseCase:["Reads or exfiltration alone do not trigger the monitor.","Stopping the monitor prevents it from recording changes.","Changing and restoring a file between checks may evade detection.","A cached file list may omit replenished files from later processing.","Unlimited replenishment can fill storage and disrupt work or recovery."],
       response:["Suitable for monitored endpoints or shares. Place decoys where normal applications do not write and set replacement count and byte limits.","Store logs outside the watched area and coordinate with existing EDR, backup and device-isolation procedures."]
     },
     data_dilution: {
       ifCase:["If an intruder selling or using stolen data cannot confidently select genuine records, the dataset may lose reliability or market value and require more validation work."],
-      elseCase:["Publishing or testing all records without selection, matching against external information, or compromising the classification inventory weakens the effect.","Disclosure of which records are genuine reduces uncertainty for those records."],
-      response:["This concept mixes synthetic records into a production database; it requires an organization able to control data formats, business processes and auditing, with impact assessed in isolation.","Separate and audit the classification inventory and lookup privileges. Review mistaken communications, monitoring, and legal or contractual handling. This tool does not implement production mixing."]
+      elseCase:["Publishing or testing all records without selecting among them bypasses the selection problem.","Matching records against external information may identify genuine data.","Compromising the classification inventory may reveal which records are synthetic.","Disclosure of genuine records reduces uncertainty about those records."],
+      response:["There is no universal recommended multiplier or threshold that guarantees safety. Choose a volume based on the assumed selection methods and cost, genuine-data diversity, storage/index/replication costs, and effects on legitimate processing.","Routine scheduled aggregates can filter synthetic rows through an added batch step. This requires implementation work but can be managed within the batch. Real-time aggregation or frequent full-table scans and rewrites may add substantial overhead.","Use caution if a small or unusual dataset cannot support plausible synthetic candidates or if strict inter-record consistency is required.","Adoption may be impractical when statutory reporting, billing, audits, machine learning, third-party messages or payments must process every row and cannot handle mixed data.","Before production use, evaluate in an isolated replica. Keep synthetic-data provenance and classification flags separate from production data and protected; design permissions, auditing, backups and exports.","Verify that reporting, billing, notifications, search, machine learning and external integrations can exclude synthetic records. Monitor for misdirected messages and contaminated business metrics.","Account for data growth, performance and storage costs, duplicates and inconsistencies, migrations, deletion and recovery, data-subject requests, backups and analytics copies.","This tool provides an overview only and does not mix records into production."]
     },
     honeyword: {
       ifCase:["If an intruder targeting a privileged account tries a registered decoy password, matches it, and explores the fake environment as if it were genuine, the attempt may be detected and the false data may consume time."],
-      elseCase:["No diversion occurs if the intruder does not try a decoy, the value does not match, or a separate route reaches production.","Differences in the decoy environment, MFA behavior or known screen details may reveal the setup. Legitimate mistakes can also cause false triggers."],
+      elseCase:["No diversion occurs if the intruder does not try a decoy password.","A value that does not match a registered decoy password does not trigger diversion.","A separate route to production bypasses the decoy session.","Differences in the decoy environment may reveal the setup.","MFA behavior or known screen details may also expose it.","Legitimate user mistakes can cause false triggers."],
       response:["This concept is for organizations operating an authentication system and requires integration and specialist operations; this sample does not connect to authentication.","Preserve production authentication, MFA and rate limits. Isolate decoy permissions, data, network and logs from production."]
     },
     path_maze: {
       ifCase:["If broad file-enumerating encryption includes decoys in its target set, discovering and processing the extra files may add work."],
-      elseCase:["Target filtering, parallel processing or collecting a file list before encryption may let real files be processed first.","Routine searches and backups may also include the files."],
+      elseCase:["Target filtering may exclude decoys from processing.","Parallel processing may reach real files first.","If a file list is collected before processing, real files may be handled before newly found decoys.","Routine searches and backups may also include the decoy files."],
       response:["Suitable for endpoints or shares where broad file traversal is expected. Start small in locations unused by legitimate workflows.","Use the operator inventory for placement and removal, and check effects on search and backup operations."]
     },
     sparse_decoy: {
       ifCase:["If an attack reads and encrypts whole files, processing a decoy with a large logical size may add read and encryption work."],
-      elseCase:["Partial encryption, size exclusions or processing only file headers reduce the extra work.","Backups, sync, copies and encrypted output may consume the full apparent size and storage."],
+      elseCase:["Partial encryption reduces the amount of the file that is processed.","Size exclusions may cause the decoy to be skipped.","Processing only file headers does not add work proportional to the full logical size.","Backups and synchronization may consume the full logical size.","Copies and encrypted output may also allocate the full size and consume storage."],
       response:["Suitable for endpoints with sparse-file support and managed storage and backup behavior.","Start with a small file size, monitor free space, and keep the operator filename list separately."]
     }
   }
@@ -658,6 +677,16 @@ const methodGuidance = {
 methodGuidance.ja.database.response = [
   "侵入後にDBやバックアップを探索される環境で、業務に合わせた架空データを使います。",
   "本番DBと分離し、配置場所やアクセスログを管理します。",
+  "配置後も定期的にメンテナンスし、デコイDBファイルの更新日時を周辺のDBやバックアップの運用に合う範囲で更新します。",
+  "DB内に更新日時などの項目がある場合は、架空データの値どうしの整合性も保ちます。実データや実ユーザーの記録は取り込まないでください。",
+  "更新頻度や日時が実際の運用と合わないと、かえって不自然さが目立つ場合があります。このツールは日時の定期更新を自動では行いません。",
+];
+methodGuidance.en.database.response = [
+  "Use synthetic data that fits the business context where intruders may search databases or backups.",
+  "Keep the decoy separate from production and manage its placement and access logs.",
+  "After deployment, maintain it periodically and update the database file's modification time in a way that fits surrounding database and backup operations.",
+  "If the database has internal timestamp fields, keep their synthetic values consistent with one another. Do not import production data or real user activity.",
+  "A schedule or timestamp that does not fit actual operations may make the decoy more noticeable. This tool does not update timestamps automatically.",
 ];
 for (const lang of Object.keys(methodGuidance)) {
   for (const [method, fields] of Object.entries(methodGuidance[lang])) Object.assign(methodFlows[lang][method], fields);
@@ -689,15 +718,14 @@ methodFlows.en.path_maze.steps[0][1] = "Choose Windows, Unix-like or macOS, then
 methodFlows.ja.path_maze.note = "ZIP内のリンクは同梱物だけを指し、実行スクリプトや外部通信はありません。既定でも20万項目を超えます。展開先の容量・検索・バックアップ・同期・ウイルススキャンへの負荷を確認してください。運用者用一覧を使い、許可済みの専用領域に配置して撤去してください。Windowsでは深い階層を長いパス非対応のツールで展開できない場合があります。";
 methodFlows.en.path_maze.note = "Links stay within the archive; it contains no executable script or external request. Defaults exceed 200,000 entries. Check storage, search, backup, sync and antivirus load. Deploy and remove it only in an authorized, dedicated location using the operator inventory. Deep paths may fail to extract with Windows tools that lack long-path support.";
 applyMethodKeyPointAdditions();
-flowScenarios.ja.path_maze = "想定：フォルダーを探索して暗号化する攻撃に、追加の架空ファイルを処理させます。";
-flowScenarios.en.path_maze = "Scenario: a directory-traversing encryptor processes additional synthetic files.";
-flowScenarios.ja.sparse_decoy = "想定：大きなファイルを全体暗号化する攻撃に、見かけ上大きな架空ファイルを処理させます。";
-flowScenarios.en.sparse_decoy = "Scenario: a full-file encryptor processes a large logical-size synthetic file.";
-methodOutcomes.ja.path_maze = {deception:"業務の保存場所に見える名前と架空の文書を組み合わせます。", delay:"攻撃がデコイを処理する場合、追加の探索と暗号化が必要になります。"};
-methodOutcomes.en.path_maze = {deception:"Use business-like folder names and synthetic documents.", delay:"An attack that processes the decoys performs additional traversal and encryption."};
-methodOutcomes.ja.sparse_decoy = {deception:"業務で使われる拡張子を選べます。拡張子と内容形式は一致せず、スパース属性は確認できます。", delay:"攻撃がファイル全体を読む場合、見かけのサイズに応じた処理が発生します。"};
-methodOutcomes.en.sparse_decoy = {deception:"Choose a business-like filename extension. The content does not match the extension; the downloaded file uses its full selected size.", delay:"A full-file reader must process the selected file size."};
-methodOutcomes.ja.sparse_decoy = {deception:"\u696d\u52d9\u3067\u4f7f\u308f\u308c\u308b\u62e1\u5f35\u5b50\u3092\u9078\u3079\u307e\u3059\u3002\u4e2d\u8eab\u306f\u305d\u306e\u5f62\u5f0f\u306b\u4e00\u81f4\u3057\u307e\u305b\u3093\u304c\u3001\u9078\u629e\u30b5\u30a4\u30ba\u306e\u30d5\u30a1\u30a4\u30eb\u3092\u4f5c\u308c\u307e\u3059\u3002",delay:"\u5168\u4f53\u3092\u8aad\u307f\u8fbc\u3080\u653b\u6483\u3067\u306f\u3001\u9078\u629e\u3057\u305f\u30b5\u30a4\u30ba\u5206\u306e\u51e6\u7406\u304c\u5fc5\u8981\u3067\u3059\u3002"};
+flowScenarios.ja.path_maze = "想定：人手の調査や重要ファイル検索アプリの候補を増やし、確認・選別の仕事を生じさせます。";
+flowScenarios.en.path_maze = "Scenario: increase the candidates a person or important-file search tool must review.";
+flowScenarios.ja.sparse_decoy = "想定：疎領域を最適化せずファイル全域を処理する場合に、処理負荷や割り当て量が増える可能性があります。";
+flowScenarios.en.sparse_decoy = "Scenario: full-file processing that does not optimize sparse regions may add work and allocation.";
+methodOutcomes.ja.path_maze = {deception:"OS別の自然なフォルダー名と架空ファイルを有限の階層に分散します。", delay:"人や検索アプリが架空ファイルを候補に含めると、確認・選別の負担が増え、本物を見つけたり使ったりするまでに時間がかかる可能性があります。その時間が防御側の対応猶予になる場合もありますが、通知機能はなく、分類・自動除外・一括・並列処理で効果は弱まります。"};
+methodOutcomes.en.path_maze = {deception:"Distribute synthetic files across a finite tree with platform-appropriate folder names.", delay:"If people or search tools include decoys among candidates, review and selection work may increase and finding or using genuine files may take longer. That may give defenders time to respond, but the method has no alerting and classification, filtering, bulk or parallel processing can reduce the effect."};
+methodOutcomes.ja.sparse_decoy = {deception:"業務らしい名前と選択した拡張子を使いますが、拡張子と内容形式は一致しません。スパース属性を調べる攻撃者には見抜かれる場合があります。", delay:"全域を処理し疎領域を最適化しない場合に限り負荷が増える可能性があります。部分処理・サイズ除外・疎領域の最適化で効果は弱まり、書き込み時は容量を消費する危険があります。"};
+methodOutcomes.en.sparse_decoy = {deception:"Use an environment-appropriate name and selected extension, but the content does not match that format. An attacker checking sparse attributes may identify it.", delay:"Work may increase only when the full file is processed without sparse-region optimization. Partial processing, size exclusions or sparse-aware handling reduce the effect; writes can consume disk capacity."};
 Object.assign(translations.ja,{sparse_size:"指定サイズの目安（GiB、1〜1,024）"});
 methodFlows.ja.sparse_decoy = {context:"\u9078\u629e\u3057\u305f\u30b5\u30a4\u30ba\u306e\u67b6\u7a7a\u30d5\u30a1\u30a4\u30eb\u3092\u76f4\u63a5\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u3057\u307e\u3059\u3002",steps:[["1. \u8a2d\u5b9a","\u30b5\u30a4\u30ba\u3068\u62e1\u5f35\u5b50\u3092\u9078\u3073\u307e\u3059\u3002"],["2. \u4fdd\u5b58","\u30d5\u30a1\u30a4\u30eb\u3092\u76f4\u63a5\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u3057\u307e\u3059\u3002"],["3. \u653b\u6483\u5074","\u30c7\u30b3\u30a4\u304c\u51e6\u7406\u3055\u308c\u307e\u3059\u3002"],["4. \u51e6\u7406\u91cf","\u5168\u4f53\u3092\u8aad\u3080\u653b\u6483\u3067\u306f\u4ed5\u4e8b\u304c\u5897\u3048\u307e\u3059\u3002"]],ifCase:"\u30d5\u30a1\u30a4\u30eb\u5168\u4f53\u3092\u51e6\u7406\u3059\u308b\u653b\u6483\u3067\u306f\u3001\u9078\u629e\u30b5\u30a4\u30ba\u306b\u5fdc\u3058\u305f\u51e6\u7406\u304c\u767a\u751f\u3057\u307e\u3059\u3002",elseCase:"\u90e8\u5206\u6697\u53f7\u5316\u3084\u30b5\u30a4\u30ba\u9664\u5916\u3067\u306f\u8ffd\u52a0\u306e\u4ed5\u4e8b\u304c\u6e1b\u308a\u307e\u3059\u3002",response:"\u904b\u7528\u8005\u5c02\u7528\u306e\u30d5\u30a1\u30a4\u30eb\u4e00\u89a7\u3092\u4fdd\u7ba1\u3057\u307e\u3059\u3002",note:"\u30b9\u30d1\u30fc\u30b9\u5c5e\u6027\u306f\u4fdd\u6301\u3055\u308c\u305a\u3001\u30d5\u30a1\u30a4\u30eb\u5168\u4f53\u3092\u8ee2\u9001\u3057\u307e\u3059\u3002"};
 for (const lang of ["ja", "en"]) for (const kind of ["path_maze", "sparse_decoy"]) {
@@ -865,8 +893,6 @@ translations.ja.quick_db_language_loading = "選択中の言語に合わせて�
 translations.en.quick_db_language_loading = "Loading database fields for the selected language. Create the database after loading finishes.";
 translations.ja.quick_guide_link = "はじめての作成・配置ガイド";
 translations.en.quick_guide_link = "Quick guide to creating and deploying samples";
-translations.ja.log_guide_link = "ログの記録と手動確認ガイド";
-translations.en.log_guide_link = "Guide to logging and manual review";
 translations.ja.scenario_schema_summary = "\u751f\u6210\u30c7\u30fc\u30bf: {name}\uff08{fields}{more}\uff09";
 translations.en.scenario_schema_summary = "Generated data: {name} ({fields}{more})";
 translations.ja.scenario_schema_more = "\u3001\u4ed6{count}\u9805\u76ee";
@@ -891,8 +917,22 @@ translations.ja.quick_db_count_invalid = "作成件数は1,000件、10,000件、
 translations.en.quick_db_count_invalid = "Choose 1,000, 10,000 or 100,000 records.";
 translations.ja.quick_db_example_summary = "生成される架空データの例を見る";
 translations.en.quick_db_example_summary = "View an example of the fictional data";
-translations.ja.stream_generated_summary = "プレビュー画面を含みます。サーバーを手動起動後、{preview_url}を開き、明示的にリンクをクリックすると無期限配信を開始します。上限は {rate} KiB/秒、同時接続は {streams} 件です。停止方法は同梱READMEを参照してください。";
-translations.en.stream_generated_summary = "Includes a preview page. Start the server manually, open {preview_url}, then explicitly click the link to begin the unbounded stream. Limits: {rate} KiB/s and {streams} concurrent streams. See README for stopping instructions.";
+translations.ja.stream_generated_summary = "配信上限は全利用者合計 {rate} KiB/秒、同時接続 {streams} 件です。プレビューは下に表示します。実際の配信には、ZIPを配信先で展開してサーバーを起動してください。";
+translations.en.stream_generated_summary = "The shared limit is {rate} KiB/s across all users, with {streams} concurrent streams. Preview the page below. To deliver a stream, extract the ZIP and start the server on the serving host.";
+Object.assign(translations.ja, {
+  stream_operator_download: "運用者専用：配信用・停止用トークンを保存（公開・配置しない）",
+  stream_deployment_download: "配信サーバー一式を保存（配置用ZIP・トークンなし）",
+  stream_deployment_note: "ZIPは配信先ホストに展開して起動します。運用者専用JSONの配信用トークンは必要ですが、停止用トークンは運用者だけで保管し、ダウンロード利用者には渡さないでください。",
+  stream_preview_title: "配信ページのプレビュー（この画面内）",
+  stream_preview_note: "見た目の確認用です。サーバー起動や通信は行わず、入力欄・ボタンも動作しません。実際の配信にはZIPを展開してPython 3.11以降でサーバーを起動し、配信用トークンを安全に入力します。配信は無期限です。停止するにはダウンロードをキャンセルするか、運用者が停止用トークンを使います。"
+});
+Object.assign(translations.en, {
+  stream_operator_download: "Operator only: save access and stop tokens (keep private; do not deploy)",
+  stream_deployment_download: "Save streaming server package (deployment ZIP; no tokens)",
+  stream_deployment_note: "Extract and start the ZIP on the host that will serve the stream. The operator JSON provides the access token; keep the stop token for administrators and never give it to download users.",
+  stream_preview_title: "Stream page preview (inside this app)",
+  stream_preview_note: "Visual preview only. It does not start a server or send requests, and its fields and buttons are inactive. To deliver a stream, extract the ZIP and start it with Python 3.11 or later, then provide the access token securely. Delivery has no time limit. Cancel the download to stop it, or have an operator use the stop token."
+});
 translations.ja.directory_generated_summary = "デコイファイル {documents} 個を {directories} 個のディレクトリに作成しました。";
 translations.en.directory_generated_summary = "Created {documents} decoy files across {directories} directories.";
 translations.ja.encoding_generated_summary = "{scenario}：候補 {candidates} 個に、それぞれ {layers} 段階の変換を作成しました。";
@@ -988,8 +1028,8 @@ translations.ja.quick_start_help = "最初はサンプルを一つ作成して�
 translations.en.quick_start_help = "Start with one sample. Files contain fictional data and use Physalia_* download names; rename them after saving if needed. A canary alert requires your monitoring URL to be accessed. The generator never contacts that URL." + translations.en.quick_start_help.slice(translations.en.quick_start_help.indexOf(" An empty canary field"));
 translations.ja.quick_env_reset_confirm = "このサンプルのため.envの設定パターンを初期値に戻します。カナリアURLは保持します。続けますか？";
 translations.en.quick_env_reset_confirm = "Reset the .env configuration pattern for this sample. Your canary URL will be kept. Continue?";
-translations.ja.fake_note = "カナリアURLを設定するとページ表示時に監視先へ接触し、接続元IPやUser-Agentなど通常のHTTP要求情報が記録される場合があります。メールスキャナーやプレビューも接触として記録され得ます。URLを設定しない場合、外部通信はありません。ページは認証や位置情報の収集を行いません。画面やHTML構造を調べるAIには再確認を促す可能性がありますが、HTMLを直接判定するツールや画面を無視する自動処理には効果が薄くなります。";
-translations.en.fake_note = "When configured, the page contacts the monitoring endpoint as soon as it loads; ordinary HTTP request data such as source IP and User-Agent may be logged. Mail scanners and previews may also create contacts. No external request is made without a URL. The page does not authenticate or request location. It may prompt an AI agent that examines its structure to reassess, but low-level HTML inspection and automation that ignores the page are less affected.";
+translations.ja.fake_note = "設定をOFFにするかURL欄を空にすると、ページから外部要求は送られません。ONにしてURLを設定した場合、ページ表示時に監視サービスへ接触記録を送ります。プレビューやメールスキャナーも要求する場合があるため、記録だけで攻撃者とは断定できません。ページは認証や位置情報の収集を行いません。画面やHTML構造を調べるAIには再確認を促す可能性がありますが、HTMLを直接判定するツールや画面を無視する自動処理には効果が薄くなります。";
+translations.en.fake_note = "When this option is off or the URL field is blank, the page sends no external request. When enabled with a URL, loading the page records a contact at the monitoring service. Previews and mail scanners may also trigger a request, so a contact alone does not identify an attacker. The page does not authenticate or collect location. It may prompt an AI agent that examines its structure to reassess, but low-level HTML inspection and automation that ignores the page are less affected.";
 translations.ja.env_switch_help = "空欄のまま作成すると、配置用ZIPには.env.developmentを含めます。開発URLは有効で、カナリアURLはコメント行に入ります。既定URLはexample.invalidです。独自ホストを使う場合は所有を確認し、本番認証のない隔離テスト先だけへ向けてください。このURLはクローラーやエージェントから要求される場合があります。生成器は名前解決・接続を行いません。内部・本番エンドポイントを指定せず、本番設定へ読み込ませないでください。ダウンロードZIP名はPhysalia_*形式です。";
 translations.en.env_switch_help = "The deployment ZIP contains .env.development by default. The development URL is active and the canary URL is a commented production alternative. The default uses example.invalid. For a custom host, confirm ownership and route it only to an isolated test endpoint without production authentication. A crawler or agent may request this active URL. The generator does not resolve or contact it. Do not enter internal or production endpoints or load the file in production configuration. The downloaded ZIP uses a Physalia_* name.";
 translations.ja.quick_env_help = "配置用ZIPには、アプリ名・ログレベル・ポート・DB/Redis接続先・タイムアウト・再試行回数などを含む.env.developmentが入ります。接続先は予約済みexample.invalidの架空ホストで、認証情報は含みません。カナリアURLはコメント行に入り、ファイルを開くだけでは通知されません。これはデコイ専用の見本です。実アプリや本番設定には読み込ませず、隔離した検証環境だけで使ってください。";
@@ -1025,7 +1065,6 @@ Object.assign(translations.ja, {
   logs_review_5:"原本をアクセス制限された場所に保全し、誤検知を確認してから既存のインシデント対応手順に従います。",
   logs_privacy_title:"プライバシーと安全な調査",
   logs_privacy_body:"IPアドレスやUser-Agent等は個人を識別し得る情報として、利用目的、必要性、閲覧者、保存期間、削除手順を定めて管理します。送信元端末への接続・スキャン、第三者システムへのログイン、無断追跡や反撃は行いません。デコイへの接触は、別システムへアクセスする権限を与えません。",
-  logs_full_guide:"詳細な記録例・運用上の注意を読む",
 });
 Object.assign(translations.en, {
   nav_logs:"Log review guide", workspace_page_logs:"Log review guide", logs_eyebrow:"MANUAL LOG REVIEW",
@@ -1047,7 +1086,6 @@ Object.assign(translations.en, {
   logs_review_5:"Preserve originals in an access-controlled location, check for false positives and follow your existing incident-response process.",
   logs_privacy_title:"Privacy and safe investigation",
   logs_privacy_body:"Set a defined purpose, necessity, readers, retention period and deletion process for potentially identifying data such as IP addresses and User-Agent values. Do not connect to or scan a source device, log in to a third-party system, track someone without authorization or retaliate. Contact with a decoy does not authorize access to another system.",
-  logs_full_guide:"Open the detailed guide and examples",
 });
 Object.assign(translations.ja, {nav_canary:"カナリア接触ログ", local_canary_title:"このPCのカナリア接触ログ", local_canary_help:"Physaliaが起動中の同じPCからの接触を記録します。ログは最大500件、アプリ終了時に消えます。", local_canary_privacy:"接続元IP、ブラウザー情報や言語など、アクセス時に送られた情報を記録します。情報は偽装・省略される場合があります。管理権限のある環境で利用し、閲覧を制限してください。", local_canary_limit:"この機能は同じPCからの接触のみを受け付けます。送信元IPは通常127.0.0.1です。", local_canary_ip:"送信元IP", local_canary_empty:"接触ログはありません。", local_canary_scope:"初期URLは、同じPCでPhysaliaが起動中の動作確認用です。別PCからは届きません。", local_canary_record:"接触 #{event_id} · {time} · {method} · ID {canary_id}"});
 Object.assign(translations.en, {nav_canary:"Canary contacts", local_canary_title:"Local canary contacts on this PC", local_canary_help:"Records contacts from this PC while Physalia is running. Up to 500 events are kept in memory until the app stops.", local_canary_privacy:"Records information sent with a request, including the source IP, browser information and language. Clients can omit or falsify these values. Use in an environment you are authorized to manage and restrict access to the log.", local_canary_limit:"This feature accepts contacts only from this PC. The source IP is normally 127.0.0.1.", local_canary_ip:"Source IP", local_canary_empty:"No contacts recorded.", local_canary_scope:"The initial URL is for checks on this PC while Physalia is running. Requests from another PC cannot reach it.", local_canary_record:"Contact #{event_id} · {time} · {method} · ID {canary_id}"});
@@ -1194,7 +1232,7 @@ $("#canary-link-style").insertBefore(canaryEmailOption, $("#canary-link-style [v
 translations.ja.quick_canary_label = "監視先URL（カナリアページURL・任意）";
 translations.en.quick_canary_label = "Monitoring URL (canary page URL, optional)";
 Object.assign(translations.ja, {
-  logs_intro:"このPCの「カナリアページ」接触ログを読み、何が分かり、何は断定できないかを確認します。外部ログの分析例も後半に分けて説明します。",
+  logs_intro:"このPCのカナリア接触ログの読み方と、自社のWebサーバーなどに記録したログの確認・分析手順を説明します。",
   logs_scope:"「カナリアページ」には、このPCで受けた接触の詳細が表示されます。外部のWebサーバーや監視サービスのログは取り込まず、自動判定もしません。",
   logs_local_title:"カナリア接触ログで注目する項目", logs_local_intro:"記録を開き、まず概要の時刻・要求方法・IDを見てから詳細を確認します。",
   logs_local_event:"時刻・event_id・canary_id・method：いつ、どのカナリア識別子に、どの要求が届いたかを確認します。同じIDへの繰り返しや短時間の連続要求にも注目します。",
@@ -1213,13 +1251,19 @@ Object.assign(translations.ja, {
   logs_review_5:"必要な記録をアクセス制限された場所に保全し、正規アクセスや誤検知を確認してから既存のインシデント対応手順に従います。"
   ,logs_analysis_title:"分析を深めるための考え方"
   ,logs_analysis_facts:"記録された事実と解釈を分け、根拠・確度・未確認事項を残します。応答や送信量だけで閲覧・持ち出しを断定できません。"
-  ,logs_analysis_sequence:"単発イベントではなく、デコイごとの要求系列や時刻を確認します。ヘッダーやIPは手掛かりであり、人物やツールの特定には使えません。"
-  ,logs_analysis_correlate:"時計ずれを考慮し、自組織の関連ログだけをrequest_idなどで照合します。接触なしも、アクセスなしの証明にはなりません。"
-  ,logs_analysis_evaluate:"通知連携は秘密URLや不要な個人情報を避け、誤検知と配信失敗を確認します。効果は対照条件と比較して評価します。"
-  ,logs_analysis_scope:"このアプリは外部ログの収集・相関分析・通知を行いません。詳しい評価方法は完全版ガイドを参照してください。"
+  ,logs_analysis_sequence:"GET・HEAD・Range要求、応答状態、要求間隔、接触したデコイの順序や広がりを確認します。IP・User-Agent・ヘッダーは共有・中継・偽装されるため、人物やツールの指紋として扱いません。"
+  ,logs_analysis_correlate:"UTCまたはタイムゾーン付き時刻にそろえ、時計のずれを考慮します。request_idなどで自組織が管理するWeb・プロキシ・認証・端末ログだけを照合します。IPと時刻だけの一致は弱い手掛かりです。"
+  ,logs_analysis_missing:"接触記録がないことは、アクセスや持ち出しがなかった証明ではありません。URLの除去・遮断、オフライン調査、キャッシュなどで記録が残らない場合があります。スキャナーやプレビューの記録も、人の閲覧を意味するとは限りません。"
+  ,logs_analysis_alerts:"通知にはイベントID、時刻、デコイID、保護されたログへのリンクなど必要最小限だけを含めます。秘密URLや不要な個人情報は避け、重複抑制、送信失敗時の確認先、担当者と対応時間を決めます。"
+  ,logs_analysis_evaluate:"同じ初期情報と時間枠を使った対照条件と比較します。目的データへの到達率・所要時間、デコイ接触、通知・対応の遅れ、正規アクセスの誤検知を記録し、AI・スクリプト・並列・オフライン処理など条件別に評価します。"
+  ,logs_analysis_scope:"このアプリは外部ログの収集・相関分析・通知を行いません。記載した手順は、管理権限のある自組織の環境で行ってください。"
+  ,logs_privacy_body:"IPアドレスやUser-Agentなど、他の情報と組み合わせて個人を識別し得る情報は、目的・必要性・閲覧者・保存期間・削除方法を定めて管理します。外部サービスへ送る場合は送信先、委託・第三者提供、契約、国外移転も確認してください。送信元端末への接続・スキャン、第三者システムへのログイン、無断追跡や反撃は行いません。デコイへの接触は別システムへアクセスする権限を与えません。個別の法的判断は適用法令や状況によって異なります。"
+  ,logs_privacy_source_label:"参考："
+  ,logs_privacy_source:"個人情報保護委員会の通則ガイドライン"
+  ,logs_privacy_faq:"ログファイルの管理に関するQ&A"
 });
 Object.assign(translations.en, {
-  logs_intro:"Review this PC's Canary page contact log to understand what it shows and what it cannot establish. Guidance for external logs is separated below.",
+  logs_intro:"Learn how to review this PC's Canary contact log and manually review logs from web servers and other systems your organization controls.",
   logs_scope:"Canary page shows contacts received on this PC, including request details. It does not ingest logs from external web servers or monitoring services, and it does not classify events automatically.",
   logs_local_title:"What to examine in Canary contacts", logs_local_intro:"Open an event and start with its time, request method and IDs, then review the details.",
   logs_local_event:"Time, event_id, canary_id and method: identify when a request arrived and which canary ID it reached. Look for repeats or bursts against the same ID.",
@@ -1238,10 +1282,16 @@ Object.assign(translations.en, {
   logs_review_5:"Preserve necessary records in an access-controlled location, check for legitimate requests and false positives, then follow your existing incident-response process."
   ,logs_analysis_title:"Ways to deepen the analysis"
   ,logs_analysis_facts:"Separate recorded facts from interpretation, and note evidence, confidence and unknowns. A response or byte count alone cannot establish viewing or exfiltration."
-  ,logs_analysis_sequence:"Review request sequences and timing by decoy, not just isolated events. Headers and IPs are clues; they do not identify a person or tool."
-  ,logs_analysis_correlate:"Account for clock skew and correlate only with your organization's logs, using request_id where available. No contact does not prove no access."
-  ,logs_analysis_evaluate:"For alerts, omit secret URLs and unnecessary personal data, and check false positives and delivery failures. Evaluate effectiveness against a control condition."
-  ,logs_analysis_scope:"This application does not collect external logs, correlate events or send alerts. See the full guide for evaluation details."
+  ,logs_analysis_sequence:"Review GET, HEAD and Range requests, response status, intervals, and the order and breadth of decoys contacted. IP addresses, User-Agent values and headers may be shared, relayed or spoofed; they are not fingerprints of a person or tool."
+  ,logs_analysis_correlate:"Use UTC or explicit time zones and account for clock skew. Correlate only with systems your organization controls, using request_id across web, proxy, identity and endpoint logs when available. A match based only on IP and time is weak evidence."
+  ,logs_analysis_missing:"No contact record does not prove there was no access or exfiltration. A URL may be removed, blocked, investigated offline or cached before logging. A scanner or preview may create a record without a person viewing the file."
+  ,logs_analysis_alerts:"Keep alerts minimal: include an event ID, time, decoy ID and a link to a protected log if needed. Exclude secret URLs and unnecessary personal data. Define deduplication, delivery-failure checks, ownership and response hours."
+  ,logs_analysis_evaluate:"Compare control and decoy conditions with equivalent starting information and time budgets. Record target reach and time, decoy contact, alert and response delays, and legitimate-user false positives. Evaluate AI use, scripts, parallel access and offline analysis separately where feasible."
+  ,logs_analysis_scope:"This application does not collect external logs, correlate events or send alerts. Use the procedures here only in environments your organization is authorized to manage."
+  ,logs_privacy_body:"Define the purpose, necessity, readers, retention and deletion process for data such as IP addresses and User-Agent values that may identify a person when combined with other information. Before sending logs to an external service, review the recipient, outsourcing or third-party provision, contract and cross-border transfers. Do not connect to or scan a source device, log in to a third-party system, track someone without authorization or retaliate. Contact with a decoy does not authorize access to another system. Legal requirements depend on applicable law and circumstances."
+  ,logs_privacy_source_label:"References: "
+  ,logs_privacy_source:"PPC Guidelines (General Rules)"
+  ,logs_privacy_faq:"PPC FAQ on log-file management"
 });
 Object.assign(translations.ja, {
   intro_physalia_note_title:"余談：実在するPhysalia（カツオノエボシ）",
@@ -1464,8 +1514,6 @@ function applyLanguage() {
   document.documentElement.lang = language;
   languageSelect.value = language;
   $("#intro-quick-guide").href = "/quickstart/" + language;
-  $("#intro-log-guide").href = "/log-guide/" + language;
-  $("#log-guide-full").href = "/log-guide/" + language;
   $("#downloads").setAttribute("aria-label", language === "ja" ? "生成ファイル" : "Generated files");
   const currentTranslations = translations[language] || {};
   for (const [key, value] of Object.entries(currentTranslations)) {
@@ -1580,7 +1628,7 @@ function updateFields(forceClear = false) {
   const selected = $('input[name="kind"]:checked').value;
   const changed = selected !== activeKind;
   updateExplanation();
-  for (const kind of ["env", "nest", "database", "web", "fake_trap", "ransomware_tripwire", "path_maze", "sparse_decoy", "data_dilution", "honeyword", "stream", "directory_maze", "encoding_maze"]) {
+  for (const kind of ["env", "nest", "database", "web", "fake_trap", "ransomware_tripwire", "path_maze", "sparse_decoy", "data_dilution", "stream", "directory_maze", "encoding_maze"]) {
     const fields = $("#" + kind + "-fields");
     fields.hidden = kind !== selected;
     fields.querySelectorAll("input, select, button, textarea").forEach(input => {
@@ -1588,7 +1636,7 @@ function updateFields(forceClear = false) {
       if (kind !== selected) clearInvalid(input);
     });
   }
-  const infoOnly = ["data_dilution", "honeyword"].includes(selected);
+  const infoOnly = selected === "data_dilution";
   $("#canary-method-notes").hidden = selected !== "env";
   button.hidden = infoOnly;
   $("#sample-settings-heading").hidden = infoOnly;
@@ -1606,6 +1654,22 @@ function updateFields(forceClear = false) {
     clearDownloads();
   }
   return true;
+}
+function disableDevelopmentMethods() {
+  for (const kind of IN_DEVELOPMENT_METHODS) {
+    const input = document.querySelector(`input[name="kind"][value="${kind}"]`);
+    const card = input?.closest(".card");
+    if (!input || !card) continue;
+    input.disabled = true;
+    card.classList.add("method-development");
+    card.setAttribute("aria-disabled", "true");
+    card.tabIndex = 0;
+    const status = document.createElement("span");
+    status.className = "method-development-status";
+    status.dataset.i18n = "method_in_development_badge";
+    status.textContent = t("method_in_development_badge");
+    card.append(status);
+  }
 }
 function updateFakeCanaryFields() {
   const enabled = $('input[name="kind"]:checked')?.value === "fake_trap" && $("#fake-embed-canary").checked;
@@ -1742,8 +1806,9 @@ function updateMethodFilter(filter = activeFitFilter) {
   const cards = [...document.querySelectorAll(".cards .card[data-fit]")];
   const matching = cards.filter(card => filter === "all" || card.dataset.fit.split(/\s+/).includes(filter));
   const selected = $('input[name="kind"]:checked');
-  if (matching.length && !matching.some(card => card.contains(selected))) {
-    matching[0].querySelector('input[name="kind"]').checked = true;
+  const selectable = matching.filter(card => !card.querySelector('input[name="kind"]')?.disabled);
+  if (selectable.length && !selectable.some(card => card.contains(selected))) {
+    selectable[0].querySelector('input[name="kind"]').checked = true;
     if (!updateFields()) return false;
   }
   activeFitFilter = filter;
@@ -1908,7 +1973,7 @@ const illustrationStages = {
   fake_trap:["person","warning","search"], nest:["files","lock","search"], stream:["person","download","clock"],
   directory_maze:["search","folders","files"], encoding_maze:["files","code","search"],
   data_dilution:["database","blocks","filter"], honeyword:["key","filter","browser"],
-  ransomware_tripwire:["file","refresh","files"], path_maze:["folders","files","search"], sparse_decoy:["large","lock","clock"],
+  ransomware_tripwire:["file","refresh","files"], path_maze:["folders","files","search"], sparse_decoy:["large","blocks","warning"],
 };
 const illustrationLabels = {
   ja:{
@@ -1917,8 +1982,8 @@ const illustrationLabels = {
     nest:["複数の候補","暗号化ZIP","解凍・内容確認"], stream:["攻撃者が取得","配信が続く","取得に時間を使う"],
     directory_maze:["攻撃者が探索","分かれた経路","候補の確認"], encoding_maze:["変換された候補","形式を復元","内容を選別"],
     data_dilution:["本物と架空データ","混在して流出","本物を選別"], honeyword:["偽パスワード","登録済みと一致","隔離セッション"],
-    ransomware_tripwire:["架空ファイル","変更・削除","架空ファイルを補充"], path_maze:["有限のフォルダー","架空ファイル","探索・処理"],
-    sparse_decoy:["大きく見えるファイル","全体を暗号化する場合","処理の仕事が増える"],
+    ransomware_tripwire:["架空ファイル","変更・削除","架空ファイルを補充"], path_maze:["人手で調査","重要ファイル検索","候補が増える"],
+    sparse_decoy:["大きな論理サイズ","小さな初期割り当て","書き込みで容量増加も"],
   },
   en:{
     env:["Fictional file","URL requested","Review at monitor"], database:["Decoy database","Data taken","Check authenticity"],
@@ -1926,8 +1991,8 @@ const illustrationLabels = {
     nest:["Multiple candidates","Encrypted ZIPs","Unlock and inspect"], stream:["Attacker downloads","Stream continues","Time spent waiting"],
     directory_maze:["Attacker explores","Branching paths","Inspect candidates"], encoding_maze:["Encoded candidates","Decode formats","Inspect contents"],
     data_dilution:["Real and fictional data","Mixed data leaks","Select real records"], honeyword:["Decoy password","Registered match","Isolated session"],
-    ransomware_tripwire:["Synthetic file","Change or deletion","New decoy created"], path_maze:["Finite folders","Synthetic files","Explore and process"],
-    sparse_decoy:["Large logical file","If fully encrypted","Extra processing"],
+    ransomware_tripwire:["Synthetic file","Change or deletion","New decoy created"], path_maze:["Manual investigation","Important-file search","More candidates"],
+    sparse_decoy:["Large logical size","Small initial allocation","Writes may use more space"],
   },
 };
 const methodExplanationImages = {
@@ -2167,7 +2232,8 @@ function renderDownloads(data) {
   const hasDeploymentPackage = (data.companions || []).some(item => item.role === "deployment");
   const isWebPackage = data.summary?.kind === "web" && hasDeploymentPackage;
   const isEnvPackage = typeof data.name === "string" && data.name.endsWith(".env") && hasDeploymentPackage;
-  const primary = data.savedPath ? document.createElement("p") : downloadLink(data, t(data.summary?.kind === "ransomware_tripwire" ? "tripwire_deployment_download"
+  const primary = data.savedPath ? document.createElement("p") : downloadLink(data, t(data.summary?.kind === "stream" ? "stream_deployment_download"
+    : data.summary?.kind === "ransomware_tripwire" ? "tripwire_deployment_download"
     : data.summary?.kind === "sparse_decoy" ? (data.summary.deployment_format ? "sparse_tar_download" : "sparse_direct_download")
     : isWebPackage ? "web_html_download" : hasDeploymentPackage ? "env_direct_download" : "download_again"),
     isEnvPackage ? document.createDocumentFragment() : $("#downloads"));
@@ -2465,12 +2531,32 @@ function renderDownloads(data) {
       preview_url: details.preview_url});
     $("#downloads").append(note);
     if (details.kind === "stream") {
+      const deploymentNote = document.createElement("p");
+      deploymentNote.className = "inline-note";
+      deploymentNote.textContent = t("stream_deployment_note");
+      $("#downloads").append(deploymentNote);
       const dailyGiB = (details.rate_kib * 84.375 / 1024).toFixed(2);
       const budgetNote = document.createElement("p");
       budgetNote.textContent = language === "ja"
         ? `\u9023\u7d9a\u914d\u4fe1\u6642\u306e\u30c7\u30fc\u30bf\u9001\u4fe1\u91cf\u306f\u6700\u5927\u7d04${dailyGiB} GiB/\u65e5\u3067\u3059\u3002\u3053\u308c\u306f\u7d2f\u7a4d\u4e0a\u9650\u3067\u306f\u3042\u308a\u307e\u305b\u3093\u3002\u56de\u7dda\u30fb\u30af\u30e9\u30a6\u30c9\u8cbb\u7528\u3092\u898b\u7a4d\u3082\u308a\u3001\u76e3\u8996\u3068\u505c\u6b62\u624b\u6bb5\u3092\u7528\u610f\u3057\u3066\u304f\u3060\u3055\u3044\u3002`
         : `Continuous delivery can send up to about ${dailyGiB} GiB/day. This is not a cumulative quota. Estimate network/cloud costs and prepare monitoring and a stop procedure.`;
       $("#downloads").append(budgetNote);
+      if (typeof details.preview_html === "string") {
+        const previewSection = document.createElement("section");
+        previewSection.className = "stream-page-preview";
+        const heading = document.createElement("h3");
+        heading.textContent = t("stream_preview_title");
+        const previewNote = document.createElement("p");
+        previewNote.textContent = t("stream_preview_note");
+        const frame = document.createElement("iframe");
+        frame.title = t("stream_preview_title");
+        frame.setAttribute("sandbox", "");
+        frame.setAttribute("referrerpolicy", "no-referrer");
+        frame.loading = "lazy";
+        frame.srcdoc = details.preview_html;
+        previewSection.append(heading, previewNote, frame);
+        $("#downloads").append(previewSection);
+      }
     }
   }
   if (data.summary?.kind === "ransomware_tripwire") {
@@ -2532,6 +2618,15 @@ methodFlows.en.sparse_decoy.steps[1] = ["2. Save", "Choose direct creation or a 
 methodFlows.en.sparse_decoy.note = "Copies or backups may consume the full logical size.";
 methodOutcomes.en.sparse_decoy.deception = "The chosen extension is for appearance; the content does not match the format and sparse allocation can be inspected.";
 applyLanguage();
+Object.assign(translations.ja, {
+  method_in_development_badge: "開発中",
+  method_in_development: "この手法は開発中のため、初版では利用できません。"
+});
+Object.assign(translations.en, {
+  method_in_development_badge: "In development",
+  method_in_development: "This method is under development and is not available in the initial release."
+});
+disableDevelopmentMethods();
 updateFields();
 showWorkspacePage(activeWorkspacePage, false);
 loadDatabaseTemplates();
@@ -2555,6 +2650,10 @@ form.addEventListener("submit", async event => {
   form.querySelectorAll('[aria-invalid="true"]').forEach(clearInvalid);
   if (generationInProgress) return;
   const kind = $('input[name="kind"]:checked').value;
+  if (IN_DEVELOPMENT_METHODS.has(kind)) {
+    result.textContent = t("method_in_development");
+    return;
+  }
   const sparseMode = kind === "sparse_decoy" ? $("#sparse-output-mode").value : "direct";
   if (kind === "sparse_decoy" && sparseMode === "direct" && !$("#sparse-destination").value.trim()) {
     result.textContent = t("sparse_destination_required");
@@ -2852,6 +2951,7 @@ $("#settings-file").addEventListener("change", async event => {
     if (!["adg-ui-v4", "adg-ui-v5", "adg-ui-v6", "adg-ui-v8", "adg-ui-v9", "adg-ui-v10", "adg-ui-v11", "adg-ui-v12", "adg-ui-v13"].includes(config.schema)) { $("#nest-scenario").value = "crm"; $("#maze-scenario").value = "crm"; }
     if (!["adg-ui-v11", "adg-ui-v12", "adg-ui-v13"].includes(config.schema)) $("#encoding-scenario").value = "crm";
     controls.forEach((el, i) => { if (el.type === "checkbox") el.checked = values[i]; else el.value = values[i]; });
+    if (method?.disabled) { result.textContent = t("method_in_development"); return; }
     if (!['adg-ui-v14', 'adg-ui-v15'].includes(config.schema)) $("#canary-link-style").value = "text";
     // Retain the legacy settings slots while always using automatic canary defaults.
     $("#canary-name").value = "";
@@ -2875,3 +2975,154 @@ $("#settings-file").addEventListener("change", async event => {
   } catch (error) { result.textContent = error.message === "unsafe_setting_text" ? t("unsafe_setting_text") : error.message === "sensitive_setting_text" ? t("sensitive_setting_text") : t("config_invalid"); }
 });
 }
+
+// Path Maze wording aligned with the current illustration and intended use.
+methodExplanations.ja.path_maze = {
+  title: translations.ja.path_maze_title,
+  how: "OS別のフォルダー名を使った有限の階層に、架空の重要ファイル候補を分散して配置します。",
+  target: "人手で重要ファイルを探す調査や、重要ファイル検索アプリが候補を抽出する場面。",
+  limit: "候補の分類・順位付け・自動除外で架空ファイルが除かれる場合があります。一括列挙や並列・オフライン処理も可能なため、遅延や本物の見落としは保証されません。"
+};
+methodExplanations.en.path_maze = {
+  title: translations.en.path_maze_title,
+  how: "Distribute synthetic important-file candidates across a finite tree using platform-appropriate folder names.",
+  target: "Manual searches for important files and tools that automatically find important-file candidates.",
+  limit: "Classification, ranking or automatic filtering may remove decoys. Bulk enumeration and parallel or offline analysis are also possible, so delay or missed genuine files are not guaranteed."
+};
+methodFlows.ja.path_maze = {
+  context: "重要そうな架空ファイルを通常のフォルダーに分散し、人手の調査や重要ファイル検索アプリが作る候補一覧に含まれる可能性を想定します。",
+  steps: [["1. 有限の階層を作成", "OSプロファイルと規模を選び、架空ファイルを含むZIPを生成します。"], ["2. 配置と台帳を確認", "専用の許可済み領域に展開し、運用者用一覧を分けて保管します。"], ["3. 候補を調査", "人手や検索アプリが重要ファイルを探す際、架空ファイルも候補になる場合があります。"], ["4. 確認作業が増える可能性", "候補を選別する作業が増え、本物が候補に埋もれる可能性があります。"]],
+  ifCase: ["人が候補ファイルを一つずつ確認する場合、選別作業が増える可能性があります。", "重要ファイル検索アプリが架空ファイルを候補から除外しきれない場合、確認対象が増える可能性があります。"],
+  elseCase: ["検索アプリの分類や順位付けで、架空ファイルが候補の下位になる場合があります。", "自動除外で架空ファイルが候補から取り除かれる場合があります。", "一括列挙後に候補を絞り込まれると、確認の手間が小さくなる場合があります。", "並列処理やオフライン解析で、選別を短時間で進められる場合があります。"],
+  response: "運用者用一覧で配置・撤去を管理し、検索、バックアップ、同期やウイルススキャンへの影響を確認します。",
+  note: "ZIP内のリンクは同梱物だけを指し、実行スクリプトや外部通信はありません。これは選別作業を増やす設計仮説であり、遅延や本物の見落としを保証しません。"
+};
+methodFlows.en.path_maze = {
+  context: "Synthetic files that look important are distributed across ordinary folders. The scenario is a manual investigation or an important-file search tool generating candidate lists.",
+  steps: [["1. Create a finite tree", "Choose an OS profile and size, then generate a ZIP containing synthetic files."], ["2. Review placement and inventory", "Extract it in an authorized dedicated location and store the operator inventory separately."], ["3. Search candidates", "People or search tools looking for important files may include decoys among the candidates."], ["4. Review work may increase", "Selection work may grow, and genuine files may be buried among candidates."]],
+  ifCase: ["Manual review of individual candidates may increase selection work.", "If an important-file search tool fails to filter out every decoy, it may add candidates to review."],
+  elseCase: ["Search-tool classification or ranking may push decoys lower in the results.", "Automatic filtering may remove decoys from the candidate list.", "Bulk enumeration followed by filtering may reduce review work.", "Parallel processing or offline analysis may speed up selection."],
+  response: "Use the operator inventory to manage placement and removal. Check search, backup, sync and antivirus impact.",
+  note: "Links stay within the ZIP; it contains no executable scripts or external requests. This is a design hypothesis about added selection work; delay and missed genuine files are not guaranteed."
+};
+Object.assign(translations.ja, {
+  path_maze_card: "重要そうな架空ファイルを階層に分散",
+  path_maze_desc: "OS別の名前を使った有限のフォルダー階層に、重要そうな架空ファイルを分散します。",
+  path_note: "既定値は20階層・各階層890分岐・各フォルダー3ファイルです。ZIP内は約497,925項目で、上限は500,000項目です。各フォルダーの一覧ページには別枝へのリンクがあります。人手の調査や重要ファイル検索アプリが架空ファイルも候補に含める場合、確認・選別の作業が増えて本物が埋もれる可能性を狙います。検索アプリの分類・順位付け・自動除外や一括・並列処理で効果は弱まり、遅延や見落としは保証されません。展開先の容量と検索・バックアップ・同期への影響を確認してください。Windowsでは長いパスに対応しないツールで展開できない場合があります。"
+});
+Object.assign(translations.en, {
+  path_maze_card: "Distribute plausible synthetic files across a folder tree",
+  path_maze_desc: "Distribute synthetic important-file candidates across a finite folder tree with platform-appropriate names.",
+  path_note: "Defaults use twenty levels, 890 branches per level and three files per folder. The ZIP contains about 497,925 entries and is capped at 500,000. Folder indexes link to other branches. During manual searches or when important-file search tools include decoys among their candidates, review work may increase and genuine files may be buried. Classification, ranking, automatic filtering, and bulk or parallel processing can reduce the effect; delay or missed targets are not guaranteed. Check destination capacity and search, backup and sync impact. Deep paths may fail to extract with Windows tools that lack long-path support."
+});
+
+// Keep product-level claims aligned with the conditional behavior of each method.
+methodExplanations.ja.sparse_decoy = {
+  title: translations.ja.sparse_title,
+  how: "論理サイズが大きく初期割り当てが小さい架空ファイルを作ります。全域を読み書きし、疎領域を最適化しない処理で負荷が増える可能性を狙います。拡張子は見た目だけで、中身は形式に準拠しません。",
+  target: "疎領域を最適化せずファイル全域を処理する暗号化・走査処理。",
+  limit: "疎領域を認識する処理、大容量ファイルの除外、部分暗号化では負荷が小さくなり得ます。書き込みで割り当て量が増え、空き容量を圧迫する危険があります。効果や遅延は保証されません。"
+};
+methodExplanations.en.sparse_decoy = {
+  title: translations.en.sparse_title,
+  how: "Creates a synthetic file with a large logical size and small initial allocation. Processing may add work when a tool reads and writes the full file without optimizing sparse regions. The extension is cosmetic; the content does not match the format.",
+  target: "Encryption or scanning that processes the entire file without optimizing sparse regions.",
+  limit: "Sparse-aware processing, large-file exclusions and partial encryption can reduce the work. Writes may increase allocated space and consume free capacity. Effect and delay are not guaranteed."
+};
+methodFlows.ja.sparse_decoy = {
+  context: "論理サイズに比べて初期割り当てが小さいファイルを配置します。空き領域は読み出すとゼロとして返されます。",
+  steps: [["1. サイズを選ぶ", "ファイルの論理サイズと表示用の拡張子を選びます。"], ["2. 配置する", "対応ファイルシステムに作成するか、スパースTARを配置先で展開します。"], ["3. 全域処理される場合", "疎領域を最適化せず全体を暗号化する攻撃では、ゼロ領域の読み出しや処理にも時間・I/Oが必要になる場合があります。"], ["4. 攻撃側と防御側への影響", "暗号文の書き込みで攻撃側の処理時間や書き込み負担が増え、監視・対応の猶予につながる可能性があります。"]],
+  ifCase: ["処理がファイルの全域を読み書きする場合、追加負荷が生じる可能性があります。", "処理が疎領域を最適化せず、大容量ファイルも除外しない場合、論理サイズに応じた作業が発生する可能性があります。"],
+  elseCase: ["疎領域を認識・最適化する処理では、追加作業が小さくなる場合があります。", "大容量ファイルを対象外にする処理では、デコイが処理されない場合があります。", "部分暗号化では、ファイル全域を処理する場合より追加作業が小さくなります。", "対象を選別する処理では、デコイが除外される場合があります。"],
+  response: ["最小サイズで隔離環境に試し、空き容量とバックアップ・同期の挙動を確認します。", "暗号化出力やコピーで論理サイズ分の容量を使う場合があります。ディスク不足が業務や復旧に影響しないよう、空き容量を監視してください。", "運用者用のファイル一覧は配置物と分けて保管します。"],
+  note: "追加の処理負担が監視・対応の猶予になる可能性はありますが、暗号化の停止や一定時間の遅延は保証しません。"
+};
+methodFlows.en.sparse_decoy = {
+  context: "Place a file whose logical size is much larger than its initial allocation. Reads from sparse regions return zeros.",
+  steps: [["1. Choose a size", "Select the logical file size and a display-only extension."], ["2. Place the file", "Create it on a supporting filesystem or extract the sparse TAR on the target."], ["3. If processed end to end", "An attack that encrypts the whole file without sparse optimization may spend time and I/O reading and processing zero-filled ranges."], ["4. Impact on both sides", "Writing ciphertext may increase the attacker's processing time and write workload, potentially giving defenders more time to notice and respond."]],
+  ifCase: ["Additional work is possible when a process reads and writes the entire file.", "Work proportional to the logical size is possible when the process neither optimizes sparse regions nor excludes large files."],
+  elseCase: ["Sparse-aware processing may reduce the additional work.", "A process that excludes large files may skip the decoy.", "Partial encryption processes less of the file than full-file encryption.", "Selective targeting may exclude the decoy."],
+  response: ["Start at the smallest size in an isolated environment. Check free space and backup/sync behavior.", "Encrypted output or copies may consume the full logical size. Monitor free capacity to avoid disrupting operations or recovery.", "Keep the operator inventory separate from the deployed files."],
+  note: "The added work may create time for monitoring and response, but it does not stop encryption or guarantee delay."
+};
+flowScenarios.ja.sparse_decoy = "想定：疎領域を最適化せず全域を読み書きする処理に限り、追加負荷や割り当て増加が起こる可能性があります。";
+flowScenarios.en.sparse_decoy = "Scenario: full-file processing may add work or allocation only when sparse regions are not optimized.";
+methodOutcomes.ja.sparse_decoy = {
+  deception: "業務らしい名前と選択した拡張子を使いますが、内容はその形式に一致しません。スパース属性を確認する攻撃者には見抜かれる場合があります。",
+  delay: "全域処理かつ疎領域を最適化しない場合、攻撃側の処理時間やI/Oが増え、監視・対応の猶予になる可能性があります。部分処理・サイズ除外・疎領域の最適化で効果は弱まり、遅延も保証されません。"
+};
+methodOutcomes.en.sparse_decoy = {
+  deception: "Use an environment-appropriate name and selected extension, but the content does not match that format. An attacker checking sparse attributes may identify it.",
+  delay: "Only full-file processing without sparse optimization may add attacker time and I/O, potentially giving defenders more time to monitor and respond. Partial processing, size exclusions or sparse-aware handling reduce the effect; delay is not guaranteed."
+};
+Object.assign(translations.ja, {
+  sparse_card: "大きな論理サイズの架空ファイルを小さな割り当てで作成",
+  sparse_note: "論理サイズは指定値から最大約0.5%変動します。対応ファイルシステムでは空き領域を疎領域として扱うため、初期のディスク割り当ては小さくなります。疎領域を最適化せず全域を読み書きする処理では、追加の計算や書き込みが発生する可能性があります。疎領域の認識・大容量ファイルの除外・部分処理では効果が弱まります。書き込み、コピー、同期、バックアップで論理サイズ分の容量を使う場合があり、ディスク不足で業務や復旧に影響する危険があります。これは暗号化を止める対策ではなく、遅延も保証しません。拡張子は見た目だけで、内容はその形式に準拠しません。",
+  sparse_generated: "指定フォルダーに架空ファイル「{filename}」を論理サイズ{size} GiBで作成しました。初期割り当ては小さいですが、全域書き込みやコピーで容量が増える場合があります。空き容量を確認し、運用者用の一覧は分けて保管してください。"
+});
+Object.assign(translations.en, {
+  sparse_card: "Create a synthetic file with a large logical size and small initial allocation",
+  sparse_note: "The logical size varies by up to about 0.5% from the selected value. On a supporting filesystem, empty ranges are sparse, so initial disk allocation is small. Processing may add computation or writes when a tool reads and writes the full file without optimizing sparse regions. Sparse-aware handling, large-file exclusions and partial processing reduce the effect. Writes, copies, sync or backups may consume the full logical size and exhaust disk space, disrupting operations or recovery. This does not stop encryption or guarantee delay. The extension is cosmetic; the content does not match that format.",
+  sparse_generated: "Created {filename} with a logical size of {size} GiB in the selected folder. Initial allocation is small, but full-file writes or copies may use more space. Check free capacity and keep the operator inventory separate."
+});
+translations.ja.intro_after_intrusion = "Physaliaは、アンチウイルスソフトなどを置き換えず、侵入後の探索・選別・データ取得に追加の手間を生じさせたり、監視・対応の手掛かりを作ったりする補助的な手法を紹介します。攻撃の回避・断念、遅延、被害抑止を保証するものではありません。各手法の成立条件と限界を確認できる解説・サンプルを提供します。";
+translations.en.intro_after_intrusion = "Physalia does not replace antivirus or other protections. It presents supplementary methods that may add work to post-compromise searching, selection or data collection, or provide a lead for monitoring and response. They do not guarantee that an attacker will evade, abandon or delay an attack, or that harm will be limited. Explanations and samples describe each method's conditions and limitations.";
+
+// Explain how independently generated decoys can be layered, without implying automatic integration.
+const combinationGuidance = {
+  ja: {
+    path_maze: [
+      "組み合わせ例：パス・メイズで探索候補を増やし、暗号化ネストやデコイDBで内容の確認・真偽判定にも手間を加えます。カナリアファイルを加えると、接触記録の手掛かりも得られる場合があります。"
+    ],
+    nest: [
+      "パス・メイズなどの候補が多い領域に暗号化ネストを組み合わせると、候補探索に加えてアーカイブ内の確認作業も生じる可能性があります。"
+    ],
+    database: [
+      "パス・メイズや暗号化ネストと組み合わせると、ファイル探索に加えて、DB候補の真偽確認にも手間を生じさせる構成にできます。"
+    ],
+    env: [
+      "パス・メイズや暗号化ネストにカナリアファイルを組み合わせると、探索・選別の負担に加えて、URLへの接触を調べる手掛かりが得られる場合があります。"
+    ],
+    ransomware_tripwire: [
+      "パス・メイズなどの架空ファイル群と併用すると、処理対象の候補を増やしながら、監視対象ファイルの変化を対応の手掛かりとして記録する構成にできます。"
+    ]
+  },
+  en: {
+    path_maze: [
+      "Combination example: use Path Maze to add search candidates, then combine it with an encrypted nest or decoy database to add content review and verification work. A canary file may also provide a lead about contact."
+    ],
+    nest: [
+      "Combining an encrypted nest with a candidate-rich area such as Path Maze may add archive inspection to the search work."
+    ],
+    database: [
+      "Combining a decoy database with Path Maze or an encrypted nest may add database-candidate verification to the file search."
+    ],
+    env: [
+      "Combining a canary file with Path Maze or an encrypted nest may provide a lead about contact in addition to the search and selection work."
+    ],
+    ransomware_tripwire: [
+      "Used alongside a synthetic file set such as Path Maze, this can add search candidates while recording changes to monitored files as a possible response lead."
+    ]
+  }
+};
+for (const [lang, methods] of Object.entries(combinationGuidance)) {
+  for (const [method, points] of Object.entries(methods)) {
+    const current = methodFlows[lang][method].response;
+    methodFlows[lang][method].response = [...(Array.isArray(current) ? current : [current]), ...points];
+  }
+}
+methodExplanations.ja.path_maze.limit += " 他の生成物とは自動で一体化しないため、配置や形式の整合性を運用者が確認し、運用者用台帳は配布物と分けて保管してください。";
+methodExplanations.en.path_maze.limit += " Outputs are not combined automatically; the operator must check placement and consistency and keep operator inventories separate from deployable files.";
+methodExplanations.ja.nest.limit += " このツールのAES暗号化ZIPでは、ファイル名やフォルダー構造は暗号化されません。7-Zipなどでパスワード入力前に一覧が見える場合があります。暗号化されるのはファイル内容で、名前の秘匿や解凍時間は保証されません。";
+methodExplanations.en.nest.limit += " This tool's AES-encrypted ZIPs do not encrypt filenames or folder structure. Listing tools such as 7-Zip may show them before a password is entered. The contents are encrypted; names are not concealed, and extraction time is not guaranteed.";
+methodExplanations.ja.database.limit += " 他の生成物との自動連携はありません。DBの読み取り自体も通知されないため、接触記録が必要ならカナリアなどを別途組み合わせて監視してください。";
+methodExplanations.en.database.limit += " It does not integrate automatically with other outputs, and database reads alone do not send alerts. Add and monitor a separate canary if contact evidence is needed.";
+methodExplanations.ja.env.limit += " 別のデコイ生成物に自動で組み込まれるわけではありません。配置は運用者が行い、URLへの要求が届いたときだけ接触記録になります。カナリア自体は遅延を生みません。";
+methodExplanations.en.env.limit += " It is not automatically embedded in other decoy outputs; the operator must place it. Contact is recorded only if a URL request reaches the monitor. A canary does not itself add delay.";
+methodExplanations.ja.ransomware_tripwire.limit += " 監視間隔は既定で約1秒で、起動時に0.25〜60秒へ変更できます。";
+methodExplanations.en.ransomware_tripwire.limit += " The default polling interval is one second and can be changed at startup to 0.25–60 seconds.";
+
+// Refresh translated UI after the final, evidence-aligned wording overrides above.
+localize(document);
+updateMethodFilter(activeFitFilter);
+updateExplanation();

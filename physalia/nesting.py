@@ -171,16 +171,16 @@ DIRECTORY_DIMENSIONS = {
 }
 HINT_NOTE_PRESETS = {
     "ja": (
-        "データ移行 引継ぎメモ\n展開キー控えは月次の鍵管理票を参照。\n",
-        "保管データ復元メモ\n復号キーは更新済みの保管ノートを確認。\n",
-        "アーカイブ整理記録\n鍵管理票は引継ぎ資料と合わせて保管。\n",
-        "共有フォルダー移行\nZIPキーは月次パスワード台帳を参照。\n",
+        "データ移行 引継ぎメモ\n対象一覧と差分を確認。未処理分は担当者レビューへ。\n",
+        "保管データ棚卸し\n対象期間と保管先を照合。保留分は次回の月次確認で更新。\n",
+        "アーカイブ整理記録\n保存対象と保持期限を確認。例外一覧は確認後に記録へ反映。\n",
+        "共有フォルダー移行\n移行後の件数とアクセス権を照合。差分はレビュー待ち。\n",
     ),
     "en": (
-        "Export handover\nSee the monthly key register for the archive key.\n",
-        "Restore notes\nSee the updated storage note for the decryption key.\n",
-        "Archive closeout\nThe key register is stored with the handover records.\n",
-        "Shared folder migration\nSee the monthly password register for the ZIP key.\n",
+        "Data migration handover\nReview the item list and differences. Route open items for owner review.\n",
+        "Storage inventory\nReconcile the covered period and storage locations. Carry pending items to the next monthly review.\n",
+        "Archive review\nCheck retention scope and dates. Record exceptions after review.\n",
+        "Shared folder migration\nReconcile item counts and access groups after migration. Differences are awaiting review.\n",
     ),
 }
 
@@ -473,7 +473,7 @@ def generate_nest(settings, language="ja"):
     def hint_path(archive_path, used_members=None):
         parent, leaf = posixpath.split(archive_path)
         stem, _ = posixpath.splitext(leaf)
-        suffixes = ("handover", "restore_notes", "export_checklist", "key_register")
+        suffixes = ("handover", "migration_review", "retention_check", "reconciliation")
         for _ in range(64):
             suffix = rng.choice(suffixes)
             name = f"{stem}_{suffix}.txt"

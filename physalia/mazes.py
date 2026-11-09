@@ -413,7 +413,8 @@ def generate_stream_sample(settings, language="ja"):
              ("index.html", preview_html), ("stream-preview.js", preview_js),
              ("README.txt", readme.encode("utf-8"))]
     summary = {"kind": "stream", "rate_kib": rate, "max_streams": maximum,
-               "preview_url": f"http://127.0.0.1:{port}/"}
+               "preview_url": f"http://127.0.0.1:{port}/",
+               "preview_html": preview_html.decode("utf-8")}
     artifact = bundle(name, files, {"warning": translate("stream_operator_warning", language), "environment": environment,
                                    "download_url": f"http://127.0.0.1:{port}{path}", "stop_url": f"http://127.0.0.1:{port}/stop"}, summary, language)
     LOGGER.info("stream_sample_complete rate_kib=%d max_streams=%d files=%d archive_bytes=%d elapsed_ms=%d",

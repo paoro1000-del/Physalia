@@ -59,7 +59,6 @@
             <li data-i18n-emphasis="intro_limit_effect"><strong>対策の効果は、配置先や攻撃者の行動によって変わります。</strong>自分の環境に合わせて、仕組みと注意点を確認してください。</li>
           </ul>
           <p class="intro-help"><a href="/quickstart/ja" id="intro-quick-guide" target="_blank" rel="noopener" data-i18n="quick_guide_link">はじめての作成・配置ガイド</a></p>
-          <p class="intro-help"><a href="/log-guide/ja" id="intro-log-guide" target="_blank" rel="noopener" data-i18n="log_guide_link">ログの記録と手動確認ガイド</a></p>
         </section>
         <section class="panel intro-panel intro-physalia-note" aria-labelledby="intro-physalia-note-title">
           <h2 id="intro-physalia-note-title" data-i18n="intro_physalia_note_title">&#x4f59;&#x8ac7;&#xff1a;&#x5b9f;&#x5728;&#x3059;&#x308b;&#x50;&#x68;&#x79;&#x73;&#x61;&#x6c;&#x69;&#x61;&#xff08;&#x30ab;&#x30c4;&#x30aa;&#x30ce;&#x30a8;&#x30dc;&#x30b7;&#xff09;</h2>
@@ -127,16 +126,18 @@
           <h2 id="logs-analysis-title" data-i18n="logs_analysis_title">分析を深めるための考え方</h2>
           <ul class="intro-limits">
             <li data-i18n="logs_analysis_facts">記録された事実と解釈を分け、根拠・確度・未確認事項を残します。応答や送信量だけで閲覧・持ち出しを断定できません。</li>
-            <li data-i18n="logs_analysis_sequence">単発イベントではなく、デコイごとの要求系列や時刻を確認します。ヘッダーやIPは手掛かりであり、人物やツールの特定には使えません。</li>
-            <li data-i18n="logs_analysis_correlate">時計ずれを考慮し、自組織の関連ログだけをrequest_idなどで照合します。接触なしも、アクセスなしの証明にはなりません。</li>
-            <li data-i18n="logs_analysis_evaluate">通知連携は秘密URLや不要な個人情報を避け、誤検知と配信失敗を確認します。効果は対照条件と比較して評価します。</li>
+            <li data-i18n="logs_analysis_sequence">単発イベントだけでなく、デコイごとのGET・HEAD・Range要求、応答状態、間隔、接触したデコイの順序や広がりを確認します。IP・User-Agent・ヘッダーは共有・中継・偽装されるため、人物やツールの指紋として扱いません。</li>
+            <li data-i18n="logs_analysis_correlate">UTCまたはタイムゾーン付き時刻にそろえ、時計のずれを考慮します。必要な場合はrequest_idなどを使い、自組織が管理するWeb・プロキシ・認証・端末ログだけを照合します。IPと時刻だけの一致は弱い手掛かりです。</li>
+            <li data-i18n="logs_analysis_missing">接触記録がないことは、アクセスや持ち出しがなかった証明ではありません。URLの除去・遮断、オフライン調査、キャッシュなどで記録が残らない場合があります。反対に、スキャナーやプレビューの記録が人の閲覧を意味するとは限りません。</li>
+            <li data-i18n="logs_analysis_alerts">通知にはイベントID、時刻、デコイID、保護されたログへのリンクなど必要最小限だけを含めます。秘密URLや不要な個人情報は含めず、重複抑制、送信失敗時の確認先、担当者と対応時間を決めます。</li>
+            <li data-i18n="logs_analysis_evaluate">効果は同じ初期情報と時間枠を使った対照条件と比較します。目的データへの到達率・所要時間、デコイ接触、通知・対応の遅れ、正規アクセスの誤検知を記録し、AI・スクリプト・並列・オフライン処理など条件別に評価します。</li>
           </ul>
-          <p class="inline-note" data-i18n="logs_analysis_scope">このアプリは外部ログの収集・相関分析・通知を行いません。詳しい評価方法は完全版ガイドを参照してください。</p>
+          <p class="inline-note" data-i18n="logs_analysis_scope">このアプリは外部ログの収集・相関分析・通知を行いません。ここに記載した手順は、管理権限のある自組織の環境で行ってください。</p>
         </section>
         <section class="panel intro-panel" aria-labelledby="logs-privacy-title">
           <h2 id="logs-privacy-title" data-i18n="logs_privacy_title">プライバシーと安全な調査</h2>
           <p data-i18n="logs_privacy_body">IPアドレスやUser-Agent等は個人を識別し得る情報として、利用目的、必要性、閲覧者、保存期間、削除手順を定めて管理します。送信元端末への接続・スキャン、第三者システムへのログイン、無断追跡や反撃は行いません。デコイへの接触は、別システムへアクセスする権限を与えません。</p>
-          <p class="intro-help"><a id="log-guide-full" href="/log-guide/ja" target="_blank" rel="noopener" data-i18n="logs_full_guide">詳細な記録例・運用上の注意を読む</a></p>
+          <p class="intro-help"><span data-i18n="logs_privacy_source_label">参考：</span><a href="https://www.ppc.go.jp/personalinfo/legal/guidelines_tsusoku/" target="_blank" rel="noopener noreferrer" data-i18n="logs_privacy_source">個人情報保護委員会の通則ガイドライン</a> · <a href="https://www.ppc.go.jp/all_faq_index/faq4-q802/" target="_blank" rel="noopener noreferrer" data-i18n="logs_privacy_faq">ログファイルの管理に関するQ&amp;A</a></p>
         </section>
       </section>
       <section id="page-canary" class="workspace-page" aria-labelledby="local-canary-title" hidden>
@@ -169,11 +170,10 @@
         <label class="card" data-fit="database exfiltration"><input type="radio" name="kind" value="database"><span class="icon blue">▤</span><strong data-i18n="database_title">デコイ・データベース</strong><small data-i18n="database_card">架空のデータベースで真偽の判断を迷わせる</small><span class="method-tags"><span class="method-tag lure" data-i18n="tag_lure">デコイ誘導</span><span class="method-tag leak" data-i18n="tag_leak">流出後の攪乱</span><span class="method-tag delay" data-i18n="tag_delay">遅延</span></span><span class="card-foot">SQLITE <b>↗</b></span></label>
         <label class="card" data-fit="website"><input type="radio" name="kind" value="web"><span class="icon amber">▦</span><strong data-i18n="web_title">スタティック・デコイ・ポータル</strong><small data-i18n="web_card">偽のポータル画面で探索を誘い込む</small><span class="method-tags"><span class="method-tag lure" data-i18n="tag_lure">デコイ誘導</span></span><span class="card-foot">HTML <b>↗</b></span></label>
         <label class="card" data-fit="website"><input type="radio" name="kind" value="fake_trap"><span class="icon amber">⚑</span><strong data-i18n="fake_title">フェイクトラップ</strong><small data-i18n="fake_card">警告や待機表示で再確認を促す</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span><span class="method-tag ai" data-i18n="tag_ai">AI攻撃を想定</span></span><span class="card-foot">HTML <b>↗</b></span></label>
-        <label class="card" data-fit="files exfiltration ransomware"><input type="radio" name="kind" value="ransomware_tripwire"><span class="icon amber">⏱</span><strong data-i18n="tripwire_title">ランサムウェア・デコイフラッド</strong><small data-i18n="tripwire_card">処理された架空ファイルを補充</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span></span><span class="card-foot">LOCAL SCRIPT <b>↗</b></span></label>
+        <label class="card" data-fit="database exfiltration"><input type="radio" name="kind" value="data_dilution"><span class="icon blue">≋</span><strong data-i18n="dilution_title">データ・ディルーション</strong><small data-i18n="dilution_card">本物に偽レコードを混ぜて選別を困難に</small><span class="method-tags"><span class="method-tag leak" data-i18n="tag_leak">流出後の攪乱</span></span><span class="card-foot"><span data-i18n="overview_only">解説のみ・生成機能なし</span> <b>↗</b></span></label>
         <label class="card" data-fit="files ransomware"><input type="radio" name="kind" value="path_maze"><span class="icon teal">⌘</span><strong data-i18n="path_maze_title">パス・メイズ</strong><small data-i18n="path_maze_card">架空ファイルを通常のフォルダーに分散</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span></span><span class="card-foot">STATIC ZIP <b>↗</b></span></label>
         <label class="card" data-fit="files ransomware"><input type="radio" name="kind" value="sparse_decoy"><span class="icon amber">◫</span><strong data-i18n="sparse_title">スパース・デコイ</strong><small data-i18n="sparse_card">見かけ上大きな架空ファイルを作成</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span></span><span class="card-foot">LOCAL FILE <b>↗</b></span></label>
-        <label class="card" data-fit="database exfiltration"><input type="radio" name="kind" value="data_dilution"><span class="icon blue">≋</span><strong data-i18n="dilution_title">データ・ディルーション</strong><small data-i18n="dilution_card">本物に偽レコードを混ぜて選別を困難に</small><span class="method-tags"><span class="method-tag leak" data-i18n="tag_leak">流出後の攪乱</span></span><span class="card-foot"><span data-i18n="overview_only">解説のみ・生成機能なし</span> <b>↗</b></span></label>
-        <label class="card" data-fit="credentials"><input type="radio" name="kind" value="honeyword"><span class="icon violet">◇</span><strong data-i18n="honeyword_title">プリビレッジ・ハニーワード・セッション</strong><small data-i18n="honeyword_card">偽パスワードで隔離デコイへ誘導</small><span class="method-tags"><span class="method-tag lure" data-i18n="tag_lure">デコイ誘導</span><span class="method-tag delay" data-i18n="tag_delay">遅延</span></span><span class="card-foot"><span data-i18n="overview_only">解説のみ・生成機能なし</span> <b>↗</b></span></label>
+        <label class="card" data-fit="files exfiltration ransomware"><input type="radio" name="kind" value="ransomware_tripwire"><span class="icon amber">⏱</span><strong data-i18n="tripwire_title">ランサムウェア・デコイフラッド</strong><small data-i18n="tripwire_card">処理された架空ファイルを補充</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span></span><span class="card-foot">LOCAL SCRIPT <b>↗</b></span></label>
         <label class="card" data-fit="exfiltration"><input type="radio" name="kind" value="stream"><span class="icon violet">∞</span><strong data-i18n="stream_title">インフィニット・ストリーム</strong><small data-i18n="stream_card">終わりのない配信でダウンロードを引き延ばす</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span><span class="method-tag lure" data-i18n="tag_lure">デコイ誘導</span></span><span class="card-foot">PYTHON SERVER <b>↗</b></span></label>
         <label class="card" data-fit="files website exfiltration"><input type="radio" name="kind" value="directory_maze"><span class="icon teal">⌘</span><strong data-i18n="directory_title">ディレクトリ・メイズ</strong><small data-i18n="directory_card">偽ファイルを階層に配置して探索を増やす</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span><span class="method-tag lure" data-i18n="tag_lure">デコイ誘導</span><span class="method-tag ai" data-i18n="tag_ai">AI攻撃を想定</span></span><span class="card-foot">STATIC ZIP <b>↗</b></span></label>
         <label class="card" data-fit="files exfiltration"><input type="radio" name="kind" value="encoding_maze"><span class="icon blue">≋</span><strong data-i18n="encoding_title">エンコーディング・メイズ</strong><small data-i18n="encoding_card">多段変換した偽候補で内容の確認を増やす</small><span class="method-tags"><span class="method-tag delay" data-i18n="tag_delay">遅延</span><span class="method-tag leak" data-i18n="tag_leak">流出後の攪乱</span><span class="method-tag ai" data-i18n="tag_ai">AI攻撃を想定</span></span><span class="card-foot">ENCODED ZIP <b>↗</b></span></label>
@@ -249,7 +249,7 @@
             <div><label for="password-words" data-i18n="password_words">単語候補（英字・カンマ区切り・空欄で既定）</label><input id="password-words" maxlength="1050" placeholder="Atlas,Cedar,Delta"></div></div>
             <div class="checks"><label><input id="lowercase" type="checkbox" checked><span data-i18n="lowercase">英小文字</span></label><label><input id="uppercase" type="checkbox" checked><span data-i18n="uppercase">英大文字</span></label><label><input id="digits" type="checkbox" checked><span data-i18n="digits">数字</span></label><label><input id="symbols" type="checkbox" checked><span data-i18n="symbols">記号</span></label></div>
             <label class="check-label"><input id="progressive" type="checkbox" checked><span data-i18n="progressive">序盤は短く、深い階層ほど長くする</span></label>
-            <p id="password-help" class="help" data-i18n="password_help">既定では単語に数字と記号を混ぜた8〜24文字のパスワードを使い、深い階層ほど長くします。復元メモは別のパスワード台帳を示しますが、別管理の文字数は記しません。検証用パスワード一覧はサンプル確認に限って使い、配置・公開しないでください。ZIP取得後はオフラインで並列試行できるため、解読時間や遅延は保証されません。</p>
+            <p id="password-help" class="help" data-i18n="password_help">既定では単語に数字と記号を混ぜた8〜24文字のパスワードを使い、深い階層ほど長くします。追加する業務メモは架空の確認・引継ぎ内容で、鍵やパスワードの場所・値は示しません。検証用パスワード一覧はサンプル確認に限って使い、配置・公開しないでください。ZIP取得後はオフラインで並列試行できるため、解読時間や遅延は保証されません。</p>
            </fieldset></details>
           <div id="nest-estimate" class="inline-note" aria-live="polite"></div>
           <div class="inline-note" data-i18n="nest_note">ダウンロードされるZIP自体がAES暗号化されています。通常ZIPを先に展開せず、AES対応ソフトで開いてください。サンプル検証にはZIPパスワード一覧を使います。パスワード一覧は検証専用に保管し、デコイと一緒に配置・公開しないでください。生成本文は32MiB、暗号化ZIPの累積サイズは64MiBまでです。</div>
@@ -286,8 +286,8 @@
           <label for="fake-variant" data-i18n="fake_variant">表示パターン</label><select id="fake-variant"><option value="warning" data-i18n="fake_warning">異常アクセスの警告</option><option value="reported" data-i18n="fake_reported">確認リクエスト受付済み</option><option value="waiting" data-i18n="fake_waiting">セッション確認中</option><option value="maintenance" data-i18n="fake_maintenance">サービスメンテナンス</option><option value="device_review" data-i18n="fake_device_review">新しいデバイスの確認</option><option value="access_request" data-i18n="fake_access_request">アクセス申請の確認</option><option value="sync_status" data-i18n="fake_sync_status">アカウント同期状況</option><option value="policy_update" data-i18n="fake_policy_update">セキュリティ設定更新</option></select>
           <label class="check-label"><input id="fake-embed-canary" type="checkbox"><span data-i18n="fake_embed_canary">ページ表示時にカナリアURLへ接続する</span></label>
           <p class="help" data-i18n="fake_canary_default_note">初期状態はOFFです。意図しない外部通信や監視先への接触を避け、明示的に有効化した場合だけ監視要求を含めます。</p>
-          <div id="fake-canary-fields" hidden><label for="fake-canary-url" data-i18n="canary_url">カナリアURL</label><textarea id="fake-canary-url" data-secret-url rows="1" inputmode="url" spellcheck="false" autocapitalize="none" placeholder="https://..." maxlength="2048" autocomplete="off">__LOCAL_CANARY_URL__</textarea><p class="help" data-i18n="fake_canary_help">監視サービスから発行されたHTTPS URLを入力します。生成ページを開くと、そのURLにGET要求を送り、接触として記録します。</p></div>
-          <p class="inline-note" data-i18n="fake_note">カナリアURLを設定すると、ページ表示時に監視先へ接触します。メールスキャナーやプレビューも接触として記録され得ます。URLを設定しない場合、外部通信はありません。認証や端末情報の追加収集はしません。</p>
+          <div id="fake-canary-fields" hidden><label for="fake-canary-url" data-i18n="fake_canary_url_label">監視用URL（カナリアURL）</label><textarea id="fake-canary-url" data-secret-url rows="1" inputmode="url" spellcheck="false" autocapitalize="none" placeholder="https://..." maxlength="2048" autocomplete="off">__LOCAL_CANARY_URL__</textarea><p class="help" data-i18n="fake_canary_help">監視用URL（カナリアURL）は、接触を記録する監視サービスから発行されたHTTPS URLです。この設定をONにしてURLを入力すると、ページ表示時に埋め込み画像のGET要求として監視先へ接続します。独自APIの実装は不要です。</p></div>
+          <p class="inline-note" data-i18n="fake_note">監視設定がOFFまたは監視用URLが空欄の場合、外部要求はありません。設定をONにしてURLを入力すると、ページ表示時に接触を記録します。プレビューやメールスキャナーも要求する場合があります。</p>
         </div>
         <div id="ransomware_tripwire-fields" class="fields" hidden>
           <div class="panel-title"><h3 data-i18n="tripwire_title">ランサムウェア・デコイフラッド</h3><p data-i18n="tripwire_desc">架空ファイルと、その変更時に別の架空ファイルを補充するスクリプトを作成します。</p></div>
@@ -297,7 +297,7 @@
         <div id="path_maze-fields" class="fields" hidden>
           <div class="panel-title"><h3 data-i18n="path_maze_title">パス・メイズ</h3><p data-i18n="path_maze_desc">既定で13階層、最大20階層のフォルダーと多数の分岐・交差リンクを生成します。</p></div>
           <label for="path-os" data-i18n="path_os">対象OS</label><select id="path-os"><option value="windows" data-i18n="path_os_windows">Windows系</option><option value="unix" data-i18n="path_os_unix">Unix系（Linuxなど）</option><option value="macos" data-i18n="path_os_macos">macOS（Mac）</option></select><p class="help" data-i18n="path_os_note">選択OSに合わせてフォルダー名の表記と相対パス長を調整します。実際の展開可否はファイルシステム、展開先の長さ、OS設定にも左右されます。</p>
-          <div class="form-grid"><div><label for="path-depth" data-i18n="path_depth">最大階層（1〜20）</label><input id="path-depth" type="number" min="1" max="20" value="20" required></div><div><label for="path-branches" data-i18n="path_branches">各階層の横分岐数（1〜1,500）</label><input id="path-branches" type="number" min="1" max="1500" value="1000" required></div><div><label for="path-files" data-i18n="path_files">各フォルダーの架空ファイル数（1〜4）</label><input id="path-files" type="number" min="1" max="4" value="1" required></div></div>
+          <div class="form-grid"><div><label for="path-depth" data-i18n="path_depth">最大階層（1〜20）</label><input id="path-depth" type="number" min="1" max="20" value="20" required></div><div><label for="path-branches" data-i18n="path_branches">各階層の横分岐数（1〜1,500）</label><input id="path-branches" type="number" min="1" max="1500" value="890" required></div><div><label for="path-files" data-i18n="path_files">各フォルダーの架空ファイル数（1〜4）</label><input id="path-files" type="number" min="1" max="4" value="3" required></div></div>
           <p id="path-maze-estimate" class="inline-note" aria-live="polite"></p>
           <p class="inline-note" data-i18n="path_note">通常のフォルダーと架空ファイルを有限個作ります。リンクや常駐プログラムは使いません。攻撃がデコイを処理する場合に追加の仕事が生じます。並列処理や対象の絞り込みでは実ファイルが先に処理されることがあります。バックアップや検索にもファイルが増えます。</p>
         </div>
@@ -310,7 +310,6 @@
           <p class="inline-note" data-i18n="sparse_note">指定フォルダーにスパースファイルを作成します。実際の使用容量は通常小さくなります。対応するファイルシステムが必要です。コピー・同期・バックアップでは見かけのサイズ分の容量を使う場合があります。拡張子は見た目だけで、中身は選択形式に準拠しません。</p>
         </div>
         <div id="data_dilution-fields" class="fields" hidden><p class="inline-note" data-i18n="technology_only">技術紹介のみです。生成や本番環境への変更は行いません。</p></div>
-        <div id="honeyword-fields" class="fields" hidden><p class="inline-note" data-i18n="technology_only">技術紹介のみです。生成や本番環境への変更は行いません。</p></div>
         <div id="stream-fields" class="fields" hidden>
           <div class="panel-title"><h3 data-i18n="stream_title">インフィニット・ストリーム</h3><p data-i18n="stream_desc">認証付きの配信サーバーと設定をZIPで生成します。生成しただけでは起動しません。</p></div>
            <div class="form-grid">

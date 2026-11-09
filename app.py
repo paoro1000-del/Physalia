@@ -10,6 +10,7 @@ import json
 import io
 import logging
 import math
+import os
 import re
 import secrets
 import hashlib
@@ -32,6 +33,9 @@ from physalia.app_logging import configure_logging
 STATIC = Path(__file__).parent / "web"
 APP_VERSION = (STATIC.parent / "VERSION").read_text(encoding="utf-8").strip()
 LOGGER = logging.getLogger("physalia")
+DEVELOPMENT_METHODS = frozenset({
+    "directory_maze", "encoding_maze", "stream", "ransomware_tripwire",
+})
 INTEGRATION_BUNDLE_FILES = (
     "LICENSE", "README.md", "README_en.md", "SECURITY.md",
     "docs/deployment_ja.md", "docs/deployment_en.md", "docs/legal_ja.md", "docs/legal_en.md",
@@ -154,10 +158,15 @@ def render_quickstart(content: bytes, language: str) -> bytes:
     """Render the bundled quick-start Markdown without adding a dependency."""
     language = language if language in ("ja", "en") else "ja"
     detailed_guide = f"/guide/{language}"
+    markdown = content.decode("utf-8")
+    title_match = re.search(r"(?m)^#\s+(.+?)\s*$", markdown)
 
     def inline(text):
         parts, position = [], 0
-        pattern = re.compile(r"`([^`]+)`|\*\*([^*]+)\*\*")
+        pattern = re.compile(
+            r"`([^`]+)`|\*\*([^*]+)\*\*|"
+            r"\[([^\]]+)\]\((https?://[^)\s]+|/guide/(?:ja|en)|/quickstart/(?:ja|en))\)"
+        )
         for match in pattern.finditer(text):
             parts.append(html.escape(text[position:match.start()]))
             if match.group(1) is not None:
@@ -166,48 +175,100 @@ def render_quickstart(content: bytes, language: str) -> bytes:
                     parts.append(f'<a href="{detailed_guide}">{html.escape(value)}</a>')
                 else:
                     parts.append(f"<code>{html.escape(value)}</code>")
-            else:
+            elif match.group(2) is not None:
                 parts.append(f"<strong>{html.escape(match.group(2))}</strong>")
+            else:
+                label, href = match.group(3), match.group(4)
+                escaped_href = html.escape(href, quote=True)
+                external = href.startswith(("https://", "http://"))
+                target = ' target="_blank" rel="noopener noreferrer"' if external else ""
+                parts.append(f'<a href="{escaped_href}"{target}>{html.escape(label)}</a>')
             position = match.end()
         parts.append(html.escape(text[position:]))
         return "".join(parts)
 
-    blocks, paragraph, list_items = [], [], []
+    lines = markdown.splitlines()
+    blocks = []
+    heading = re.compile(r"^(#{1,3})\s+(.+?)\s*#*\s*$")
+    list_marker = re.compile(r"^(\s*)([-+*]|\d+[.)])\s+(.+)$")
+    table_rule = re.compile(r"^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$")
 
-    def flush():
-        if paragraph:
-            blocks.append("<p>" + inline(" ".join(paragraph)) + "</p>")
-            paragraph.clear()
-        if list_items:
-            blocks.append("<ul>" + "".join(f"<li>{inline(item)}</li>" for item in list_items) + "</ul>")
-            list_items.clear()
+    def cells(line):
+        value = line.strip().strip("|")
+        return [cell.strip() for cell in value.split("|")]
 
-    for raw_line in content.decode("utf-8").splitlines():
-        line = raw_line.strip()
+    index = 0
+    while index < len(lines):
+        line = lines[index].strip()
         if not line:
-            flush()
-        elif line.startswith("# "):
-            flush()
-            blocks.append(f"<h1>{inline(line[2:])}</h1>")
-        elif line.startswith("## "):
-            flush()
-            blocks.append(f"<h2>{inline(line[3:])}</h2>")
-        elif line.startswith("- "):
-            if paragraph:
-                flush()
-            list_items.append(line[2:])
-        else:
-            if list_items:
-                flush()
-            paragraph.append(line)
-    flush()
-    title = "Quick start" if language == "en" else "はじめに"
-    back_label = "Back to the generator" if language == "en" else "生成画面に戻る"
+            index += 1
+            continue
+
+        if line.startswith("```"):
+            language_hint = line[3:].strip().lower()
+            index += 1
+            code_lines = []
+            while index < len(lines) and not lines[index].strip().startswith("```"):
+                code_lines.append(lines[index])
+                index += 1
+            if index < len(lines):
+                index += 1
+            language_class = f' class="language-{html.escape(language_hint, quote=True)}"' if re.fullmatch(r"[a-z0-9_-]+", language_hint) else ""
+            blocks.append(f"<pre><code{language_class}>{html.escape(chr(10).join(code_lines))}</code></pre>")
+            continue
+
+        heading_match = heading.match(line)
+        if heading_match:
+            level = len(heading_match.group(1))
+            blocks.append(f"<h{level}>{inline(heading_match.group(2))}</h{level}>")
+            index += 1
+            continue
+
+        if index + 1 < len(lines) and "|" in lines[index] and table_rule.match(lines[index + 1]):
+            header_cells = cells(lines[index])
+            index += 2
+            row_html = []
+            while index < len(lines) and lines[index].strip() and "|" in lines[index]:
+                row_cells = cells(lines[index])
+                row_cells += [""] * max(0, len(header_cells) - len(row_cells))
+                row_html.append("<tr>" + "".join(f"<td>{inline(cell)}</td>" for cell in row_cells[:len(header_cells)]) + "</tr>")
+                index += 1
+            head_html = "<thead><tr>" + "".join(f"<th scope=\"col\">{inline(cell)}</th>" for cell in header_cells) + "</tr></thead>"
+            blocks.append('<div class="guide-table-wrap"><table class="guide-table">' + head_html + "<tbody>" + "".join(row_html) + "</tbody></table></div>")
+            continue
+
+        marker = list_marker.match(lines[index])
+        if marker:
+            base_indent = len(marker.group(1).expandtabs(4))
+            ordered = marker.group(2)[0].isdigit()
+            items = []
+            while index < len(lines):
+                current = list_marker.match(lines[index])
+                if not current or len(current.group(1).expandtabs(4)) != base_indent or current.group(2)[0].isdigit() != ordered:
+                    break
+                items.append(current.group(3).strip())
+                index += 1
+            tag = "ol" if ordered else "ul"
+            blocks.append(f"<{tag}>" + "".join(f"<li>{inline(item)}</li>" for item in items) + f"</{tag}>")
+            continue
+
+        paragraph = [line]
+        index += 1
+        while index < len(lines) and lines[index].strip():
+            next_line = lines[index].strip()
+            if (heading.match(next_line) or next_line.startswith("```") or
+                    list_marker.match(lines[index]) or
+                    (index + 1 < len(lines) and "|" in lines[index] and table_rule.match(lines[index + 1]))):
+                break
+            paragraph.append(next_line)
+            index += 1
+        blocks.append("<p>" + inline(" ".join(paragraph)) + "</p>")
+    title = title_match.group(1).strip() if title_match else ("Quick start" if language == "en" else "はじめに")
     page = f'''<!doctype html>
 <html lang="{language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; object-src 'none'; base-uri 'none'; form-action 'none">
-<title>{html.escape(title)}</title><style>*{{box-sizing:border-box}}body{{margin:0;background:#f3f6fa;color:#233247;font:16px/1.7 system-ui,-apple-system,"Segoe UI",sans-serif}}main{{max-width:780px;margin:32px auto;padding:28px;background:white;border:1px solid #dfe7eb;border-radius:10px}}h1{{margin-top:0;font-size:26px}}h2{{margin-top:28px;font-size:19px;color:#214e4c}}p,ul{{margin:12px 0}}li{{padding:3px 0}}code{{padding:2px 5px;background:#f0f4f6;border-radius:4px;font-size:.92em}}a{{color:#126653}}.back-link{{display:inline-block;margin-bottom:18px;font-size:14px}}a:focus-visible{{outline:3px solid #397ca7;outline-offset:3px}}@media(max-width:820px){{main{{margin:12px;padding:20px;border-radius:0}}}}</style></head>
-<body><main><nav aria-label="{html.escape(back_label)}"><a class="back-link" href="/">← {html.escape(back_label)}</a></nav>{''.join(blocks)}</main></body></html>'''
+<title>{html.escape(title)}</title><style>*{{box-sizing:border-box}}body{{margin:0;background:#f3f6fa;color:#233247;font:16px/1.7 system-ui,-apple-system,"Segoe UI",sans-serif}}main{{max-width:900px;margin:32px auto;padding:32px;background:white;border:1px solid #dfe7eb;border-radius:10px}}h1{{margin-top:0;font-size:28px;line-height:1.35}}h2{{margin:34px 0 12px;font-size:21px;line-height:1.4;color:#214e4c;border-bottom:1px solid #e4ecec;padding-bottom:7px}}h3{{margin:26px 0 9px;font-size:17px;line-height:1.4;color:#214e4c}}p{{margin:12px 0 16px}}ul,ol{{margin:10px 0 18px;padding-left:28px}}li{{padding:3px 0 4px}}li+li{{margin-top:3px}}code{{padding:2px 5px;background:#f0f4f6;border-radius:4px;font-size:.92em;overflow-wrap:anywhere}}pre{{margin:14px 0;padding:14px 16px;overflow:auto;border-radius:7px;background:#f3f6f8;line-height:1.55}}pre code{{padding:0;background:transparent;white-space:pre}}a{{color:#126653}}a:focus-visible{{outline:3px solid #397ca7;outline-offset:3px}}.guide-table-wrap{{margin:14px 0 20px;overflow-x:auto}}.guide-table{{width:100%;border-collapse:collapse;font-size:14px;line-height:1.55}}.guide-table th,.guide-table td{{border:1px solid #dfe7eb;padding:9px 11px;text-align:left;vertical-align:top}}.guide-table th{{background:#edf4f5;color:#214e4c}}.guide-table td:first-child{{white-space:nowrap}}@media(max-width:820px){{main{{margin:12px;padding:20px;border-radius:0}}.guide-table td:first-child{{white-space:normal}}}}@media(max-width:600px){{main{{padding:17px}}body{{font-size:15px}}}}
+</style></head><body><main>{''.join(blocks)}</main></body></html>'''
     return page.encode("utf-8")
 
 
@@ -912,6 +973,8 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError(translate("invalid_input", language))
             kind = data.get("kind")
             settings = data.get("settings")
+            if isinstance(kind, str) and kind in DEVELOPMENT_METHODS:
+                raise ValueError(translate("method_in_development", language))
             LOGGER.debug("generation_payload_parsed id=%s kind=%s setting_count=%d has_destination=%s",
                          self.request_id, kind if isinstance(kind, str) and kind in GENERATORS else "invalid",
                          len(settings) if isinstance(settings, dict) else -1,
@@ -1013,19 +1076,32 @@ def main():
     language_parser.add_argument("--lang", choices=("ja", "en"), default="ja")
     language = language_parser.parse_known_args()[0].lang
     parser = argparse.ArgumentParser(description=translate("server_description", language), parents=[language_parser])
-    parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--port", type=int, default=None)
     parser.add_argument("--open", action="store_true", help=translate("open_help", language))
     args = parser.parse_args()
-    if not 0 <= args.port <= 65535:
+    try:
+        app_config = json.loads((Path(__file__).parent / "app_config.json").read_text(encoding="utf-8"))
+        if not isinstance(app_config, dict):
+            raise ValueError("configuration root must be an object")
+    except FileNotFoundError:
+        app_config = {}
+    except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
+        parser.error(f"Invalid app_config.json ({type(exc).__name__}).")
+    configured_port = app_config.get("port", 8765)
+    if (isinstance(configured_port, bool) or not isinstance(configured_port, int)
+            or not 0 <= configured_port <= 65535):
+        parser.error("app_config.json port must be an integer between 0 and 65535.")
+    port = configured_port if args.port is None else args.port
+    if not 0 <= port <= 65535:
         parser.error(translate("port_error", language))
     configure_logging()
     try:
-        server = LocalThreadingHTTPServer(("127.0.0.1", args.port), Handler)
+        server = LocalThreadingHTTPServer(("127.0.0.1", port), Handler)
     except OSError as exc:
-        LOGGER.error("server_bind_failed error_type=%s errno=%s",
-                     type(exc).__name__, exc.errno)
+        LOGGER.error("server_bind_failed host=%s port=%s error_type=%s errno=%s",
+                     "127.0.0.1", port, type(exc).__name__, exc.errno)
         if exc.errno == errno.EADDRINUSE:
-            parser.exit(1, translate("port_in_use", language, port=args.port) + "\n")
+            parser.exit(1, translate("port_in_use", language, port=port) + "\n")
         raise
     url = f"http://127.0.0.1:{server.server_port}/"
     LOGGER.info("app_started port=%s", server.server_port)

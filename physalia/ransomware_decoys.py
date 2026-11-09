@@ -250,8 +250,8 @@ def generate_path_maze(settings, language="ja"):
         raise ValueError("対象OSはwindows、unix、macosから選択してください。"
                          if ja else "Choose a supported path profile: windows, unix or macos.")
     depth = integer(settings.get("depth", 20), "depth", 1, 20, language)
-    branches = integer(settings.get("branches", 1000), "branches", 1, 1500, language)
-    per_dir = integer(settings.get("files", 1), "files", 1, 4, language)
+    branches = integer(settings.get("branches", 890), "branches", 1, 1500, language)
+    per_dir = integer(settings.get("files", 3), "files", 1, 4, language)
     # Preserve a deep spine and recursively expand each lateral branch into a
     # small subtree. This gives every wide branch nested folders without the
     # exponential growth of a complete B-ary tree.

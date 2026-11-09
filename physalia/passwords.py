@@ -76,5 +76,5 @@ def make_password(policy, depth, layers):
             stem.insert(rng.randrange(len(stem) + 1), character)
         password = "".join(stem)
     hinted = policy["hints"] == "all" or (policy["hints"] == "early" and depth <= 2)
-    # Notes can suggest a separate key register but never disclose password text.
+    # Optional operational notes provide context without revealing password or key locations.
     return password, hinted
