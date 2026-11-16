@@ -8,7 +8,6 @@ import os
 import stat
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = ROOT / "examples" / "deception-study-metadata-template.schema.json"
 TEMPLATE_PATH = ROOT / "examples" / "deception-study-metadata-template.json"
@@ -19,6 +18,7 @@ SUPPORTED_KEYWORDS = {
     "minLength", "maxLength", "minItems", "maxItems", "uniqueItems",
 }
 MAX_METADATA_BYTES = 2 * 1024 * 1024
+WINDOWS = os.name == "nt"
 
 
 def safe_display(value):
@@ -49,8 +49,11 @@ def _load_json(path: Path):
         raise OSError(f"{path} must be a regular file")
     if before.st_size > MAX_METADATA_BYTES:
         raise ValueError(f"{path} exceeds 2 MiB")
-    identity = lambda info: (info.st_dev, info.st_ino, info.st_mode, info.st_size,
-                              info.st_mtime_ns, info.st_ctime_ns)
+    def identity(info, *, cross_source=False):
+        fields = (info.st_dev, info.st_ino, info.st_mode, info.st_size, info.st_mtime_ns)
+        # On Windows stat(path) and fstat(fd) may report creation and change
+        # time respectively. Compare ctime only between like sources there.
+        return fields if WINDOWS and cross_source else fields + (info.st_ctime_ns,)
     flags = (os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
              | getattr(os, "O_NONBLOCK", 0))
     descriptor = os.open(path, flags)
@@ -58,14 +61,16 @@ def _load_json(path: Path):
         with os.fdopen(descriptor, "rb") as source:
             descriptor = -1
             opened = os.fstat(source.fileno())
-            if not stat.S_ISREG(opened.st_mode) or identity(before) != identity(opened):
+            if (not stat.S_ISREG(opened.st_mode)
+                    or identity(before, cross_source=True) != identity(opened, cross_source=True)):
                 raise OSError(f"{path} changed while opening")
             raw = source.read(MAX_METADATA_BYTES + 1)
             finished = os.fstat(source.fileno())
             after = path.stat(follow_symlinks=False)
         if len(raw) > MAX_METADATA_BYTES:
             raise ValueError(f"{path} exceeds 2 MiB")
-        if identity(opened) != identity(finished) or identity(finished) != identity(after):
+        if (identity(opened) != identity(finished) or identity(before) != identity(after)
+                or identity(finished, cross_source=True) != identity(after, cross_source=True)):
             raise OSError(f"{path} changed while reading")
         return json.loads(raw.decode("utf-8"), object_pairs_hook=_unique_object,
                           parse_constant=_reject_constant)
