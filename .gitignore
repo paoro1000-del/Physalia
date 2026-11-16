@@ -32,6 +32,7 @@ generated/
 # Local design notes; do not publish or bundle.
 /docs/agent_deception_strategy_and_design.html
 /docs/ai.md
+/cloud-jump-spacing.png
 /*.adg
 /*.db
 /*.sqlite*
