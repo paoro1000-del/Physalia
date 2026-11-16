@@ -12,6 +12,8 @@ dist/
 .envrc
 .secrets/
 # Local agent overrides, editor settings, and integration configuration.
+AGENTS.md
+CLAUDE.md
 GEMINI.md
 .agents/
 .claude/
