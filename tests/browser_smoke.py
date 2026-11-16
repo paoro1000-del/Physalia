@@ -60,6 +60,30 @@ def main():
                 document = target.read_text(encoding="utf-8")
                 assert "<!doctype html>" in document.lower()
                 assert "https://canary.example.invalid/browser-smoke" in document
+                requests = []
+                page.on("request", lambda request: requests.append(request.post_data_json)
+                        if request.method == "POST" and request.url.endswith("/api/generate") else None)
+                page.locator('input[name="kind"][value="fake_trap"]').check()
+                for enabled, url in ((False, "https://canary.example.invalid/private"),
+                                     (True, ""),
+                                     (True, "https://canary.example.invalid/fake-trap")):
+                    page.locator("#fake-embed-canary").check()
+                    page.locator("#fake-canary-url").fill(url)
+                    if not enabled:
+                        page.locator("#fake-embed-canary").uncheck()
+                    page.locator("#submit").click()
+                    expect(page.locator("#downloads")).to_be_visible()
+                    with page.expect_download() as download_event:
+                        page.locator("#downloads a[download]").first.click()
+                    trap_file = Path(temp) / "fake-trap.html"
+                    download_event.value.save_as(trap_file)
+                    trap_html = trap_file.read_text(encoding="utf-8")
+                    settings = requests[-1]["settings"]
+                    assert settings["embed_canary"] == bool(enabled and url), settings
+                    assert settings["canary_url"] == (url if enabled else ""), settings
+                    assert ("contact-marker\" src=" in trap_html) == bool(enabled and url)
+                    if url:
+                        assert (url in trap_html) == bool(enabled), trap_html
                 assert not errors, errors
                 assert not external, external
                 print(

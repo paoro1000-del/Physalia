@@ -71,6 +71,7 @@ Do not upload generated decoy files or settings to a public Git repository. If g
 
 ## Documentation
 
+- [Security measures](.github/README.md#security-measures-and-対策一覧)
 - [First sample](docs/quickstart_en.md)
 - [Deployment and response](docs/deployment_en.md)
 - [Log review](docs/log-review-guide_en.md)

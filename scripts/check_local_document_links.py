@@ -16,8 +16,8 @@ DOCUMENTS = (
     ROOT / "README_en.md",
     ROOT / "CONTRIBUTING.md",
     ROOT / "SECURITY.md",
-    *sorted((ROOT / "docs").glob("*.md")),
-    *sorted((ROOT / "docs").glob("*.html")),
+    *sorted((ROOT / "docs").rglob("*.md")),
+    *sorted((ROOT / "docs").rglob("*.html")),
 )
 UI_SOURCE_FILES = (
     ROOT / "web" / "index.html",

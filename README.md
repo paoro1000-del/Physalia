@@ -76,6 +76,7 @@ HTTP要求の完了時には、相関ID、メソッド、安全な経路分類�
 
 ## ドキュメント
 
+- [各対策の説明](.github/README.md#security-measures-and-対策一覧)
 - [初回サンプルの作成](docs/quickstart_ja.md)
 - [配置・検知・対応](docs/deployment_ja.md)
 - [ログの確認](docs/log-review-guide_ja.md)

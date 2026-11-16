@@ -16,3 +16,25 @@ This is currently a personal project, and pull requests from others are not bein
 
 - [English guide](../README_en.md)
 - [日本語ガイド](../README.md)
+
+## Security measures and 対策一覧
+
+各対策の仕組み、対象とする脅威、運用上の限界を紹介します。開発中・技術紹介のみの項目は、利用状況を確認してください。
+
+Explore how each measure works, the threats considered and its operational limitations. Check availability for concepts and work in progress.
+
+| 対策 / Measure | 提供状況 / Availability |
+| --- | --- |
+| [カナリアファイル / Canary File](../docs/measures/canary-file.md) | サンプル生成 / Sample generation |
+| [エンクリプテッド・ディープ・ネスト / Encrypted Deep Nest](../docs/measures/encrypted-deep-nest.md) | サンプル生成 / Sample generation |
+| [デコイ・データベース / Decoy Database](../docs/measures/decoy-database.md) | サンプル生成 / Sample generation |
+| [スタティック・デコイ・ポータル / Static Decoy Portal](../docs/measures/static-decoy-portal.md) | サンプル生成 / Sample generation |
+| [フェイクトラップ / Fake Trap](../docs/measures/fake-trap.md) | サンプル生成 / Sample generation |
+| [ランサムウェア・デコイフラッド / Ransomware Decoy Flood](../docs/measures/ransomware-decoy-flood.md) | 開発中 / In development |
+| [パス・メイズ / Path Maze](../docs/measures/path-maze.md) | サンプル生成 / Sample generation |
+| [スパース・デコイ / Sparse Decoy](../docs/measures/sparse-decoy.md) | サンプル生成 / Sample generation |
+| [データ・ディルーション / Data Dilution](../docs/measures/data-dilution.md) | 技術紹介のみ / Concept only |
+| [特権ハニーワード・セッション / Privilege Honeyword Session](../docs/measures/privilege-honeyword-session.md) | 技術紹介のみ / Concept only |
+| [インフィニット・ストリーム / Infinite Stream](../docs/measures/infinite-stream.md) | 開発中 / In development |
+| [ディレクトリ・メイズ / Directory Maze](../docs/measures/directory-maze.md) | 開発中 / In development |
+| [エンコーディング・メイズ / Encoding Maze](../docs/measures/encoding-maze.md) | 開発中 / In development |
